@@ -14,14 +14,14 @@ import operator
 import sys
 
 from mo_future import reduce, text
-from pyparsing import Combine, Forward, Group, Keyword, Literal, Optional, ParserElement, Regex, Word, ZeroOrMore, \
+from pyparsing import Combine, Forward, Group, Keyword, Literal, OneOrMore, Optional, ParserElement, Regex, Word, ZeroOrMore, \
     alphanums, alphas, delimitedList, infixNotation, opAssoc, restOfLine
 
 from moz_sql_parser.debugs import debug
 from moz_sql_parser.keywords import AND, AS, ASC, BETWEEN, CASE, COLLATE_NOCASE, CROSS_JOIN, DESC, ELSE, END, FROM, \
     FULL_JOIN, FULL_OUTER_JOIN, GROUP_BY, HAVING, IN, INNER_JOIN, IS, IS_NOT, JOIN, LEFT_JOIN, LEFT_OUTER_JOIN, LIKE, \
     LIMIT, NOT_BETWEEN, NOT_IN, NOT_LIKE, OFFSET, ON, OR, ORDER_BY, RESERVED, RIGHT_JOIN, RIGHT_OUTER_JOIN, SELECT, \
-    THEN, UNION, UNION_ALL, USING, WHEN, WHERE, binary_ops, unary_ops, WITH, durations
+    THEN, UNION, UNION_ALL, USING, WHEN, WHERE, CREATE_TABLE, binary_ops, unary_ops, WITH, durations
 
 ParserElement.enablePackrat()
 
@@ -395,7 +395,101 @@ statement = Group(Group(Optional(
     )
 ))("with") + ordered_sql("query")).addParseAction(to_with_clause)
 
-SQLParser = statement
+def to_create_json_call(instring, tokensStart, retTokens):
+    # ARRANGE INTO {op: params} FORMAT
+    for tok in retTokens:
+        name = tok.name.lower()
+
+        types = tok.types
+        option = tok.option
+        if not types:
+            types = tok[1]
+        if not option:
+            option = tok[2:4]
+            op = options_call(option)
+        if len(tok) == 2 or 3 or 4:
+            if op is None:
+                yield {"name" : name, "type": types}
+            else:
+                yield {"name" : name, "type": types, "option" : op}
+        else:
+            yield tok
+
+def options_call(option):
+    op = str(option)
+    if "not" and "null" in op:
+        return "not null"
+    elif "primary" in op:
+        return "primary key"
+    elif "foreign" in op:
+        return "foreign key"
+    elif "check" in op:
+        return "check"
+    elif "default" in op:
+        return op
+    elif "index" in op:
+        return "index"
+    else:
+        return None
+
+
+def to_create_table_call(instring, tokensStart, retTokens):
+    tok = retTokens
+
+    if tok:
+        return {"create table" : tok.asList()}
+
+def to_table_name_call(instring, tokensStart, retTokens):
+    tok = retTokens
+
+    if tok[0]:
+        return {"name" : tok[0] }
+
+
+def to_columns_call(instring, tokensStart, retTokens):
+    tok = retTokens
+
+    return {"columns" : tok.asList()}
+
+
+createStmt = Forward()
+
+column_name = ident.copy().setName("column_name").setDebugActions(*debug)
+
+column_size = Group(
+                Literal('(').suppress().setDebugActions(*debug) +
+                intNum.setName("size").setDebugActions(*debug) +
+                Literal(')').suppress().setDebugActions(*debug)
+              )
+
+column_type = OneOrMore(
+    Group(
+        ident.setName("column_type").setDebugActions(*debug) +
+        Optional(column_size("size")))
+    )
+
+column_options = Optional("NOT NULL") + Optional("UNIQUE")
+
+column_definition = delimitedList(
+        Group(
+            column_name("name") +
+            column_type("type") +
+            Optional(column_options("options"))
+        )
+    ).addParseAction(to_create_json_call)
+
+
+createStmt << Group(
+    CREATE_TABLE.suppress().setDebugActions(*debug) +
+    Group(delimitedList(
+    ident.copy().setName("table_name")("name").setDebugActions(*debug)).addParseAction(to_table_name_call) +
+    Literal("(").setDebugActions(*debug).suppress() +
+            delimitedList(column_definition).addParseAction(to_columns_call) +
+    Literal(")").setDebugActions(*debug).suppress()
+    ).addParseAction(to_create_table_call)
+)
+
+SQLParser = statement | createStmt
 
 # IGNORE SOME COMMENTS
 oracleSqlComment = Literal("--") + restOfLine

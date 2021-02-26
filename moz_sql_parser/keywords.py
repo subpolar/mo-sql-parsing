@@ -45,6 +45,7 @@ sql_reserved_words = [
     "WITH",
     "WHEN",
     "WHERE",
+    "CREATE_TABLE",
 ]
 
 reserved_keywords = []
