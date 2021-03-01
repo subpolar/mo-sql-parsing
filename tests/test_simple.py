@@ -114,16 +114,16 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_bad_select1(self):
-        assertRaises('Expected select', lambda: parse("se1ect A, B, C from dual"))
+        assertRaises('(at char 0)', lambda: parse("se1ect A, B, C from dual"))
 
     def test_bad_select2(self):
-        assertRaises('Expected {{expression1 [{[as] column_name1}]}', lambda: parse("Select &&& FROM dual"))
+        assertRaises('(at char 7)', lambda: parse("Select &&& FROM dual"))
 
     def test_bad_from(self):
         assertRaises('(at char 20)', lambda: parse("select A, B, C frum dual"))
 
     def test_incomplete1(self):
-        assertRaises('Expected {{expression1 [{[as] column_name1}]}', lambda: parse("SELECT"))
+        assertRaises('(at char 6)', lambda: parse("SELECT"))
 
     def test_incomplete2(self):
         assertRaises("", lambda: parse("SELECT * FROM"))

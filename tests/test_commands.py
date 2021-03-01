@@ -61,3 +61,38 @@ class TestSimple(TestCase):
         result = parse("create table student (name varchar not null, sunny int primary key)")
         expected = {"create table": [{"name": "student"}, {"columns": [{"name": "name", "type": "varchar", "option": "not null"}, {"name": "sunny", "type": "int", "option": "primary key"}]}]}
         self.assertEqual(result, expected)
+
+    def test_create_table_select(self):
+        result = parse("create table student as select * from XYZZY, ABC")
+        expected = {
+               'create table': [
+                    {'name': 'student'}, 
+                    {"select": "*", "from": ["XYZZY", "ABC"]}
+                ]
+            }
+        self.assertEqual(result, expected)
+
+    def test_create_table_paren_select(self):
+        result = parse("create table student as ( select * from XYZZY )")
+        expected = {
+               'create table': [
+                    {'name': 'student'}, 
+                    {"select": "*", "from": "XYZZY"}
+                ]
+            }
+        self.assertEqual(result, expected)
+
+    def test_create_table_with_select(self):
+        result = parse("create table student as with t as ( select * from XYZZY ) select * from t")
+        expected = {
+               'create table': [
+                    {'name': 'student'}, 
+                    {"select": "*", 
+                     "from": "t", 
+                     "with": { "name":"t",
+                               "value":{"select": "*", "from":"XYZZY"}
+                            }
+                    }
+                ]
+            }
+        self.assertEqual(result, expected)

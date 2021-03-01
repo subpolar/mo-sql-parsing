@@ -15,7 +15,7 @@ import sys
 
 from mo_future import reduce, text
 from pyparsing import Combine, Forward, Group, Keyword, Literal, OneOrMore, Optional, ParserElement, Regex, Word, ZeroOrMore, \
-    alphanums, alphas, delimitedList, infixNotation, opAssoc, restOfLine
+    alphanums, alphas, delimitedList, infixNotation, opAssoc, restOfLine, nestedExpr 
 
 from moz_sql_parser.debugs import debug
 from moz_sql_parser.keywords import AND, AS, ASC, BETWEEN, CASE, COLLATE_NOCASE, CROSS_JOIN, DESC, ELSE, END, FROM, \
@@ -482,10 +482,16 @@ column_definition = delimitedList(
 createStmt << Group(
     CREATE_TABLE.suppress().setDebugActions(*debug) +
     Group(delimitedList(
-    ident.copy().setName("table_name")("name").setDebugActions(*debug)).addParseAction(to_table_name_call) +
-    Literal("(").setDebugActions(*debug).suppress() +
+        ident.copy().setName("table_name")("name").setDebugActions(*debug)).addParseAction(to_table_name_call) +
+        Optional( 
+            Literal("(").setDebugActions(*debug).suppress() +
             delimitedList(column_definition).addParseAction(to_columns_call) +
-    Literal(")").setDebugActions(*debug).suppress()
+            Literal(")").setDebugActions(*debug).suppress()
+        ) + 
+        Optional( 
+            AS.suppress() + 
+            infixNotation( statement, [] )
+        )
     ).addParseAction(to_create_table_call)
 )
 
