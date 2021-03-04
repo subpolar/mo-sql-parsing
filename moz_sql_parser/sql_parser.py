@@ -395,103 +395,109 @@ statement = Group(Group(Optional(
     )
 ))("with") + ordered_sql("query")).addParseAction(to_with_clause)
 
-def to_create_json_call(instring, tokensStart, retTokens):
-    # ARRANGE INTO {op: params} FORMAT
-    for tok in retTokens:
-        name = tok.name.lower()
-
-        types = tok.types
-        option = tok.option
-        if not types:
-            types = tok[1]
-        if not option:
-            option = tok[2:4]
-            op = options_call(option)
-        if len(tok) == 2 or 3 or 4:
-            if op is None:
-                yield {"name" : name, "type": types}
-            else:
-                yield {"name" : name, "type": types, "option" : op}
-        else:
-            yield tok
-
-def options_call(option):
-    op = str(option)
-    if "not" and "null" in op:
-        return "not null"
-    elif "primary" in op:
-        return "primary key"
-    elif "foreign" in op:
-        return "foreign key"
-    elif "check" in op:
-        return "check"
-    elif "default" in op:
-        return op
-    elif "index" in op:
-        return "index"
-    else:
-        return None
-
-
 def to_create_table_call(instring, tokensStart, retTokens):
-    tok = retTokens
+    t = retTokens.asDict()
 
-    if tok:
-        return {"create table" : tok.asList()}
-
-def to_table_name_call(instring, tokensStart, retTokens):
-    tok = retTokens
-
-    if tok[0]:
-        return {"name" : tok[0] }
-
-
-def to_columns_call(instring, tokensStart, retTokens):
-    tok = retTokens
-
-    return {"columns" : tok.asList()}
-
+    if t:
+        return {"create table" : t}
 
 createStmt = Forward()
 
-column_name = ident.copy().setName("column_name").setDebugActions(*debug)
+column_name = ident.setDebugActions(*debug)
+
+column_definition = Forward()
 
 column_size = Group(
                 Literal('(').suppress().setDebugActions(*debug) +
-                intNum.setName("size").setDebugActions(*debug) +
+                delimitedList(
+                    intNum.setName("size").setDebugActions(*debug)
+                ) +
                 Literal(')').suppress().setDebugActions(*debug)
               )
 
-column_type = OneOrMore(
-    Group(
-        ident.setName("column_type").setDebugActions(*debug) +
-        Optional(column_size("size")))
+column_type = Forward()
+
+BigQuery_STRUCT = (
+    Keyword("struct", caseless=True)("type_name") + 
+    Literal("<").suppress() +
+    delimitedList(column_definition)("type_parameter") +
+    Literal(">").suppress()
+)
+
+BigQuery_ARREY = (
+    Keyword("array", caseless=True)("type_name") + 
+    Literal("<").suppress() +
+    delimitedList(column_type)("type_parameter") +
+    Literal(">").suppress()
+)
+
+column_type << (
+        BigQuery_STRUCT |
+        BigQuery_ARREY |
+        ident("type_name").setDebugActions(*debug) +
+        Optional(column_size)("type_parameter")
+    ).addParseAction(
+        lambda s,l,t: { t.type_name: t.type_parameter } if t.type_parameter else t.type_name
     )
 
-column_options = Optional("NOT NULL") + Optional("UNIQUE")
+column_def_references = Group( 
+    Keyword("references", caseless=True).suppress() + 
+    Group( 
+        ident("table") + 
+        Literal("(").suppress() +
+        delimitedList( ident )("columns") +
+        Literal(")").suppress()
+    )("references")
+)
 
-column_definition = delimitedList(
-        Group(
-            column_name("name") +
-            column_type("type") +
-            Optional(column_options("options"))
-        )
-    ).addParseAction(to_create_json_call)
+column_def_check = Group(
+    Keyword("check", caseless=True).suppress() +
+    Group( 
+        Literal("(").suppress() +
+        delimitedList( expr ) +
+        Literal(")").suppress()
+    )("check")
+)
+
+column_def_default = Group(
+    Keyword("default", caseless=True).suppress() +
+    Group( 
+        ident | expr
+    )("default")
+)
+
+column_options = ZeroOrMore( 
+    Keyword("not null", caseless=True) 
+    | Keyword("null", caseless=True) 
+    | Keyword("unique", caseless=True) 
+    | Keyword("primary key", caseless=True) 
+    | column_def_references
+    | column_def_check
+    | column_def_default
+)
+
+column_definition << Group(
+        column_name("name").addParseAction( lambda s, l, t: t.name.lower() ) +
+        column_type("type") +
+        Optional(column_options("option"))
+    ).addParseAction(
+        lambda s,l,t: t[0].asDict()
+    )
 
 
 createStmt << Group(
     CREATE_TABLE.suppress().setDebugActions(*debug) +
-    Group(delimitedList(
-        ident.copy().setName("table_name")("name").setDebugActions(*debug)).addParseAction(to_table_name_call) +
+    (
+        ident("name").setDebugActions(*debug) +
         Optional( 
             Literal("(").setDebugActions(*debug).suppress() +
-            delimitedList(column_definition).addParseAction(to_columns_call) +
+            delimitedList(column_definition) +
             Literal(")").setDebugActions(*debug).suppress()
-        ) + 
+        )("columns") + 
         Optional( 
             AS.suppress() + 
             infixNotation( statement, [] )
-        )
+        )("select_statement")
     ).addParseAction(to_create_table_call)
 )
 
