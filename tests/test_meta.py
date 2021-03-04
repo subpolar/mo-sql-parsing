@@ -1,4 +1,3 @@
-
 # encoding: utf-8
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -11,10 +10,14 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import os
+import re
 import sys
 from unittest import TestCase
+
+from mo_future import unichr
+
+from mo_parsing.utils import regex_range
 from moz_sql_parser import sql_parser
-from moz_sql_parser.debugs import DEBUG
 
 _ensure_imported = sql_parser
 
@@ -25,10 +28,14 @@ class TestSimple(TestCase):
     """
 
     def test_recursion_limit(self):
-        if os.environ.get('TRAVIS_BRANCH') == 'master':
+        if os.environ.get("TRAVIS_BRANCH") == "master":
             limit = sys.getrecursionlimit()
-            self.assertEqual(limit, 1500)
+            self.assertLess(limit, 1500)
 
-    def test_debug_is_off(self):
-        self.assertFalse(DEBUG, "Turn off debugging")
+    def test_regex_range(self):
+        for i in range(9, 4000):
+            c = unichr(i)
+            pattern = regex_range(c)
+            found = re.match(pattern, c)
+            self.assertTrue(bool(found))
 
