@@ -65,57 +65,57 @@ class TestCreateSimple(TestCase):
         self.assertEqual(result, expected)
 
 class TestWithOption(TestCase):
-    def test_two_columns_with_option_not_null(self):
+    def test_not_null(self):
         result = parse("create table student (name varchar not null, sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": "not null"}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_null(self):
+    def test_null(self):
         result = parse("create table student (name varchar null, sunny int primary key)")
-        expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": "null"}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
+        expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": "nullable"}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_unique(self):
+    def test_unique(self):
         result = parse("create table student (name varchar unique, sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": "unique"}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_primary_key(self):
+    def test_primary_key(self):
         result = parse("create table student (name varchar primary key, sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": "primary key"}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_reference(self):
+    def test_reference(self):
         result = parse("create table student (name varchar REFERENCES person (colname), sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"references":{"table":"person", "columns":"colname"}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_reference_composite(self):
+    def test_reference_composite(self):
         result = parse("create table student (name varchar REFERENCES person(colname, colname2), sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"references":{"table":"person", "columns":["colname", "colname2"]}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_check(self):
+    def test_check(self):
         result = parse("create table student (name varchar check ( length(name)<10 ) , sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"check": {'lt': [{'length': 'name'}, 10]}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_default_value(self):
+    def test_default_value(self):
         result = parse("create table student (name varchar default 'text', sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": {"literal": "text"}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_default_expr(self):
+    def test_default_expr(self):
         result = parse("create table student (name varchar default (ex * 2) , sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": {"mul": ["ex", 2]}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_index(self):
+    def test_index(self):
         result = parse("create table student (name varchar default (ex * 2) , sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": {"mul": ["ex", 2]}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    def test_two_columns_with_option_complexy(self):
+    def test_complexy(self):
         result = parse("create table student (name varchar not null primary key default (ex * 2) , sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": ["not null", "primary key", {"default": {"mul": ["ex", 2]}}]}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
