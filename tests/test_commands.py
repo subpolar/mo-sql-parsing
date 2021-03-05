@@ -71,6 +71,7 @@ class TestWithOption(TestCase):
         self.assertEqual(result, expected)
 
     def test_null(self):
+        # NULL mean ＮULLABLE in MySQL 
         result = parse("create table student (name varchar null, sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": "nullable"}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
@@ -98,6 +99,18 @@ class TestWithOption(TestCase):
     def test_check(self):
         result = parse("create table student (name varchar check ( length(name)<10 ) , sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"check": {'lt': [{'length': 'name'}, 10]}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
+        self.assertEqual(result, expected)
+
+    @skip("null value is not interpreted.")
+    def test_default_null_value(self):
+        result = parse("create table student (name varchar default null, sunny int primary key)")
+        expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": "null"}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
+        self.assertEqual(result, expected)
+
+    @skip("'null' literal is not interpreted.")
+    def test_default_null_literal(self):
+        result = parse("create table student (name varchar default 'null', sunny int primary key)")
+        expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": {"literal": "null"}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
     def test_default_value(self):
@@ -204,6 +217,7 @@ class TestCreateForBigQuery(TestCase):
         self.assertEqual(result, expected)
 
     def test_array_nested_array(self):
+        # Not supported this case in BigQuery. but, allow.  
         result = parse("create table student (name array<array<int>>)")
         expected = {"create table": {
             "name": "student", 
@@ -211,6 +225,21 @@ class TestCreateForBigQuery(TestCase):
                 "name": "name", 
                 "type": {
                     "array": { "array" : "int" }
+                }
+            }
+        }} 
+        self.assertEqual(result, expected)
+
+
+    def test_array_nested_struct_array(self):
+        # Not supported this case in BigQuery. but, allow.  
+        result = parse("create table student (name array<struct<child array<int>>>)")
+        expected = {"create table": {
+            "name": "student", 
+            "columns": {
+                "name": "name", 
+                "type": {
+                    "array": { "struct" : { "name": "child", "type":{ "array" : "int" } } }
                 }
             }
         }} 
