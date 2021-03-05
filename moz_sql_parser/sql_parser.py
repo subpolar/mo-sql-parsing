@@ -228,24 +228,14 @@ statement << (
     + Group(ordered_sql)("query")
 ).addParseAction(to_statement)
 
-def to_create_table_call(instring, tokensStart, retTokens):
-    t = retTokens.asDict()
-
-    if t:
-        return {"create table" : t}
-
 createStmt = Forward()
 
-column_name = ident.setDebugActions(*debug)
+column_name = ident
 
 column_definition = Forward()
 
 column_size = Group(
-                Literal('(').suppress().setDebugActions(*debug) +
-                delimitedList(
-                    intNum.setName("size").setDebugActions(*debug)
-                ) +
-                Literal(')').suppress().setDebugActions(*debug)
+                LB + delimitedList( intNum ) + RB
               )
 
 column_type = Forward()
@@ -267,28 +257,28 @@ BigQuery_ARREY = (
 column_type << (
         BigQuery_STRUCT |
         BigQuery_ARREY |
-        ident("type_name").setDebugActions(*debug) +
+        ident("type_name") +
         Optional(column_size)("type_parameter")
     ).addParseAction(
-        lambda s,l,t: { t.type_name: t.type_parameter } if t.type_parameter else t.type_name
+        lambda t: { t['type_name']: t['type_parameter'] } if t['type_parameter'] else t['type_name']
     )
 
 column_def_references = Group( 
     Keyword("references", caseless=True).suppress() + 
     Group( 
         ident("table") + 
-        Literal("(").suppress() +
+        LB +
         delimitedList( ident )("columns") +
-        Literal(")").suppress()
+        RB
     )("references")
 )
 
 column_def_check = Group(
     Keyword("check", caseless=True).suppress() +
     Group( 
-        Literal("(").suppress() +
+        LB +
         delimitedList( expr ) +
-        Literal(")").suppress()
+        RB
     )("check")
 )
 
@@ -301,37 +291,30 @@ column_def_default = Group(
 
 column_options = ZeroOrMore( 
     Keyword("not null", caseless=True) 
-    | Keyword("null", caseless=True) 
+    | NULL.copy().addParseAction( lambda t: "nullable" )
     | Keyword("unique", caseless=True) 
     | Keyword("primary key", caseless=True) 
     | column_def_references
     | column_def_check
     | column_def_default
-)
+).set_parser_name("column_options")
 
 column_definition << Group(
-        column_name("name").addParseAction( lambda s, l, t: t.name.lower() ) +
+        column_name("name").addParseAction( lambda t: t[0].lower() ) +
         column_type("type") +
-        Optional(column_options("option"))
-    ).addParseAction(
-        lambda s,l,t: t[0].asDict()
-    )
+        Optional(column_options)("option")
+    ).set_parser_name("column_definition")
 
-
-createStmt << Group(
-    CREATE_TABLE.suppress().setDebugActions(*debug) +
+createStmt << (
+    CREATE_TABLE +
     (
-        ident("name").setDebugActions(*debug) +
-        Optional( 
-            Literal("(").setDebugActions(*debug).suppress() +
-            delimitedList(column_definition) +
-            Literal(")").setDebugActions(*debug).suppress()
-        )("columns") + 
+        ident("name") +
+        Optional(Group(LB + delimitedList(column_definition) + RB))("columns") +
         Optional( 
             AS.suppress() + 
             infixNotation( statement, [] )
         )("select_statement")
-    ).addParseAction(to_create_table_call)
+    )("create table")
 )
 
 SQLParser = statement | createStmt
