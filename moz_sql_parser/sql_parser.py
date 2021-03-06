@@ -263,7 +263,7 @@ column_type << (
         lambda t: { t['type_name']: t['type_parameter'] } if t['type_parameter'] else t['type_name']
     )
 
-column_def_references = Group( 
+column_def_references = ( 
     Keyword("references", caseless=True).suppress() + 
     Group( 
         ident("table") + 
@@ -275,7 +275,7 @@ column_def_references = Group(
 
 column_def_check = Group(
     Keyword("check", caseless=True).suppress() +
-    Group( 
+    ( 
         LB +
         delimitedList( expr ) +
         RB
@@ -283,11 +283,9 @@ column_def_check = Group(
 )
 
 column_def_default = Group(
-    Keyword("default", caseless=True).suppress() +
-    Group( 
-        ident | expr
-    )("default")
-)
+    Keyword("default", caseless=True)("op") +
+    expr("params")
+).addParseAction(to_json_call)
 
 column_options = ZeroOrMore( 
     Keyword("not null", caseless=True) 
