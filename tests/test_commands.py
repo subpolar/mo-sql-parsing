@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 from unittest import TestCase, skip
 
 from moz_sql_parser import parse, sql_parser
+from mo_dots import Null
 from tests.util import assertRaises
 
 
@@ -101,13 +102,13 @@ class TestWithOption(TestCase):
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"check": {'lt': [{'length': 'name'}, 10]}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    @skip("null value is not interpreted.")
+#    @skip("null value is not interpreted.")
     def test_default_null_value(self):
         result = parse("create table student (name varchar default null, sunny int primary key)")
-        expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": "null"}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
+        expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": None }}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
-    @skip("'null' literal is not interpreted.")
+#    @skip("'null' literal is not interpreted.")
     def test_default_null_literal(self):
         result = parse("create table student (name varchar default 'null', sunny int primary key)")
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": "varchar", "option": {"default": {"literal": "null"}}}, {"name": "sunny", "type": "int", "option": "primary key"}]}}
