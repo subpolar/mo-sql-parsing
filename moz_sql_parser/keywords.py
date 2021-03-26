@@ -1,7 +1,7 @@
 from moz_sql_parser.utils import *
 
 # SQL CONSTANTS
-NULL = Keyword("null", caseless=True).addParseAction(lambda: "null")
+NULL = Keyword("null", caseless=True).addParseAction(lambda: nullValue)
 TRUE = Keyword("true", caseless=True).addParseAction(lambda: True)
 FALSE = Keyword("false", caseless=True).addParseAction(lambda: False)
 NOCASE = Keyword("nocase", caseless=True)

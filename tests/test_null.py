@@ -53,13 +53,36 @@ class TestSimple(TestCase):
         result = parse(sql)
         expected = {'from': 'x', 'select': [{'value': Null}, {'value': 'b'}]}
         self.assertEqual(result, expected)
-                
 
+    def test_null_parameter(self):
+        sql = "select DECODE()"
+        result = parse(sql)
+        #  see to_json_call. when param is null, set {}.
+        expected = {"select": {"value": {"decode": {}}}}
+        # expected = {"select": {"value": {"decode": Null}}}
+        self.assertEqual(result, expected)
 
     def test_null_parameter2(self):
         sql = "select DECODE(NULL)"
         result = parse(sql)
-        expected = {"select": {"value": {"decode": Null}}}
+        expected = {"select": {"value": {"decode": None}}}
+        # expected = {"select": {"value": {"decode": Null}}}
+        self.assertEqual(result, expected)
+
+    def test_null_parameter3(self):
+        sql = "select DECODE(NULL,a)"
+        result = parse(sql)
+        #  see to_json_call. when param is null, set {}.
+        expected = {"select": {"value": {"decode": [None,"a"]}}}
+        # expected = {"select": {"value": {"decode": Null}}}
+        self.assertEqual(result, expected)
+
+    def test_null_parameter4(self):
+        sql = "select DECODE(a,NULL)"
+        result = parse(sql)
+        #  see to_json_call. when param is null, set {}.
+        expected = {"select": {"value": {"decode": ["a", None]}}}
+        # expected = {"select": {"value": {"decode": Null}}}
         self.assertEqual(result, expected)
 
     def test_issue18(self):
