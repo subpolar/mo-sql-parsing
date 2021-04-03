@@ -88,7 +88,6 @@ class TestSimple(TestCase):
     def test_issue18(self):
         sql = "SELECT a, CASE WHEN some_columns = 'Bob' THEN NULL ELSE 'helloworld' END AS some_columns FROM mytable"
         result = parse(sql)
-        print(result)
         expected = {
             "from": "mytable",
             "select": [

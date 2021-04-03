@@ -37,6 +37,8 @@ ident = Combine(
 ).set_parser_name("identifier")
 
 # EXPRESSIONS
+column_definition = Forward()
+column_type = Forward()
 
 # CASE
 case = (
@@ -230,43 +232,30 @@ statement << (
 
 createStmt = Forward()
 
-column_name = ident
-
-column_definition = Forward()
-
-column_size = Group(
-                LB + delimitedList( intNum ) + RB
-              )
-
-column_type = Forward()
-
-BigQuery_STRUCT = (
-    Keyword("struct", caseless=True)("type_name") + 
+BigQuery_STRUCT = Group(
+    Keyword("struct", caseless=True)("op") +
     Literal("<").suppress() +
-    delimitedList(column_definition)("type_parameter") +
+    delimitedList(column_definition)("params") +
     Literal(">").suppress()
-)
+).addParseAction(to_json_call)
 
-BigQuery_ARREY = (
-    Keyword("array", caseless=True)("type_name") + 
+BigQuery_ARREY = Group(
+    Keyword("array", caseless=True)("op") +
     Literal("<").suppress() +
-    delimitedList(column_type)("type_parameter") +
+    delimitedList(column_type)("params") +
     Literal(">").suppress()
-)
+).addParseAction(to_json_call)
 
 column_type << (
         BigQuery_STRUCT |
         BigQuery_ARREY |
-        ident("type_name") +
-        Optional(column_size)("type_parameter")
-    ).addParseAction(
-        lambda t: { t['type_name']: t['type_parameter'] } if t['type_parameter'] else t['type_name']
+        Group(ident("op") + Optional(LB + delimitedList( intNum )("params") + RB)).addParseAction(to_json_call)
     )
 
-column_def_references = ( 
-    Keyword("references", caseless=True).suppress() + 
-    Group( 
-        ident("table") + 
+column_def_references = (
+    Keyword("references", caseless=True).suppress() +
+    Group(
+        ident("table") +
         LB +
         delimitedList( ident )("columns") +
         RB
@@ -275,7 +264,7 @@ column_def_references = (
 
 column_def_check = Group(
     Keyword("check", caseless=True).suppress() +
-    ( 
+    (
         LB +
         delimitedList( expr ) +
         RB
@@ -287,18 +276,18 @@ column_def_default = Group(
     expr("params")
 ).addParseAction(to_json_call)
 
-column_options = ZeroOrMore( 
-    Keyword("not null", caseless=True) 
+column_options = ZeroOrMore(
+    Keyword("not null", caseless=True)
     | NULL.copy().addParseAction( lambda t: "nullable" )
-    | Keyword("unique", caseless=True) 
-    | Keyword("primary key", caseless=True) 
+    | Keyword("unique", caseless=True)
+    | Keyword("primary key", caseless=True)
     | column_def_references
     | column_def_check
     | column_def_default
 ).set_parser_name("column_options")
 
 column_definition << Group(
-        column_name("name").addParseAction( lambda t: t[0].lower() ) +
+        ident("name").addParseAction( lambda t: t[0].lower() ) +
         column_type("type") +
         Optional(column_options)("option")
     ).set_parser_name("column_definition")
@@ -308,8 +297,8 @@ createStmt << (
     (
         ident("name") +
         Optional(Group(LB + delimitedList(column_definition) + RB))("columns") +
-        Optional( 
-            AS.suppress() + 
+        Optional(
+            AS.suppress() +
             infixNotation( statement, [] )
         )("select_statement")
     )("create table")
