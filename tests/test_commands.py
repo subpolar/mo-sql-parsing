@@ -65,6 +65,7 @@ class TestCreateSimple(TestCase):
         expected = {"create table": {"name": "student", "columns": {"name": "name", "type": {"decimal" : [2,3]} , "option": "not null"}}}
         self.assertEqual(result, expected)
 
+
 class TestWithOption(TestCase):
     def test_not_null(self):
         result = parse("create table student (name varchar not null, sunny int primary key)")
@@ -134,12 +135,106 @@ class TestWithOption(TestCase):
         expected = {"create table": {"name": "student", "columns": [{"name": "name", "type": {"varchar": {}}, "option": ["not null", "primary key", {"default": {"mul": ["ex", 2]}}]}, {"name": "sunny", "type": {"int": {}}, "option": "primary key"}]}}
         self.assertEqual(result, expected)
 
+
+class TestTableConstraint(TestCase):
+    def test_primary_key(self):
+        result = parse("create table student (name varchar not null, primary key( name ) )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": {"name": "name", "type": {"varchar": {}}, "option": "not null"},
+            "constraint": {"primary_key": {"columns": "name"}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_primary_key_composite(self):
+        result = parse("create table student (name varchar not null, id varchar not null, primary key( name, id ) )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": [
+                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+            ],
+            "constraint": {"primary_key": {"columns": ["name", "id"]}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_constraint(self):
+        result = parse("create table student (name varchar null, constraint c_00 primary key(name))")
+        expected = {"create table": {
+            "name": "student",
+            "columns": {"name": "name", "type": {"varchar": {}}, "option": "nullable"},
+            "constraint": {"name":"c_00", "primary_key": {"columns": "name"}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_unique(self):
+        result = parse("create table student (name varchar, unique unique_student(name) )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": {"name": "name", "type": {"varchar": {}}},
+            "constraint": {"unique": {"index_name": "unique_student", "columns": "name"}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_unique_composite(self):
+        result = parse("create table student (name varchar not null, id varchar not null, unique key unique_student(name, id) )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": [
+                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+            ],
+            "constraint": {"unique": {"index_name": "unique_student", "columns": ["name", "id"]}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_reference(self):
+        result = parse("create table student (name varchar, "
+                       "foreign key frn_student(name) references person (colname) )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": {"name": "name", "type": {"varchar": {}}},
+            "constraint":
+                {"foreign_key": {"index_name": "frn_student",
+                                 "columns": "name",
+                                 "references": {"table": "person", "columns": "colname"}}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_reference_composite(self):
+        result = parse("create table student (name varchar not null, id varchar not null, "
+                       "foreign key frn_student(name, id) references person (colname, pid)  )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": [
+                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+            ],
+            "constraint":
+                {"foreign_key": {"index_name": "frn_student",
+                                 "columns": ["name","id"],
+                                 "references": {"table": "person", "columns": ["colname", "pid"]}}}
+        }}
+        self.assertEqual(result, expected)
+
+    def test_check(self):
+        result = parse("create table student (name varchar, "
+                       "constraint chk_01 check (name like '%Doe') )")
+        expected = {"create table": {
+            "name": "student",
+            "columns": {"name": "name", "type": {"varchar": {}}},
+            "constraint":
+                {"name": "chk_01", "check": {"like": ["name", {"literal": "%Doe"}]}}
+        }}
+        self.assertEqual(result, expected)
+
+
 class TestCreateSelect(TestCase):
     def test_select(self):
         result = parse("create table student as select * from XYZZY, ABC")
         expected = {
                "create table": {
-                    "name": "student", 
+                    "name": "student",
                     "select_statement":{"select": "*", "from": ["XYZZY", "ABC"]}
                 }
             }
@@ -149,7 +244,7 @@ class TestCreateSelect(TestCase):
         result = parse("create table student as ( select * from XYZZY )")
         expected = {
                "create table": {
-                    "name": "student", 
+                    "name": "student",
                     "select_statement":{"select": "*", "from": "XYZZY"}
                 }
             }
@@ -159,10 +254,10 @@ class TestCreateSelect(TestCase):
         result = parse("create table student as with t as ( select * from XYZZY ) select * from t")
         expected = {
                "create table": {
-                    "name": "student", 
+                    "name": "student",
                     "select_statement":{
-                        "select": "*", 
-                        "from": "t", 
+                        "select": "*",
+                        "from": "t",
                         "with": { "name":"t",
                                 "value":{"select": "*", "from":"XYZZY"}
                                 }
@@ -175,23 +270,23 @@ class TestCreateForBigQuery(TestCase):
     def test_struct_nested_one_column(self):
         result = parse("create table student (name struct<first_name varchar>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "struct": {"name": "first_name", "type": {"varchar": {}}}
                 }
             }
-        }} 
+        }}
 
         self.assertEqual(result, expected)
 
     def test_struct_nested_many_column(self):
         result = parse("create table student (name struct<first_name varchar, middle_name char(1), last_name varchar>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "struct": [
                         {"name": "first_name", "type": {"varchar": {}}}
@@ -200,57 +295,57 @@ class TestCreateForBigQuery(TestCase):
                     ]
                 }
             }
-        }} 
+        }}
 
         self.assertEqual(result, expected)
 
     def test_array_nested(self):
         result = parse("create table student (name array<varchar>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "array": {"varchar": {}}
                 }
             }
-        }} 
+        }}
         self.assertEqual(result, expected)
 
     def test_array_nested_array(self):
         # Not supported this case in BigQuery. but, allow.  
         result = parse("create table student (name array<array<int>>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "array": { "array" : {"int": {}} }
                 }
             }
-        }} 
+        }}
         self.assertEqual(result, expected)
 
     def test_array_nested_struct_array(self):
         # Not supported this case in BigQuery. but, allow.  
         result = parse("create table student (name array<struct<child array<int>>>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "array": {"struct": {"name": "child", "type": {"array": {"int": {}}}}}
                 }
             }
-        }} 
+        }}
         self.assertEqual(result, expected)
 
     def test_array_nested_struct(self):
         result = parse("create table student (name array<struct<chr nchar, is_valid boolean>>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "array": {"struct": [
                         {"name": "chr", "type": {"nchar": {}}},
@@ -258,15 +353,15 @@ class TestCreateForBigQuery(TestCase):
                     ]}
                 }
             }
-        }} 
+        }}
         self.assertEqual(result, expected)
 
     def test_struct_nested_array(self):
         result = parse("create table student (name struct<chr array<nchar>, is_valid array<boolean>>)")
         expected = {"create table": {
-            "name": "student", 
+            "name": "student",
             "columns": {
-                "name": "name", 
+                "name": "name",
                 "type": {
                     "struct": [
                         {"name": "chr", "type": {"array": {"nchar": {}}}},
@@ -274,7 +369,7 @@ class TestCreateForBigQuery(TestCase):
                     ]
                 }
             }
-        }} 
+        }}
         self.assertEqual(result, expected)
 
 

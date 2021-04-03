@@ -13,6 +13,7 @@ AS = Keyword("as", caseless=True).suppress()
 ALL = Keyword("all", caseless=True)
 BY = Keyword("by", caseless=True).suppress()
 CAST = Keyword("cast", caseless=True)
+CONSTRAINT = Keyword("constraint", caseless=True).suppress()
 CREATE = Keyword("create", caseless=True).suppress()
 CROSS = Keyword("cross", caseless=True)
 DISTINCT = Keyword("distinct", caseless=True)
@@ -44,6 +45,15 @@ WHEN = Keyword("when", caseless=True).suppress()
 WHERE = Keyword("where", caseless=True).suppress()
 WITH = Keyword("with", caseless=True).suppress()
 WITHIN = Keyword("within", caseless=True).suppress()
+PRIMARY = Keyword("primary", caseless=True).suppress()
+FOREIGN = Keyword("foreign", caseless=True).suppress()
+KEY = Keyword("key", caseless=True).suppress()
+UNIQUE = Keyword("unique", caseless=True).suppress()
+INDEX = Keyword("index", caseless=True).suppress()
+REFERENCES = Keyword("references", caseless=True).suppress()
+
+PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
+FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
 # SIMPLE OPERATORS
 CASTING = Literal("::").set_parser_name("concat")
@@ -114,6 +124,9 @@ RESERVED = MatchFirst([
     CASE,
     CAST,
     COLLATE,
+    CONSTRAINT,
+    CREATE_TABLE,
+    CREATE,
     CROSS_JOIN,
     CROSS,
     DESC,
@@ -121,6 +134,8 @@ RESERVED = MatchFirst([
     ELSE,
     END,
     FALSE,
+    FOREIGN_KEY,
+    FOREIGN,
     FROM,
     FULL_JOIN,
     FULL_OUTER_JOIN,
@@ -129,12 +144,14 @@ RESERVED = MatchFirst([
     GROUP,
     HAVING,
     IN,
+    INDEX,
     INNER_JOIN,
     INNER,
     INTERVAL,
     IS_NOT,
     IS,
     JOIN,
+    KEY,
     LEFT_JOIN,
     LEFT_OUTER_JOIN,
     LEFT,
@@ -156,6 +173,9 @@ RESERVED = MatchFirst([
     OVER,
     PARTITION_BY,
     PARTITION,
+    PRIMARY_KEY,
+    PRIMARY,
+    REFERENCES,
     RIGHT_JOIN,
     RIGHT_OUTER_JOIN,
     RIGHT,
@@ -166,6 +186,7 @@ RESERVED = MatchFirst([
     TRUE,
     UNION_ALL,
     UNION,
+    UNIQUE,
     USING,
     WHEN,
     WHERE,
