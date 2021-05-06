@@ -31,6 +31,7 @@ ORDER = Keyword("order", caseless=True).suppress()
 OUTER = Keyword("outer", caseless=True)
 OVER = Keyword("over", caseless=True).suppress()
 PARTITION = Keyword("partition", caseless=True).suppress()
+# PERCENT = Keyword("percent", caseless=True).suppress()
 RIGHT = Keyword("right", caseless=True)
 RLIKE = Keyword("rlike", caseless=True)
 SELECT = Keyword("select", caseless=True).suppress()
@@ -153,6 +154,7 @@ RESERVED = MatchFirst([
     OVER,
     PARTITION_BY,
     PARTITION,
+    # PERCENT,
     RIGHT_JOIN,
     RIGHT_OUTER_JOIN,
     RIGHT,
@@ -332,6 +334,7 @@ BOOL = Group(Keyword("bool", caseless=True)("op")).addParseAction(to_json_call)
 BOOLEAN = Group(Keyword("boolean", caseless=True)("op")).addParseAction(to_json_call)
 DOUBLE = Group(Keyword("double", caseless=True)("op")).addParseAction(to_json_call)
 FLOAT64 = Group(Keyword("float64", caseless=True)("op")).addParseAction(to_json_call)
+FLOAT = Group(Keyword("float", caseless=True)("op")).addParseAction(to_json_call)
 GEOMETRY = Group(Keyword("geometry", caseless=True)("op")).addParseAction(to_json_call)
 INTEGER = Group(Keyword("integer", caseless=True)("op")).addParseAction(to_json_call)
 INT = Group(Keyword("int", caseless=True)("op")).addParseAction(to_json_call)
@@ -392,6 +395,7 @@ known_types = MatchFirst([
     DOUBLE_PRECISION,
     DOUBLE,
     FLOAT64,
+    FLOAT,
     GEOMETRY,
     INTEGER,
     INT,

@@ -397,10 +397,22 @@ realNum = (
     .set_parser_name("float")
     .addParseAction(lambda t: float(t[0]))
 )
+
+def parse_int(tokens):
+    if "e" in tokens[0].lower():
+        return int(float(tokens[0]))
+    else:
+        return int(tokens[0])
+
 intNum = (
     Regex(r"[+-]?\d+([eE]\+?\d+)?")
     .set_parser_name("int")
-    .addParseAction(lambda t: int(t[0]))
+    .addParseAction(parse_int)
+)
+hexNum = (
+    Regex(r"0x[0-9a-fA-F]+")
+    .set_parser_name("hex")
+    .addParseAction(lambda t: {"hex": t[0][2:]})
 )
 
 # STRINGS

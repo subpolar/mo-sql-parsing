@@ -9,8 +9,9 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import os
-from unittest import TestCase, skipIf
+from unittest import TestCase
 
+from mo_parsing.debug import Debugger
 from moz_sql_parser import parse
 
 IS_MASTER = os.environ.get("TRAVIS_BRANCH") == "master"

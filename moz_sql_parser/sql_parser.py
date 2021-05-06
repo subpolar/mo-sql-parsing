@@ -26,8 +26,7 @@ sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
 ident = Combine(
     ~RESERVED
     + (delimitedList(
-        Literal("*")
-        | literal_string
+        literal_string
         | mysql_ident
         | sqlserver_ident
         | Word(IDENT_CHAR),
@@ -114,6 +113,13 @@ call_function = (
     + RB
 ).addParseAction(to_json_call)
 
+with Engine(white=""):
+    def scale(tokens):
+        return {"mul":[tokens[0], tokens[1]]}
+
+    scale_function = ((realNum | intNum) + call_function).addParseAction(scale)
+    scale_ident = ((realNum | intNum) + ident).addParseAction(scale)
+
 compound = (
     NULL
     | TRUE
@@ -129,15 +135,19 @@ compound = (
     | (LB + Group(ordered_sql) + RB)
     | (LB + Group(delimitedList(expr)).addParseAction(to_tuple_call) + RB)
     | sqlString.set_parser_name("string")
-    | call_function
-    | known_types
+    | hexNum.set_parser_name("hex")
+    | scale_function
+    | scale_ident
     | realNum.set_parser_name("float")
     | intNum.set_parser_name("int")
-    | ident
+    | call_function
+    | known_types
+    | Combine(ident + Optional(".*"))
 )
 
 expr << (
     (
+        Literal("*") |
         infixNotation(
             compound,
             [
