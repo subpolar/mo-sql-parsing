@@ -351,6 +351,7 @@ BYTES = (Keyword("bytes", caseless=True)("op") + _size).addParseAction(to_json_c
 CHAR = (Keyword("char", caseless=True)("op") + _size).addParseAction(to_json_call)
 VARCHAR = (Keyword("varchar", caseless=True)("op") + _size).addParseAction(to_json_call)
 VARBINARY = (Keyword("varbinary", caseless=True)("op") + _size).addParseAction(to_json_call)
+TINYINT = (Keyword("tinyint", caseless=True)("op") + _size).addParseAction(to_json_call)
 
 DECIMAL = (
     Keyword("decimal", caseless=True)("op") + _sizes
@@ -414,4 +415,5 @@ known_types = MatchFirst([
     TIMETZ_TYPE,
     VARCHAR,
     VARBINARY,
+    TINYINT,
 ])
