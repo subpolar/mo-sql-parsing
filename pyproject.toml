@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "dora-sql-parsing"
+version = "0.0.2"
+description = "Extract Parse Tree from SQL"
+authors = ["DataLabs <time.dataanalytics.datalabs@compasso.com.br>"]
+license = "MPL 2.0"
+homepage = "https://github.com/doraproject/mo-sql-parsing"
+readme = "README.md"
+classifiers = [
+        "Development Status :: 3 - Alpha",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Programming Language :: SQL",
+        "Programming Language :: Python :: 3.7",
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+]
+packages = [
+    { include = "mo_parsing" },
+    { include = "mo_sql_parsing" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+mo-future = "3.147.20327"
+
+[tool.poetry.dev-dependencies]
+mo-testing = "^4.33.21121"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
