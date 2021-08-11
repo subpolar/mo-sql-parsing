@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "dora-sql-parsing"
-version = "0.0.2"
+name = "mo-sql-parser"
+version = "0.1.1"
 description = "Extract Parse Tree from SQL"
 authors = ["DataLabs <time.dataanalytics.datalabs@compasso.com.br>"]
 license = "MPL 2.0"
