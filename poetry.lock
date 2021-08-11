@@ -1,0 +1,165 @@
+[[package]]
+name = "mo-collections"
+version = "4.30.21121"
+description = "More Collections! Some useful data structures for dealing with Data"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+mo-kwargs = "4.22.21108"
+mo-logs = "4.23.21108"
+
+[[package]]
+name = "mo-dots"
+version = "4.22.21108"
+description = "More Dots! Dot-access to Python dicts like Javascript"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-future = "3.147.20327"
+mo-imports = "3.149.20327"
+
+[[package]]
+name = "mo-future"
+version = "3.147.20327"
+description = "More future! Make Python 2/3 compatibility a bit easier"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "mo-imports"
+version = "3.149.20327"
+description = "More Imports! - Delayed importing"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-future = "3.147.20327"
+
+[[package]]
+name = "mo-kwargs"
+version = "4.22.21108"
+description = "More KWARGS! Let call parameters override kwargs"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+
+[[package]]
+name = "mo-logs"
+version = "4.23.21108"
+description = "More Logs! Structured Logging and Exception Handling"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+mo-imports = "3.149.20327"
+mo-kwargs = "4.22.21108"
+
+[[package]]
+name = "mo-math"
+version = "4.23.21108"
+description = "More Math! Many of the aggregates you are familiar with, but null-safe"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+mo-logs = "4.23.21108"
+
+[[package]]
+name = "mo-testing"
+version = "4.33.21121"
+description = "More Testing! Extends the `unittest.TestCase` to provide deep, yet fuzzy, structural comparisons"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-collections = "4.30.21121"
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+mo-logs = "4.23.21108"
+mo-math = "4.23.21108"
+mo-threads = "4.33.21121"
+
+[[package]]
+name = "mo-threads"
+version = "4.33.21121"
+description = "More Threads! Simpler and faster threading."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+mo-logs = "4.23.21108"
+mo-math = "4.23.21108"
+mo-times = "4.23.21108"
+
+[[package]]
+name = "mo-times"
+version = "4.23.21108"
+description = "More Time! Time as a vector space, the way it was meant to be."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mo-dots = "4.22.21108"
+mo-future = "3.147.20327"
+mo-logs = "4.23.21108"
+mo-math = "4.23.21108"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.7"
+content-hash = "a50a4eed57f18f6a4373123fd3b0a5529ae3748b122218c1bd063b026ef10ef1"
+
+[metadata.files]
+mo-collections = [
+    {file = "mo-collections-4.30.21121.tar.gz", hash = "sha256:957499c15450a1c4fb8f692ca391945a11aa8aef34883047b4b0c50f6c9212d6"},
+]
+mo-dots = [
+    {file = "mo-dots-4.22.21108.tar.gz", hash = "sha256:f9f2f9a6e44e214959aecd55857b6df487b8e86daf51334e2e982d47ea33ed23"},
+]
+mo-future = [
+    {file = "mo-future-3.147.20327.tar.gz", hash = "sha256:4aafcf859e4657bc11b04ee9791321e2d44702604ae01cac7c412468cb6a513f"},
+]
+mo-imports = [
+    {file = "mo-imports-3.149.20327.tar.gz", hash = "sha256:32e3dc720c84765224d29ed7e9d6972a369d41d756e6f26ddb5b7aa01241331d"},
+]
+mo-kwargs = [
+    {file = "mo-kwargs-4.22.21108.tar.gz", hash = "sha256:9c9d00ab86f1f75013193807d90cad17cbc515384cf3b17b8aff3104a300f7ce"},
+]
+mo-logs = [
+    {file = "mo-logs-4.23.21108.tar.gz", hash = "sha256:de4136a7ce215ecbfd7a368588be0a3f1fd8a6521dc2d4aae57cc1c3ba299aab"},
+]
+mo-math = [
+    {file = "mo-math-4.23.21108.tar.gz", hash = "sha256:336290b50bd5ff88bd22cd98cdfb4a6fc4587a7b06154ce6469551e24c91ee36"},
+]
+mo-testing = [
+    {file = "mo-testing-4.33.21121.tar.gz", hash = "sha256:04c8f613a291e1ea383a27371a7e0bafc3c462ceec30f6620e1fa3f7cb625423"},
+]
+mo-threads = [
+    {file = "mo-threads-4.33.21121.tar.gz", hash = "sha256:51469c7ce1f9bc64fa0badb5b6c61716793d52e888b134aa9dd6bf05c88b2bf3"},
+]
+mo-times = [
+    {file = "mo-times-4.23.21108.tar.gz", hash = "sha256:1542c63dfb5f1c1c80827c7e6cae39058ef13a4325c4d758168c1467f96fd442"},
+]
