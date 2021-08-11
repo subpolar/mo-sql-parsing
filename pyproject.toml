@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mo-sql-parser"
+name = "mo-sql-parsing"
 version = "0.1.1"
 description = "Extract Parse Tree from SQL"
 authors = ["DataLabs <time.dataanalytics.datalabs@compasso.com.br>"]
