@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from threading import Lock
 
-from mo_sql_parsing.sql_parser import SQLParser, scrub_literal, scrub
+from mo_sql_parsing.sql_parser import SQLParser, scrub_literal
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 
@@ -21,7 +21,7 @@ def parse(sql):
     with parseLocker:
         sql = sql.rstrip().rstrip(";")
         parse_result = SQLParser.parseString(sql, parseAll=True)
-        return scrub(parse_result)
+        return parse_result
 
 
 def format(json, **kwargs):

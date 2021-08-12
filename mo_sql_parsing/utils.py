@@ -11,73 +11,13 @@ from __future__ import absolute_import, division, unicode_literals
 
 import ast
 
-from mo_dots import is_data, is_null
-from mo_future import text, number_types, binary_type
-from mo_logs import Log
+from mo_dots import is_data
+from mo_future import text, number_types
 
 from mo_parsing import *
-from mo_parsing import debug
 from mo_parsing.utils import is_number, listwrap, alphanums
 
 IDENT_CHAR = alphanums + "@_$"
-
-
-def scrub(result):
-    if result == None:
-        return None
-    elif isinstance(result, text):
-        if result == "null":
-            return None
-        return result
-    elif isinstance(result, binary_type):
-        return result.decode("utf8")
-    elif isinstance(result, number_types):
-        return result
-    elif isinstance(result, dict) and not result:
-        return result
-    elif isinstance(result, list):
-        output = [rr for r in result for rr in [scrub(r)]]
-
-        if not output:
-            return None
-        elif len(output) == 1:
-            return output[0]
-        else:
-            return scrub_literal(output)
-    else:
-        # ATTEMPT A DICT INTERPRETATION
-        kv_pairs = list(result.items())
-        output = {k: vv for k, v in kv_pairs for vv in [scrub(v)] if not is_null(vv)}
-        if isinstance(result, dict):
-            return output
-        elif output:
-            if debug.DEBUGGING:
-                # CHECK THAT NO ITEMS WERE MISSED
-                def look(r):
-                    for token in r.tokens:
-                        if isinstance(token, ParseResults):
-                            if token.name:
-                                continue
-                            elif token.length() == 0:
-                                continue
-                            elif isinstance(token.type, Group):
-                                Log.error(
-                                    "This token is lost during scrub: {{token}}",
-                                    token=token,
-                                )
-                            else:
-                                look(token)
-                        else:
-                            Log.error(
-                                "This token is lost during scrub: {{token}}",
-                                token=token,
-                            )
-
-                look(result)
-
-            return output
-        temp = list(result)
-        return scrub(temp)
 
 
 def scrub_literal(candidate):
@@ -168,8 +108,8 @@ def to_json_operator(tokens):
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
     if tokens.length() == 1:
-        return [scrub(tokens)]
-    return [scrub_literal(scrub(tokens))]
+        return [tokens]
+    return [scrub_literal(tokens)]
 
 
 binary_ops = {
@@ -208,10 +148,10 @@ def to_json_call(tokens):
     op = tokens["op"].lower()
     op = binary_ops.get(op, op)
 
-    params = scrub(tokens["params"])
+    params = tokens["params"]
     if not params:
         params = {}
-    if scrub(tokens["ignore_nulls"]):
+    if tokens["ignore_nulls"]:
         ignore_nulls = True
     else:
         ignore_nulls = None
@@ -226,7 +166,7 @@ def to_json_call(tokens):
 
 def to_interval_call(tokens):
     # ARRANGE INTO {interval: [amount, type]} FORMAT
-    params = scrub(tokens["params"])
+    params = tokens["params"]
     if not params:
         params = {}
     if len(params) == 2:
@@ -268,7 +208,7 @@ def to_when_call(tokens):
 
 
 def to_join_call(tokens):
-    op = " ".join(listwrap(scrub(tokens["op"])))
+    op = " ".join(listwrap(tokens["op"]))
     if tokens["join"]["name"]:
         output = {op: {
             "name": tokens["join"]["name"],
@@ -295,15 +235,15 @@ def to_expression_call(tokens):
 
 
 def to_alias(tokens):
-    cols = scrub(tokens["col"])
-    name = scrub(tokens[0])
+    cols = tokens["col"]
+    name = tokens[0]
     if cols:
         return {name: cols}
     return name
 
 
 def to_top_clause(tokens):
-    value = scrub(tokens["value"])
+    value = tokens["value"]
     if not value:
         return None
     elif tokens["ties"]:
@@ -336,12 +276,12 @@ def to_select_call(tokens):
 def to_union_call(tokens):
     unions = tokens["union"]
     if unions.type.parser_name == "unordered sql":
-        output = scrub(unions)  # REMOVE THE Group()
+        output = unions  # REMOVE THE Group()
     else:
         unions = list(unions)
-        sources = scrub([unions[i] for i in range(0, len(unions), 2)])
+        sources = [unions[i] for i in range(0, len(unions), 2)]
         operators = [
-            "_".join(listwrap(scrub(unions[i]))) for i in range(1, len(unions), 2)
+            "_".join(unions[i]) for i in range(1, len(unions), 2)
         ]
         acc = sources[-1]
         last_union = None
@@ -364,8 +304,8 @@ def to_union_call(tokens):
 
 
 def to_statement(tokens):
-    output = scrub(tokens["query"])
-    output["with"] = scrub(tokens["with"])
+    output = tokens["query"][0]
+    output["with"] = tokens["with"]
     return output
 
 
