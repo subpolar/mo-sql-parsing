@@ -168,7 +168,7 @@ def to_json_operator(tokens):
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
     if tokens.length() == 1:
-        return [tokens]
+        return [tokens[0]]
     return [scrub_literal(tokens)]
 
 

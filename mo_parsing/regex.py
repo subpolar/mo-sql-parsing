@@ -10,7 +10,7 @@ from mo_future import unichr, is_text
 from mo_imports import export
 
 from mo_parsing.core import add_reset_action
-from mo_parsing.engine import Engine, PLAIN_ENGINE
+from mo_parsing.whitespaces import Whitespace, NO_WHITESPACE
 from mo_parsing.enhancement import (
     Char,
     NotAny,
@@ -97,7 +97,7 @@ def DEC():
 
 
 def name_token(tokens):
-    with PLAIN_ENGINE:
+    with NO_WHITESPACE:
         n = tokens["name"]
         v = tokens["value"]
         if not n:
@@ -109,26 +109,34 @@ def repeat(tokens):
     if tokens.length() == 1:
         return tokens.value()
 
-    operand, operator = tokens
+    try:
+        operand, operator = tokens
+    except Exception as cause:
+        Log.error("not expected", cause=cause)
+
     mode = operator["mode"]
     if not mode:
         if operator["exact"]:
-            return Many(operand, exact=int(operator["exact"]))
+            return Many(operand, NO_WHITESPACE, exact=int(operator["exact"]))
         else:
             return Many(
-                operand, min_match=int(operator["min"]), max_match=int(operator["max"])
+                operand,
+                NO_WHITESPACE,
+                min_match=int(operator["min"]),
+                max_match=int(operator["max"]),
             )
     elif mode in "*?":
-        return ZeroOrMore(operand)
+        return ZeroOrMore(operand, NO_WHITESPACE)
     elif mode in "+?":
-        return OneOrMore(operand)
+        return OneOrMore(operand, NO_WHITESPACE)
     elif mode == "?":
-        return Optional(operand)
+        return Optional(operand, NO_WHITESPACE)
     else:
         Log.error("not expected")
 
 
-PLAIN_ENGINE.use()
+NO_WHITESPACE.use()
+
 
 #########################################################################################
 # SQUARE BRACKETS
@@ -165,11 +173,11 @@ plainChar = Char(exclude=r"\]").addParseAction(lambda t: Literal(t.value()))
 
 escapedHexChar = Combine(
     (Literal("\\0x") | Literal("\\x") | Literal("\\X"))  # lookup literals is faster
-    + OneOrMore(Char(hexnums))
+    + OneOrMore(Char(hexnums), NO_WHITESPACE)
 ).addParseAction(hex_to_char)
 
 escapedOctChar = Combine(
-    Literal("\\0") + OneOrMore(Char("01234567"))
+    Literal("\\0") + OneOrMore(Char("01234567"), NO_WHITESPACE)
 ).addParseAction(lambda t: Literal(unichr(int(t.value()[2:], 8))))
 
 singleChar = escapedHexChar | escapedOctChar | escapedChar | plainChar
@@ -178,8 +186,8 @@ charRange = Group(singleChar("min") + "-" + singleChar("max")).addParseAction(to
 
 brackets = (
     "["
-    + Optional("^")("negate")
-    + OneOrMore(Group(charRange | singleChar | macro)("body"))
+    + Optional("^", NO_WHITESPACE)("negate")
+    + OneOrMore(Group(charRange | singleChar | macro)("body"), NO_WHITESPACE)
     + "]"
 ).addParseAction(to_bracket)
 
@@ -195,7 +203,7 @@ simple_char = Word(
 ).addParseAction(lambda t: Literal(t.value()))
 esc_char = ("\\" + AnyChar()).addParseAction(lambda t: Literal(t.value()[1]))
 
-with Engine():
+with Whitespace():
     # ALLOW SPACES IN THE RANGE
     repetition = (
         Word(nums)("exact") + "}"
@@ -251,19 +259,20 @@ term = (
 )
 
 
-more = (term + Optional(repetition)).addParseAction(repeat)
-sequence = OneOrMore(more).addParseAction(lambda t: And(t))
+more = (term + Optional(repetition, NO_WHITESPACE)).addParseAction(repeat)
+sequence = OneOrMore(more, NO_WHITESPACE).addParseAction(lambda t: And(t, NO_WHITESPACE))
 regex << (
     delimitedList(sequence, separator="|")
     .set_token_name("value")
     .addParseAction(lambda t: MatchFirst(listwrap(t.value())).streamline())
     .streamline()
 )
+regex = regex.finalize()
 
 parameters = (
     "\\" + Char(alphanums)("name") | "\\g<" + Word(alphas, alphanums)("name") + ">"
 ).addParseAction(lambda t: t["name"])
-PLAIN_ENGINE.release()
+NO_WHITESPACE.release()
 
 
 class Regex(ParseEnhancement):
