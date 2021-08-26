@@ -148,17 +148,14 @@ def to_json_operator(tokens):
         # ASSOCIATIVE OPERATORS
         acc = []
         for operand in operands:
-            if isinstance(operand, ParseResults):
+            while isinstance(operand, ParseResults) and isinstance(operand.type, Group):
+                # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
-                if isinstance(operand, list):
-                    acc.append(operand)
-                    continue
-                prefix = operand.get(op)
-                if prefix:
-                    acc.extend(prefix)
-                    continue
-                else:
-                    acc.append(operand)
+
+            if isinstance(operand, list):
+                acc.append(operand)
+            elif isinstance(operand, dict) and operand.get(op):
+                acc.extend(operand.get(op))
             else:
                 acc.append(operand)
         binary_op = {op: acc}
@@ -167,7 +164,8 @@ def to_json_operator(tokens):
 
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
-    if tokens.length() == 1:
+    tokens = list(tokens)
+    if len(tokens) == 1:
         return [tokens[0]]
     return [scrub_literal(tokens)]
 
@@ -310,7 +308,7 @@ def to_top_clause(tokens):
     elif tokens["percent"]:
         return {"percent": value}
     else:
-        return value
+        return [value]
 
 
 def to_select_call(tokens):

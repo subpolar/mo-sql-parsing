@@ -472,8 +472,7 @@ class TestRedshift(TestCase):
             , 0) as dead_crons
         from source
         """
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {
             "from": "source",
             "select": {

@@ -186,8 +186,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_groupby(self):
-        with Debugger():
-            result = parse("select a, count(1) as b from mytable group by a")
+        result = parse("select a, count(1) as b from mytable group by a")
         expected = {
             "select": [{"value": "a"}, {"name": "b", "value": {"count": 1}}],
             "from": "mytable",
@@ -1063,8 +1062,7 @@ class TestSimple(TestCase):
         #      0         1         2         3         4         5         6         7         8         9
         #      012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
         sql = "SELECT * FROM a WHERE ((a = 1 AND (b=2 AND c=3, False)))"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {
             "select": "*",
             "from": "a",

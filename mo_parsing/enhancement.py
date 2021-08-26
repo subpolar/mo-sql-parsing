@@ -278,7 +278,7 @@ class Many(ParseEnhancement):
                 if result:
                     acc.append(result)
                     count += 1
-        except ParseException:
+        except ParseException as pe:
             if self.parser_config.min_match <= count <= max:
                 pass
             else:

@@ -9,7 +9,7 @@ from mo_imports import export
 from mo_parsing import whitespaces
 from mo_parsing.core import ParserElement, _PendingSkip
 from mo_parsing.whitespaces import Whitespace
-from mo_parsing.enhancement import Optional, SkipTo, Many
+from mo_parsing.enhancement import Optional, SkipTo, Many, Suppress
 from mo_parsing.exceptions import (
     ParseException,
     ParseSyntaxException,
