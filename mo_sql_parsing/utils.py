@@ -187,6 +187,7 @@ binary_ops = {
     ">=": "gte",
     "=": "eq",
     "==": "eq",
+    "<=>": "eq!",  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
     "!=": "neq",
     "<>": "neq",
     "not in": "nin",

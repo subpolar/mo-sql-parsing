@@ -60,7 +60,8 @@ GTE = Literal(">=").set_parser_name("gte")
 LTE = Literal("<=").set_parser_name("lte")
 LT = Literal("<").set_parser_name("lt")
 GT = Literal(">").set_parser_name("gt")
-EQ = (Literal("==") | Literal("=")).set_parser_name("eq")
+EQ = (Literal("==") | Literal("=")).set_parser_name("eq")  # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
+DEQ = Literal('<=>').set_parser_name("eq!")  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 
 AND = Keyword("and", caseless=True)
@@ -237,7 +238,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EQ | NEQ,
+    EQ | NEQ | DEQ,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
     IN,
@@ -350,6 +351,8 @@ BLOB = (Keyword("blob", caseless=True)("op") + _size).addParseAction(to_json_cal
 BYTES = (Keyword("bytes", caseless=True)("op") + _size).addParseAction(to_json_call)
 CHAR = (Keyword("char", caseless=True)("op") + _size).addParseAction(to_json_call)
 VARCHAR = (Keyword("varchar", caseless=True)("op") + _size).addParseAction(to_json_call)
+VARBINARY = (Keyword("varbinary", caseless=True)("op") + _size).addParseAction(to_json_call)
+TINYINT = (Keyword("tinyint", caseless=True)("op") + _size).addParseAction(to_json_call)
 
 DECIMAL = (
     Keyword("decimal", caseless=True)("op") + _sizes
@@ -412,4 +415,6 @@ known_types = MatchFirst([
     TIMESTAMPTZ_TYPE,
     TIMETZ_TYPE,
     VARCHAR,
+    VARBINARY,
+    TINYINT,
 ])
