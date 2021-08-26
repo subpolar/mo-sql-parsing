@@ -87,7 +87,7 @@ PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
 RIGHT_JOIN = (RIGHT + JOIN).set_parser_name("right join")
 RIGHT_OUTER_JOIN = (RIGHT + OUTER + JOIN).set_parser_name("right outer join")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
-UNION_ALL = Group(UNION + ALL).set_parser_name("union_all")
+UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS

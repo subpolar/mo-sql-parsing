@@ -224,7 +224,7 @@ unordered_sql = Group(
 ).set_parser_name("unordered sql")
 
 ordered_sql << (
-    (unordered_sql + ZeroOrMore((UNION_ALL | UNION) + unordered_sql))("union")
+    (unordered_sql + ZeroOrMore(Group(UNION_ALL | UNION) + unordered_sql))("union")
     + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
     + Optional(LIMIT + expr("limit"))
     + Optional(OFFSET + expr("offset"))
