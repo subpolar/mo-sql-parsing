@@ -51,29 +51,29 @@ def scrub(result):
         if isinstance(result, dict):
             return output
         elif output:
-            if debug.DEBUGGING:
-                # CHECK THAT NO ITEMS WERE MISSED
-                def look(r):
-                    for token in r.tokens:
-                        if isinstance(token, ParseResults):
-                            if token.name:
-                                continue
-                            elif token.length() == 0:
-                                continue
-                            elif isinstance(token.type, Group):
-                                Log.error(
-                                    "This token is lost during scrub: {{token}}",
-                                    token=token,
-                                )
-                            else:
-                                look(token)
-                        else:
-                            Log.error(
-                                "This token is lost during scrub: {{token}}",
-                                token=token,
-                            )
-
-                look(result)
+            # if debug.DEBUGGING:
+            #     # CHECK THAT NO ITEMS WERE MISSED
+            #     def look(r):
+            #         for token in r.tokens:
+            #             if isinstance(token, ParseResults):
+            #                 if token.name:
+            #                     continue
+            #                 elif token.length() == 0:
+            #                     continue
+            #                 elif isinstance(token.type, Group):
+            #                     Log.error(
+            #                         "This token is lost during scrub: {{token}}",
+            #                         token=token,
+            #                     )
+            #                 else:
+            #                     look(token)
+            #             else:
+            #                 Log.error(
+            #                     "This token is lost during scrub: {{token}}",
+            #                     token=token,
+            #                 )
+            #
+            #     look(result)
 
             return output
         temp = list(result)
@@ -229,17 +229,10 @@ def to_interval_call(tokens):
     params = tokens["params"]
     if not params:
         params = {}
-    if len(params) == 2:
-        return ParseResults(
-            tokens.type, tokens.start, tokens.end, [{"interval": params}]
-        )
+    if params.length() == 2:
+        return {"interval": params}
 
-    return ParseResults(
-        tokens.type,
-        tokens.start,
-        tokens.end,
-        [{"add": [{"interval": p} for p in _chunk(params, size=2)]}],
-    )
+    return {"add": [{"interval": p} for p in _chunk(params, size=2)]}
 
 
 def to_case_call(tokens):
@@ -268,7 +261,7 @@ def to_when_call(tokens):
 
 
 def to_join_call(tokens):
-    op = " ".join(listwrap(tokens["op"]))
+    op = " ".join(tokens["op"])
     if tokens["join"]["name"]:
         output = {op: {
             "name": tokens["join"]["name"],
@@ -296,7 +289,7 @@ def to_expression_call(tokens):
 
 def to_alias(tokens):
     cols = tokens["col"]
-    name = tokens[0]
+    name = tokens[0][0]
     if cols:
         return {name: cols}
     return name
@@ -336,7 +329,7 @@ def to_select_call(tokens):
 def to_union_call(tokens):
     unions = tokens["union"]
     if unions.type.parser_name == "unordered sql":
-        output = unions  # REMOVE THE Group()
+        output = {k: v for k, v in unions.items()}  # REMOVE THE Group()
     else:
         unions = list(unions)
         sources = [unions[i] for i in range(0, len(unions), 2)]
