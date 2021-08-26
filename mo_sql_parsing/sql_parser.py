@@ -104,7 +104,7 @@ ordered_sql = Forward()
 call_function = (
     ident("op")
     + LB
-    + Optional(Group(ordered_sql) | delimitedList(expr))("params")
+    + Optional(Group(ordered_sql) | delimitedList(Group(expr)))("params")
     + Optional(
         Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True)
     )("ignore_nulls")
@@ -238,5 +238,5 @@ statement << (
     + Group(ordered_sql)("query")
 ).addParseAction(to_statement)
 
-SQLParser = statement
+SQLParser = statement.finalize()
 engine.release()
