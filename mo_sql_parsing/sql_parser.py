@@ -273,19 +273,19 @@ column_def_check = (
 )
 
 column_def_default = (
-    Keyword("default", caseless=True)("op") +
-    expr("params")
-).addParseAction(to_json_call)
+    Keyword("default", caseless=True).suppress() +
+    expr("default")
+)
 
-column_options = ZeroOrMore(
-    Keyword("not null", caseless=True)
-    | NULL.copy().addParseAction( lambda t: "nullable" )
+column_options = ZeroOrMore(Group(
+    (NOT + NULL).addParseAction(lambda : "not null")
+    | NULL.addParseAction( lambda t: "nullable" )
     | Keyword("unique", caseless=True)
     | Keyword("primary key", caseless=True)
     | column_def_references
     | column_def_check("check")
     | column_def_default
-).set_parser_name("column_options")
+)).set_parser_name("column_options")
 
 column_definition << Group(
         ident("name").addParseAction(lambda t: t[0].lower()) +
