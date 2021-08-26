@@ -5,17 +5,17 @@ from operator import itemgetter
 
 from mo_future import Iterable, text, generator_types
 from mo_imports import export
-from mo_parsing import engine
 
+from mo_parsing import whitespaces
 from mo_parsing.core import ParserElement, _PendingSkip
-from mo_parsing.engine import Engine
-from mo_parsing.enhancement import Optional, SkipTo, Many
+from mo_parsing.whitespaces import Whitespace
+from mo_parsing.enhancement import Optional, SkipTo, Many, Suppress
 from mo_parsing.exceptions import (
     ParseException,
     ParseSyntaxException,
 )
 from mo_parsing.results import ParseResults
-from mo_parsing.tokens import Empty
+from mo_parsing.tokens import Empty, LookBehind
 from mo_parsing.utils import (
     empty_tuple,
     is_forward,
@@ -46,7 +46,7 @@ class ParseExpression(ParserElement):
         else:
             exprs = [exprs]
 
-        self.exprs = [engine.CURRENT.normalize(e) for e in exprs]
+        self.exprs = [whitespaces.CURRENT.normalize(e) for e in exprs]
         for e in self.exprs:
             if is_forward(e):
                 e.track(self)
@@ -73,10 +73,7 @@ class ParseExpression(ParserElement):
 
     def copy(self):
         output = ParserElement.copy(self)
-        if self.engine is engine.CURRENT:
-            output.exprs = self.exprs
-        else:
-            output.exprs = [e.copy() for e in self.exprs]
+        output.exprs = self.exprs
         return output
 
     def append(self, other):
@@ -84,11 +81,9 @@ class ParseExpression(ParserElement):
         return self
 
     def leaveWhitespace(self):
-        """
-        Extends ``leaveWhitespace`` defined in base class, and also invokes ``leaveWhitespace`` on
-        all contained expressions.
-        """
-        with Engine(""):
+        """Extends ``leaveWhitespace`` defined in base class, and also invokes ``leaveWhitespace`` on
+        all contained expressions."""
+        with whitespaces.NO_WHITESPACE:
             output = self.copy()
             output.exprs = [e.leaveWhitespace() for e in self.exprs]
             return output
@@ -144,18 +139,18 @@ class And(ParseExpression):
     May be constructed using the ``'+'`` operator.
     May also be constructed using the ``'-'`` operator, which will
     suppress backtracking.
-
     """
 
     __slots__ = []
+    Config = append_config(ParseExpression, "whitespace")
 
     class SyntaxErrorGuard(Empty):
         def __init__(self, *args, **kwargs):
-            with Engine(""):
+            with Whitespace(""):
                 super(And.SyntaxErrorGuard, self).__init__(*args, **kwargs)
                 self.parser_name = "-"
 
-    def __init__(self, exprs):
+    def __init__(self, exprs, whitespace=None):
         if exprs and Ellipsis in exprs:
             tmp = []
             for i, expr in enumerate(exprs):
@@ -171,6 +166,9 @@ class And(ParseExpression):
                     tmp.append(expr)
             exprs[:] = tmp
         super(And, self).__init__(exprs)
+        self.set_config(
+            whitespace=whitespace or whitespaces.CURRENT
+        )
 
     def streamline(self):
         if self.streamlined:
@@ -210,7 +208,10 @@ class And(ParseExpression):
             same = same and f is e
             if f.is_annotated():
                 acc.append(f)
-            elif isinstance(f, And):
+            elif (
+                isinstance(f, And)
+                and f.parser_config.whitespace is self.parser_config.whitespace
+            ):
                 same = False
                 acc.extend(f.exprs)
             else:
@@ -243,18 +244,27 @@ class And(ParseExpression):
     def _min_length(self):
         return sum(e.min_length() for e in self.exprs)
 
+    @property
+    def whitespace(self):
+        return self.parser_config.whitespace
+
     def parseImpl(self, string, start, doActions=True):
         # pass False as last arg to _parse for first element, since we already
         # pre-parsed the string as part of our And pre-parsing
         encountered_syntax_error = False
-        end = start
+        end = index = start
         acc = []
-        for expr in self.exprs:
+        for i, expr in enumerate(self.exprs):
+            if end > index:
+                if isinstance(expr, LookBehind):
+                    index = end
+                else:
+                    index = self.parser_config.whitespace.skip(string, end)
             if isinstance(expr, And.SyntaxErrorGuard):
                 encountered_syntax_error = True
                 continue
             try:
-                result = expr._parse(string, end, doActions)
+                result = expr._parse(string, index, doActions)
                 end = result.end
                 acc.append(result)
             except ParseException as pe:
@@ -269,7 +279,7 @@ class And(ParseExpression):
         if other is Ellipsis:
             return _PendingSkip(self)
 
-        return And([self, engine.CURRENT.normalize(other)]).streamline()
+        return And([self, whitespaces.CURRENT.normalize(other)], whitespaces.CURRENT).streamline()
 
     def checkRecursion(self, seen=empty_tuple):
         subRecCheckList = seen + (self,)
@@ -331,6 +341,10 @@ class Or(ParseExpression):
         output.streamlined = True
         output.checkRecursion()
         return output
+
+    @property
+    def whitespace(self):
+        return [e.whitespace for e in self.exprs]
 
     def parseImpl(self, string, start, doActions=True):
         causes = []
@@ -446,6 +460,10 @@ class MatchFirst(ParseExpression):
             Log.warning("expecting streamline")
             return 0
 
+    @property
+    def whitespace(self):
+        return [e.whitespace for e in self.exprs]
+
     def parseImpl(self, string, start, doActions=True):
         causes = []
 
@@ -487,10 +505,10 @@ class MatchFirst(ParseExpression):
         if other is Ellipsis:
             return _PendingSkip(Optional(self))
 
-        return MatchFirst([self, engine.CURRENT.normalize(other)]).streamline()
+        return MatchFirst([self, whitespaces.CURRENT.normalize(other)]).streamline()
 
     def __ror__(self, other):
-        return engine.CURRENT.normalize(other) | self
+        return whitespaces.CURRENT.normalize(other) | self
 
     def __regex__(self):
         return (
@@ -656,15 +674,16 @@ class MatchAll(ParseExpression):
     """
 
     __slots__ = []
-    Config = append_config(ParseExpression, "min_match", "max_match")
+    Config = append_config(ParseExpression, "min_match", "max_match", "whitespace")
 
-    def __init__(self, exprs):
+    def __init__(self, exprs, whitespace):
         """
         :param exprs: The expressions to be matched
         :param mins: list of integers indincating any minimums
         """
         super(MatchAll, self).__init__(exprs)
         self.set_config(
+            whitespace=whitespace,
             min_match=[
                 e.parser_config.min_match if isinstance(e, Many) else 1 for e in exprs
             ],
@@ -682,6 +701,10 @@ class MatchAll(ParseExpression):
         # TODO: MAY BE TOO CONSERVATIVE, WE MAY BE ABLE TO PROVE self CAN CONSUME A CHARACTER
         return min(e.min_length() for e in self.exprs)
 
+    @property
+    def whitespace(self):
+        return [e.whitespace for e in self.exprs]
+
     def parseImpl(self, string, start, doActions=True):
         end = start
         matchOrder = []
@@ -696,7 +719,7 @@ class MatchAll(ParseExpression):
                     loc = e._parse(string, end).end
                     if loc == end:
                         continue
-                    end = loc
+                    end = self.parser_config.whitespace.skip(string, loc)
                     c2 = count[i] = c + 1
                     if c2 >= ma:
                         del todo[i]
@@ -711,8 +734,9 @@ class MatchAll(ParseExpression):
         for c, (e, mi, ma) in zip(count, todo):
             if c < mi:
                 raise ParseException(
-                    string,
+                    self,
                     start,
+                    string,
                     "Missing minimum (%i) more required elements (%s)" % (mi, e),
                 )
 
@@ -731,11 +755,12 @@ class MatchAll(ParseExpression):
         # add any unmatched Optionals, in case they have default values defined
         matchOrder += [e for e in self.exprs if id(e) not in found]
 
+        # TODO: CAN WE AVOID THIS RE-PARSE?
         results = []
         end = start
         for e in matchOrder:
             result = e._parse(string, end, doActions)
-            end = result.end
+            end = self.parser_config.whitespace.skip(string, result.end)
             results.append(result)
 
         return ParseResults(self, results[0].start, results[-1].end, results)

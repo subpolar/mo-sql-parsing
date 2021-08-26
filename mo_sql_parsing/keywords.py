@@ -1,4 +1,4 @@
-from moz_sql_parser.utils import *
+from mo_sql_parsing.utils import *
 
 # SQL CONSTANTS
 NULL = Keyword("null", caseless=True).addParseAction(lambda: "null")
@@ -75,19 +75,19 @@ NOT = Keyword("not", caseless=True)
 OR = Keyword("or", caseless=True)
 
 # COMPOUND KEYWORDS
-CROSS_JOIN = Group(CROSS + JOIN).set_parser_name("cross join")
-FULL_JOIN = Group(FULL + JOIN).set_parser_name("full join")
-FULL_OUTER_JOIN = Group(FULL + OUTER + JOIN).set_parser_name("full outer join")
+CROSS_JOIN = (CROSS + JOIN).set_parser_name("cross join")
+FULL_JOIN = (FULL + JOIN).set_parser_name("full join")
+FULL_OUTER_JOIN = (FULL + OUTER + JOIN).set_parser_name("full outer join")
 GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
-INNER_JOIN = Group(INNER + JOIN).set_parser_name("inner join")
-LEFT_JOIN = Group(LEFT + JOIN).set_parser_name("left join")
-LEFT_OUTER_JOIN = Group(LEFT + OUTER + JOIN).set_parser_name("left outer join")
+INNER_JOIN = (INNER + JOIN).set_parser_name("inner join")
+LEFT_JOIN = (LEFT + JOIN).set_parser_name("left join")
+LEFT_OUTER_JOIN = (LEFT + OUTER + JOIN).set_parser_name("left outer join")
 ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
 PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
-RIGHT_JOIN = Group(RIGHT + JOIN).set_parser_name("right join")
-RIGHT_OUTER_JOIN = Group(RIGHT + OUTER + JOIN).set_parser_name("right outer join")
+RIGHT_JOIN = (RIGHT + JOIN).set_parser_name("right join")
+RIGHT_OUTER_JOIN = (RIGHT + OUTER + JOIN).set_parser_name("right outer join")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
-UNION_ALL = Group(UNION + ALL).set_parser_name("union_all")
+UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS

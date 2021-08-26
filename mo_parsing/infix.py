@@ -1,13 +1,12 @@
 # encoding: utf-8
 import re
 import warnings
-from collections import Iterable
 
 from mo_dots import listwrap
-from mo_future import text
-from mo_imports import delay_import, expect
+from mo_future import text, Iterable
+from mo_imports import delay_import
 
-from mo_parsing import engine
+from mo_parsing import whitespaces
 from mo_parsing.enhancement import (
     Combine,
     Forward,
@@ -39,9 +38,9 @@ def delimitedList(expr, separator=",", combine=False):
         delimitedList(Word(hexnums), delim=':', combine=True).parseString("AA:BB:CC:DD:EE") # -> ['AA:BB:CC:DD:EE']
     """
     if combine:
-        return Combine(expr + ZeroOrMore(separator + expr))
+        return Combine(expr + ZeroOrMore(separator + expr, whitespaces.CURRENT))
     else:
-        return expr + ZeroOrMore(Suppress(separator) + expr)
+        return expr + ZeroOrMore(Suppress(separator) + expr, whitespaces.CURRENT)
 
 
 def oneOf(strs, caseless=False, asKeyword=False):
@@ -127,7 +126,9 @@ RIGHT_ASSOC = object()
 _no_op = Empty().suppress()
 
 
-def infixNotation(baseExpr, spec, lpar=Suppress("("), rpar=Suppress(")")):
+def infixNotation(
+    baseExpr, spec, lpar=Suppress(Literal("(")), rpar=Suppress(Literal(")"))
+):
     """
     :param baseExpr: expression representing the most basic element for the
        nested
@@ -165,7 +166,7 @@ def infixNotation(baseExpr, spec, lpar=Suppress("("), rpar=Suppress(")")):
         def record_self(tok):
             ParseResults(tok.type, tok.start, tok.end, [tok.type.parser_name])
 
-        output = engine.CURRENT.normalize(op)
+        output = whitespaces.CURRENT.normalize(op)
         is_suppressed = isinstance(output, Suppress)
         if is_suppressed:
             output = output.expr

@@ -9,13 +9,14 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from mo_parsing import PLAIN_ENGINE, Engine
+from mo_parsing import whitespaces
 from mo_parsing.helpers import delimitedList, restOfLine
-from moz_sql_parser.keywords import *
-from moz_sql_parser.utils import *
-from moz_sql_parser.windows import sortColumn, window
+from mo_parsing.whitespaces import NO_WHITESPACE
+from mo_sql_parsing.keywords import *
+from mo_sql_parsing.utils import *
+from mo_sql_parsing.windows import sortColumn, window
 
-engine = Engine().use()
+engine = whitespaces.STANDARD_WHITESPACE.use()
 engine.add_ignore(Literal("--") + restOfLine)
 engine.add_ignore(Literal("#") + restOfLine)
 
@@ -103,7 +104,7 @@ ordered_sql = Forward()
 call_function = (
     ident("op")
     + LB
-    + Optional(Group(ordered_sql) | delimitedList(expr))("params")
+    + Optional(Group(ordered_sql) | delimitedList(Group(expr)))("params")
     + Optional(
         Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True)
     )("ignore_nulls")
@@ -111,13 +112,13 @@ call_function = (
 ).addParseAction(to_json_call)
 
 
-with PLAIN_ENGINE:
+with NO_WHITESPACE:
     def scale(tokens):
         return {"mul": [tokens[0], tokens[1]]}
 
     # TODO: THE call_function IS CONSUMING WHITESPACE PREFIX leaveWhitespace() DOES NOT APPEAR TO STOP IT
-    scale_function = ((realNum | intNum) + call_function.leaveWhitespace()).addParseAction(scale)
-    scale_ident = ((realNum | intNum) + ident.leaveWhitespace()).addParseAction(scale)
+    scale_function = ((realNum | intNum) + call_function).addParseAction(scale)
+    scale_ident = ((realNum | intNum) + ident).addParseAction(scale)
 
 compound = (
     NULL
@@ -190,7 +191,7 @@ table_source = (
 )
 
 join = (
-    (
+    Group(
         CROSS_JOIN
         | FULL_JOIN
         | FULL_OUTER_JOIN
@@ -223,7 +224,7 @@ unordered_sql = Group(
 ).set_parser_name("unordered sql")
 
 ordered_sql << (
-    (unordered_sql + ZeroOrMore((UNION_ALL | UNION) + unordered_sql))("union")
+    (unordered_sql + ZeroOrMore(Group(UNION_ALL | UNION) + unordered_sql))("union")
     + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
     + Optional(LIMIT + expr("limit"))
     + Optional(OFFSET + expr("offset"))
@@ -237,5 +238,5 @@ statement << (
     + Group(ordered_sql)("query")
 ).addParseAction(to_statement)
 
-SQLParser = statement
+SQLParser = statement.finalize()
 engine.release()

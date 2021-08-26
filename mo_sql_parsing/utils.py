@@ -51,29 +51,29 @@ def scrub(result):
         if isinstance(result, dict):
             return output
         elif output:
-            if debug.DEBUGGING:
-                # CHECK THAT NO ITEMS WERE MISSED
-                def look(r):
-                    for token in r.tokens:
-                        if isinstance(token, ParseResults):
-                            if token.name:
-                                continue
-                            elif token.length() == 0:
-                                continue
-                            elif isinstance(token.type, Group):
-                                Log.error(
-                                    "This token is lost during scrub: {{token}}",
-                                    token=token,
-                                )
-                            else:
-                                look(token)
-                        else:
-                            Log.error(
-                                "This token is lost during scrub: {{token}}",
-                                token=token,
-                            )
-
-                look(result)
+            # if debug.DEBUGGING:
+            #     # CHECK THAT NO ITEMS WERE MISSED
+            #     def look(r):
+            #         for token in r.tokens:
+            #             if isinstance(token, ParseResults):
+            #                 if token.name:
+            #                     continue
+            #                 elif token.length() == 0:
+            #                     continue
+            #                 elif isinstance(token.type, Group):
+            #                     Log.error(
+            #                         "This token is lost during scrub: {{token}}",
+            #                         token=token,
+            #                     )
+            #                 else:
+            #                     look(token)
+            #             else:
+            #                 Log.error(
+            #                     "This token is lost during scrub: {{token}}",
+            #                     token=token,
+            #                 )
+            #
+            #     look(result)
 
             return output
         temp = list(result)
@@ -148,17 +148,14 @@ def to_json_operator(tokens):
         # ASSOCIATIVE OPERATORS
         acc = []
         for operand in operands:
-            if isinstance(operand, ParseResults):
+            while isinstance(operand, ParseResults) and isinstance(operand.type, Group):
+                # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
-                if isinstance(operand, list):
-                    acc.append(operand)
-                    continue
-                prefix = operand.get(op)
-                if prefix:
-                    acc.extend(prefix)
-                    continue
-                else:
-                    acc.append(operand)
+
+            if isinstance(operand, list):
+                acc.append(operand)
+            elif isinstance(operand, dict) and operand.get(op):
+                acc.extend(operand.get(op))
             else:
                 acc.append(operand)
         binary_op = {op: acc}
@@ -167,9 +164,10 @@ def to_json_operator(tokens):
 
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
-    if tokens.length() == 1:
-        return [scrub(tokens)]
-    return [scrub_literal(scrub(tokens))]
+    tokens = list(tokens)
+    if len(tokens) == 1:
+        return [tokens[0]]
+    return [scrub_literal(tokens)]
 
 
 binary_ops = {
@@ -208,10 +206,10 @@ def to_json_call(tokens):
     op = tokens["op"].lower()
     op = binary_ops.get(op, op)
 
-    params = scrub(tokens["params"])
+    params = tokens["params"]
     if not params:
         params = {}
-    if scrub(tokens["ignore_nulls"]):
+    if tokens["ignore_nulls"]:
         ignore_nulls = True
     else:
         ignore_nulls = None
@@ -226,20 +224,13 @@ def to_json_call(tokens):
 
 def to_interval_call(tokens):
     # ARRANGE INTO {interval: [amount, type]} FORMAT
-    params = scrub(tokens["params"])
+    params = tokens["params"]
     if not params:
         params = {}
-    if len(params) == 2:
-        return ParseResults(
-            tokens.type, tokens.start, tokens.end, [{"interval": params}]
-        )
+    if params.length() == 2:
+        return {"interval": params}
 
-    return ParseResults(
-        tokens.type,
-        tokens.start,
-        tokens.end,
-        [{"add": [{"interval": p} for p in _chunk(params, size=2)]}],
-    )
+    return {"add": [{"interval": p} for p in _chunk(params, size=2)]}
 
 
 def to_case_call(tokens):
@@ -268,7 +259,7 @@ def to_when_call(tokens):
 
 
 def to_join_call(tokens):
-    op = " ".join(listwrap(scrub(tokens["op"])))
+    op = " ".join(tokens["op"])
     if tokens["join"]["name"]:
         output = {op: {
             "name": tokens["join"]["name"],
@@ -295,15 +286,15 @@ def to_expression_call(tokens):
 
 
 def to_alias(tokens):
-    cols = scrub(tokens["col"])
-    name = scrub(tokens[0])
+    cols = tokens["col"]
+    name = tokens[0][0]
     if cols:
         return {name: cols}
     return name
 
 
 def to_top_clause(tokens):
-    value = scrub(tokens["value"])
+    value = tokens["value"]
     if not value:
         return None
     elif tokens["ties"]:
@@ -317,7 +308,7 @@ def to_top_clause(tokens):
     elif tokens["percent"]:
         return {"percent": value}
     else:
-        return value
+        return [value]
 
 
 def to_select_call(tokens):
@@ -336,12 +327,12 @@ def to_select_call(tokens):
 def to_union_call(tokens):
     unions = tokens["union"]
     if unions.type.parser_name == "unordered sql":
-        output = scrub(unions)  # REMOVE THE Group()
+        output = {k: v for k, v in unions.items()}  # REMOVE THE Group()
     else:
         unions = list(unions)
-        sources = scrub([unions[i] for i in range(0, len(unions), 2)])
+        sources = [unions[i] for i in range(0, len(unions), 2)]
         operators = [
-            "_".join(listwrap(scrub(unions[i]))) for i in range(1, len(unions), 2)
+            "_".join(unions[i]) for i in range(1, len(unions), 2)
         ]
         acc = sources[-1]
         last_union = None
@@ -364,8 +355,8 @@ def to_union_call(tokens):
 
 
 def to_statement(tokens):
-    output = scrub(tokens["query"])
-    output["with"] = scrub(tokens["with"])
+    output = tokens["query"][0]
+    output["with"] = tokens["with"]
     return output
 
 

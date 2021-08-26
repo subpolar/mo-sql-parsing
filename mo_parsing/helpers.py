@@ -4,8 +4,9 @@ from datetime import datetime
 
 from mo_future import text
 
+from mo_parsing import whitespaces
 from mo_parsing.core import add_reset_action
-from mo_parsing.engine import Engine, STANDARD_ENGINE
+from mo_parsing.whitespaces import Whitespace, STANDARD_WHITESPACE, NO_WHITESPACE
 from mo_parsing.enhancement import (
     Combine,
     Dict,
@@ -188,7 +189,7 @@ def countedArray(expr, intExpr=None):
 
     def countFieldParseAction(t, l, s):
         n = t[0]
-        arrayExpr << Group(Many(expr, exact=n))
+        arrayExpr << Group(Many(expr, exact=n, whitespace=whitespaces.CURRENT))
         return []
 
     intExpr = (
@@ -430,8 +431,8 @@ def nestedExpr(opener="(", closer=")", content=None, ignoreExpr=quotedString):
                 " is given"
             )
 
-        ignore_chars = engine.CURRENT.white_chars
-        with Engine(""):
+        ignore_chars = whitespaces.CURRENT.white_chars
+        with Whitespace(""):
 
             def scrub(t):
                 return t[0].strip()
@@ -545,28 +546,29 @@ def makeHTMLTags(tagStr, suppress_LT=Suppress("<"), suppress_GT=Suppress(">")):
     )
     simpler_name = "".join(resname.replace(":", " ").title().split())
 
-    openTag = (
-        (
-            suppress_LT
-            + tagStr("tag")
-            + OpenDict(ZeroOrMore(Group(
-                tagAttrName.addParseAction(downcaseTokens)
-                + Optional(Suppress("=") + tagAttrValue)
-            )))
-            + Optional(
-                "/", default=[False]
-            )("empty").addParseAction(lambda t, l, s: t[0] == "/")
-            + suppress_GT
+    with STANDARD_WHITESPACE:
+        openTag = (
+            (
+                suppress_LT
+                + tagStr("tag")
+                + OpenDict(ZeroOrMore(Group(
+                    tagAttrName.addParseAction(downcaseTokens)
+                    + Optional(Suppress("=") + tagAttrValue)
+                )))
+                + Optional(
+                    "/", default=[False]
+                )("empty").addParseAction(lambda t, l, s: t[0] == "/")
+                + suppress_GT
+            )
+            .set_token_name("start" + simpler_name)
+            .set_parser_name("<%s>" % resname)
         )
-        .set_token_name("start" + simpler_name)
-        .set_parser_name("<%s>" % resname)
-    )
 
-    closeTag = (
-        Combine(Literal("</") + tagStr + ">")
-        .set_token_name("end" + simpler_name)
-        .set_parser_name("</%s>" % resname)
-    )
+        closeTag = (
+            Combine(Literal("</") + tagStr + ">")
+            .set_token_name("end" + simpler_name)
+            .set_parser_name("</%s>" % resname)
+        )
 
     # openTag.tag = resname
     # closeTag.tag = resname
@@ -673,8 +675,6 @@ def indentedBlock(blockStatementExpr, indent=True):
 
     A valid block must contain at least one ``blockStatement``.
     """
-    blockStatementExpr.engine.add_ignore("\\" + LineEnd())
-
     PEER = Forward()
     DEDENT = Forward()
 
@@ -727,24 +727,28 @@ def indentedBlock(blockStatementExpr, indent=True):
         else:
             raise ParseException(t.type, s, l, "not a subentry")
 
-    NL = OneOrMore(LineEnd().suppress())
-    INDENT = Empty().addParseAction(indent_stack)
-    NODENT = Empty().addParseAction(nodent_stack)
+    ignore_list = whitespaces.CURRENT.ignore_list
+    with Whitespace(whitespaces.CURRENT.white_chars) as e:
+        e.add_ignore(*ignore_list)
 
-    if indent:
-        smExpr = Group(
-            Optional(NL)
-            + INDENT
-            + OneOrMore(PEER + Group(blockStatementExpr) + Optional(NL))
-            + DEDENT
-        )
-    else:
-        smExpr = Group(
-            Optional(NL)
-            + NODENT
-            + OneOrMore(PEER + Group(blockStatementExpr) + Optional(NL))
-            + DEDENT
-        )
+        NL = OneOrMore(LineEnd().suppress())
+        INDENT = Empty().addParseAction(indent_stack)
+        NODENT = Empty().addParseAction(nodent_stack)
+
+        if indent:
+            smExpr = Group(
+                Optional(NL)
+                + INDENT
+                + OneOrMore(PEER + Group(blockStatementExpr) + Optional(NL))
+                + DEDENT
+            )
+        else:
+            smExpr = Group(
+                Optional(NL)
+                + NODENT
+                + OneOrMore(PEER + Group(blockStatementExpr) + Optional(NL))
+                + DEDENT
+            )
     return smExpr.setFailAction(_reset_stack).set_parser_name("indented block")
 
 
@@ -769,7 +773,7 @@ cStyleComment = Combine(
 
 htmlComment = Regex(r"<!--[\s\S]*?-->").set_parser_name("HTML comment")
 
-with Engine("") as engine:
+with NO_WHITESPACE:
     restOfLine = Regex(r"[^\n]*").set_parser_name("rest of line")
 
     dblSlashComment = Regex(r"//(?:\\\n|[^\n])*").set_parser_name("// comment")
@@ -984,11 +988,3 @@ _commasepitem = (
 comma_separated_list = delimitedList(Optional(
     quotedString | _commasepitem, default=""
 )).set_parser_name("comma separated list")
-"""Predefined expression of 1 or more printable words or quoted strings, separated by commas."""
-
-
-# export
-from mo_parsing import core, engine
-
-core._flatten = _flatten
-core.quotedString = quotedString

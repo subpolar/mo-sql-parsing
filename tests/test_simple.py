@@ -9,9 +9,11 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import json
-from unittest import TestCase, skip
+from unittest import TestCase
+
 from mo_dots import Null
-from moz_sql_parser import parse
+
+from mo_sql_parsing import parse
 
 try:
     from tests.util import assertRaises
@@ -898,7 +900,7 @@ class TestSimple(TestCase):
                 {"name": "a", "value": {"select": {"value": 1}}},
                 {"name": "b", "value": {"select": {"value": 2}}},
             ],
-            "union_all": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"},],
+            "union_all": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"}]
         }
         self.assertEqual(result, expected)
 
