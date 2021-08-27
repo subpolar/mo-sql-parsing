@@ -119,14 +119,13 @@ you may find it easier if all JSON expressions had a list of operands:
 
 ```
 def normalize(expression):
-    # ensure parameters are in a list
     if isinstance(expression, dict):
         return [
-            {"op": op, "operands": [normalize(p) for p in listwrap(operands)]}
-            for op, operands in expression.items()
+            {"operator": operator, "operands": [normalize(p) for p in listwrap(operands)]}
+            for operator, operands in expression.items()
         ][0]
     return expression
 ```
 
-([see the smoke test for working example)[])
+[see the smoke test for working example](https://github.com/klahnakoski/mo-sql-parsing/blob/dev/tests/smoke_test.py)
  
