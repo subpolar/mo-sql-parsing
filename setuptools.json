@@ -10,12 +10,10 @@
         "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
     ],
-    "extras_require": {
-        "dev": []
-    },
     "description": "Extract Parse Tree from SQL",
+    "extras_require": {"dev": []},
     "include_package_data": true,
-    "install_requires": ["mo-dots==5.22.21182", "mo-future==5.17.21182", "mo-logs==5.23.21182"],
+    "install_requires": ["mo-dots==5.22.21182", "mo-future==5.17.21182", "mo-parsing==5.40.21239"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -155,6 +153,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing", "mo_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "5.33.21239",
+    "version": "5.40.21239",
     "zip_safe": true
 }
