@@ -109,3 +109,25 @@ class TestNull(TestCase):
         }
 
         self.assertEqual(result, expected)
+
+    def test_issue_18(self):
+        result = parse(
+            """SELECT a, CASE WHEN some_columns = 'Bob' THEN NULL ELSE 'helloworld' END AS some_columns FROM mytable"""
+        )
+        expected = {
+            "from": "mytable",
+            "select": [
+                {"value": "a"},
+                {
+                    "name": "some_columns",
+                    "value": {"case": [
+                        {
+                            "then": {"null": {}},
+                            "when": {"eq": ["some_columns", {"literal": "Bob"}]},
+                        },
+                        {"literal": "helloworld"},
+                    ]},
+                },
+            ],
+        }
+        self.assertEqual(result, expected)
