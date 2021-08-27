@@ -109,6 +109,7 @@ UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS
+AT_TIME_ZONE = Group(Keyword("at", caseless=True) + Keyword("time", caseless=True) + Keyword("zone", caseless=True))
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
@@ -239,6 +240,7 @@ precedence = {
     "gt": 6,
     "eq": 7,
     "neq": 7,
+    "at_time_zone": 8,
     "between": 8,
     "not_between": 8,
     "in": 8,
@@ -267,6 +269,7 @@ KNOWN_OPS = [
     BINARY_OR,
     GTE | LTE | LT | GT,
     EQ | NEQ | DEQ,
+    AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
     IN,
