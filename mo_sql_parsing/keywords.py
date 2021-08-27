@@ -1,7 +1,7 @@
 from mo_sql_parsing.utils import *
 
 # SQL CONSTANTS
-NULL = Keyword("null", caseless=True).addParseAction(lambda: nullValue)
+NULL = Keyword("null", caseless=True).addParseAction(lambda: SQL_NULL)
 TRUE = Keyword("true", caseless=True).addParseAction(lambda: True)
 FALSE = Keyword("false", caseless=True).addParseAction(lambda: False)
 NOCASE = Keyword("nocase", caseless=True)

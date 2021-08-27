@@ -11,46 +11,18 @@ from __future__ import absolute_import, division, unicode_literals
 
 import ast
 
-from mo_dots import is_data, is_null, NullType
+from mo_dots import is_data, is_null
 from mo_future import text, number_types, binary_type
 
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap, alphanums
 
 IDENT_CHAR = alphanums + "@_$"
+SQL_NULL = {"null": {}}
 
 
-class AvoidNull(NullType):
-    def __str__(self):
-        return "None"
-
-    def __repr__(self):
-        return "NullValue"
-
-
-avoidNull = AvoidNull()
-
-
-class NullValue(str):
-    pass
-
-nullValue = NullValue()
-
-
-def is_null_value(token):
-    return token is nullValue
-
-
-def is_scrub(token):
-    return isinstance(token, AvoidNull) or isinstance(token, NullValue) or not is_null(token)
-
-
-def scrub(result):
-    if isinstance(result, AvoidNull):
-        return result
-    elif isinstance(result, NullValue):
-        return avoidNull
-    elif result == None:
+def scrub(result, nulls=SQL_NULL):
+    if result == None:
         return None
     elif isinstance(result, text):
         return result
@@ -71,36 +43,19 @@ def scrub(result):
             return scrub_literal(output)
     else:
         # ATTEMPT A DICT INTERPRETATION
-        kv_pairs = list(result.items())
-        output = {k: vv for k, v in kv_pairs for vv in [scrub(v)] if is_scrub(vv)}
-
+        try:
+            kv_pairs = list(result.items())
+        except Exception as c:
+            print(c)
+        output = {
+            k: nulls if vv is SQL_NULL else vv
+            for k, v in kv_pairs
+            for vv in [scrub(v)]
+            if not is_null(vv)
+        }
         if isinstance(result, dict):
             return output
         elif output:
-            # if debug.DEBUGGING:
-            #     # CHECK THAT NO ITEMS WERE MISSED
-            #     def look(r):
-            #         for token in r.tokens:
-            #             if isinstance(token, ParseResults):
-            #                 if token.name:
-            #                     continue
-            #                 elif token.length() == 0:
-            #                     continue
-            #                 elif isinstance(token.type, Group):
-            #                     Log.error(
-            #                         "This token is lost during scrub: {{token}}",
-            #                         token=token,
-            #                     )
-            #                 else:
-            #                     look(token)
-            #             else:
-            #                 Log.error(
-            #                     "This token is lost during scrub: {{token}}",
-            #                     token=token,
-            #                 )
-            #
-            #     look(result)
-
             return output
         temp = list(result)
         return scrub(temp)
@@ -116,7 +71,6 @@ def scrub_literal(candidate):
     ):
         candidate = {"literal": [r["literal"] if is_data(r) else r for r in candidate]}
     return candidate
-
 
 
 def _chunk(values, size):
@@ -148,22 +102,22 @@ def to_json_operator(tokens):
         op = op.type.parser_name
     op = binary_ops.get(op, op)
     if op == "eq":
-        if is_null_value(tokens[2]):
+        if tokens[2] is SQL_NULL:
             return {"missing": tokens[0]}
-        elif is_null_value(tokens[0]):
+        elif tokens[0] == "null":
             return {"missing": tokens[2]}
     elif op == "neq":
-        if is_null_value(tokens[2]):
+        if tokens[2] is SQL_NULL:
             return {"exists": tokens[0]}
-        elif is_null_value(tokens[0]):
+        elif tokens[0] == "null":
             return {"exists": tokens[2]}
     elif op == "is":
-        if is_null_value(tokens[2]):
+        if tokens[2] is SQL_NULL:
             return {"missing": tokens[0]}
         else:
             return {"exists": tokens[0]}
     elif op == "is_not":
-        if is_null_value(tokens[2]):
+        if tokens[2] is SQL_NULL:
             return {"exists": tokens[0]}
         else:
             return {"missing": tokens[0]}

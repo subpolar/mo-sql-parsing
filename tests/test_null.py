@@ -33,14 +33,14 @@ class TestSimple(TestCase):
     def test_null_value(self):
         sql = "select null"
         result = parse(sql)
-        expected = {"select": {"value": Null}}
+        expected = {"select": {"value": {"null":{}}}}
         self.assertEqual(result, expected)
         
         
     def test_null_value2(self):
         sql = "select 'a',null"
         result = parse(sql)
-        expected = {"select": [{"value": {"literal": "a"}}, {"value": Null}]}
+        expected = {"select": [{"value": {"literal": "a"}}, {"value": {"null":{}}}]}
         self.assertEqual(result, expected)
 
     def test_value2(self):
@@ -52,7 +52,7 @@ class TestSimple(TestCase):
     def test_null_value3(self):
         sql = "select null,b from x"
         result = parse(sql)
-        expected = {'from': 'x', 'select': [{'value': Null}, {'value': 'b'}]}
+        expected = {'from': 'x', 'select': [{'value': {"null":{}}}, {'value': 'b'}]}
         self.assertEqual(result, expected)
 
     def test_null_parameter(self):
@@ -66,7 +66,7 @@ class TestSimple(TestCase):
     def test_null_parameter2(self):
         sql = "select DECODE(NULL)"
         result = parse(sql)
-        expected = {"select": {"value": {"decode": None}}}
+        expected = {"select": {"value": {"decode": {"null":{}}}}}
         # expected = {"select": {"value": {"decode": Null}}}
         self.assertEqual(result, expected)
 
@@ -74,7 +74,7 @@ class TestSimple(TestCase):
         sql = "select DECODE(NULL,a)"
         result = parse(sql)
         #  see to_json_call. when param is null, set {}.
-        expected = {"select": {"value": {"decode": [None,"a"]}}}
+        expected = {"select": {"value": {"decode": [{"null":{}},"a"]}}}
         # expected = {"select": {"value": {"decode": Null}}}
         self.assertEqual(result, expected)
 
@@ -82,7 +82,7 @@ class TestSimple(TestCase):
         sql = "select DECODE(a,NULL)"
         result = parse(sql)
         #  see to_json_call. when param is null, set {}.
-        expected = {"select": {"value": {"decode": ["a", None]}}}
+        expected = {"select": {"value": {"decode": ["a", {"null":{}}]}}}
         # expected = {"select": {"value": {"decode": Null}}}
         self.assertEqual(result, expected)
 
@@ -97,7 +97,7 @@ class TestSimple(TestCase):
                     "name":'some_columns', 
                     'value':{
                         'case': [
-                            {'when': {'eq': [ 'some_columns', {'literal':'Bob'}] }, 'then': None},
+                            {'when': {'eq': [ 'some_columns', {'literal':'Bob'}] }, 'then': {"null":{}}},
                             {'literal':'helloworld'},
                        ]
                     }

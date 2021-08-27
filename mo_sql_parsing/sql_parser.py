@@ -251,7 +251,7 @@ BigQuery_STRUCT = (
     Literal(">").suppress()
 ).addParseAction(to_json_call)
 
-BigQuery_ARREY = (
+BigQuery_ARRAY = (
     Keyword("array", caseless=True)("op") +
     Literal("<").suppress() +
     delimitedList(column_type)("params") +
@@ -259,9 +259,9 @@ BigQuery_ARREY = (
 ).addParseAction(to_json_call)
 
 column_type << (
-    BigQuery_STRUCT |
-    BigQuery_ARREY |
-    Group(ident("op") + Optional(LB + delimitedList(intNum)("params") + RB)).addParseAction(to_json_call)
+        BigQuery_STRUCT |
+        BigQuery_ARRAY |
+        Group(ident("op") + Optional(LB + delimitedList(intNum)("params") + RB)).addParseAction(to_json_call)
 )
 
 column_def_references = (
