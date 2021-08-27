@@ -151,7 +151,7 @@
     },
     "long_description_content_type": "text/markdown",
     "name": "mo-sql-parsing",
-    "packages": ["mo_sql_parsing", "mo_parsing"],
+    "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
     "version": "5.40.21239",
     "zip_safe": true
