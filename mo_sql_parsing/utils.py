@@ -13,21 +13,22 @@ import ast
 
 from mo_dots import is_data, is_null
 from mo_future import text, number_types, binary_type
-from mo_logs import Log
 
 from mo_parsing import *
-from mo_parsing import debug
 from mo_parsing.utils import is_number, listwrap, alphanums
 
 IDENT_CHAR = alphanums + "@_$"
+SQL_NULL = {"null": {}}
+
+null_locations = []
 
 
 def scrub(result):
-    if result == None:
+    if result is SQL_NULL:
+        return SQL_NULL
+    elif result == None:
         return None
     elif isinstance(result, text):
-        if result == "null":
-            return None
         return result
     elif isinstance(result, binary_type):
         return result.decode("utf8")
@@ -43,41 +44,23 @@ def scrub(result):
         elif len(output) == 1:
             return output[0]
         else:
+            for i, v in enumerate(output):
+                if v is SQL_NULL:
+                    null_locations.append((output, i))
             return scrub_literal(output)
     else:
         # ATTEMPT A DICT INTERPRETATION
-        kv_pairs = list(result.items())
+        try:
+            kv_pairs = list(result.items())
+        except Exception as c:
+            print(c)
         output = {k: vv for k, v in kv_pairs for vv in [scrub(v)] if not is_null(vv)}
-        if isinstance(result, dict):
+        if isinstance(result, dict) or output:
+            for k, v in output.items():
+                if v is SQL_NULL:
+                    null_locations.append((output, k))
             return output
-        elif output:
-            if debug.DEBUGGING:
-                # CHECK THAT NO ITEMS WERE MISSED
-                def look(r):
-                    for token in r.tokens:
-                        if isinstance(token, ParseResults):
-                            if token.name:
-                                continue
-                            elif token.length() == 0:
-                                continue
-                            elif isinstance(token.type, Group):
-                                Log.error(
-                                    "This token is lost during scrub: {{token}}",
-                                    token=token,
-                                )
-                            else:
-                                look(token)
-                        else:
-                            Log.error(
-                                "This token is lost during scrub: {{token}}",
-                                token=token,
-                            )
-
-                look(result)
-
-            return output
-        temp = list(result)
-        return scrub(temp)
+        return scrub(list(result))
 
 
 def scrub_literal(candidate):
@@ -121,22 +104,22 @@ def to_json_operator(tokens):
         op = op.type.parser_name
     op = binary_ops.get(op, op)
     if op == "eq":
-        if tokens[2] == "null":
+        if tokens[2] is SQL_NULL:
             return {"missing": tokens[0]}
-        elif tokens[0] == "null":
+        elif tokens[0] is SQL_NULL:
             return {"missing": tokens[2]}
     elif op == "neq":
-        if tokens[2] == "null":
+        if tokens[2] is SQL_NULL:
             return {"exists": tokens[0]}
-        elif tokens[0] == "null":
+        elif tokens[0] is SQL_NULL:
             return {"exists": tokens[2]}
     elif op == "is":
-        if tokens[2] == "null":
+        if tokens[2] is SQL_NULL:
             return {"missing": tokens[0]}
         else:
             return {"exists": tokens[0]}
     elif op == "is_not":
-        if tokens[2] == "null":
+        if tokens[2] is SQL_NULL:
             return {"exists": tokens[0]}
         else:
             return {"missing": tokens[0]}
@@ -148,17 +131,14 @@ def to_json_operator(tokens):
         # ASSOCIATIVE OPERATORS
         acc = []
         for operand in operands:
-            if isinstance(operand, ParseResults):
+            while isinstance(operand, ParseResults) and isinstance(operand.type, Group):
+                # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
-                if isinstance(operand, list):
-                    acc.append(operand)
-                    continue
-                prefix = operand.get(op)
-                if prefix:
-                    acc.extend(prefix)
-                    continue
-                else:
-                    acc.append(operand)
+
+            if isinstance(operand, list):
+                acc.append(operand)
+            elif isinstance(operand, dict) and operand.get(op):
+                acc.extend(operand.get(op))
             else:
                 acc.append(operand)
         binary_op = {op: acc}
@@ -167,9 +147,10 @@ def to_json_operator(tokens):
 
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
-    if tokens.length() == 1:
-        return [scrub(tokens)]
-    return [scrub_literal(scrub(tokens))]
+    tokens = list(tokens)
+    if len(tokens) == 1:
+        return [tokens[0]]
+    return [scrub_literal(tokens)]
 
 
 binary_ops = {
@@ -189,6 +170,7 @@ binary_ops = {
     ">=": "gte",
     "=": "eq",
     "==": "eq",
+    "<=>": "eq!",  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
     "!=": "neq",
     "<>": "neq",
     "not in": "nin",
@@ -208,10 +190,10 @@ def to_json_call(tokens):
     op = tokens["op"].lower()
     op = binary_ops.get(op, op)
 
-    params = scrub(tokens["params"])
+    params = tokens["params"]
     if not params:
         params = {}
-    if scrub(tokens["ignore_nulls"]):
+    if tokens["ignore_nulls"]:
         ignore_nulls = True
     else:
         ignore_nulls = None
@@ -226,20 +208,13 @@ def to_json_call(tokens):
 
 def to_interval_call(tokens):
     # ARRANGE INTO {interval: [amount, type]} FORMAT
-    params = scrub(tokens["params"])
+    params = tokens["params"]
     if not params:
         params = {}
-    if len(params) == 2:
-        return ParseResults(
-            tokens.type, tokens.start, tokens.end, [{"interval": params}]
-        )
+    if params.length() == 2:
+        return {"interval": params}
 
-    return ParseResults(
-        tokens.type,
-        tokens.start,
-        tokens.end,
-        [{"add": [{"interval": p} for p in _chunk(params, size=2)]}],
-    )
+    return {"add": [{"interval": p} for p in _chunk(params, size=2)]}
 
 
 def to_case_call(tokens):
@@ -268,7 +243,7 @@ def to_when_call(tokens):
 
 
 def to_join_call(tokens):
-    op = " ".join(listwrap(scrub(tokens["op"])))
+    op = " ".join(tokens["op"])
     if tokens["join"]["name"]:
         output = {op: {
             "name": tokens["join"]["name"],
@@ -295,15 +270,15 @@ def to_expression_call(tokens):
 
 
 def to_alias(tokens):
-    cols = scrub(tokens["col"])
-    name = scrub(tokens[0])
+    cols = tokens["col"]
+    name = tokens[0][0]
     if cols:
         return {name: cols}
     return name
 
 
 def to_top_clause(tokens):
-    value = scrub(tokens["value"])
+    value = tokens["value"]
     if not value:
         return None
     elif tokens["ties"]:
@@ -317,7 +292,7 @@ def to_top_clause(tokens):
     elif tokens["percent"]:
         return {"percent": value}
     else:
-        return value
+        return [value]
 
 
 def to_select_call(tokens):
@@ -336,13 +311,11 @@ def to_select_call(tokens):
 def to_union_call(tokens):
     unions = tokens["union"]
     if unions.type.parser_name == "unordered sql":
-        output = scrub(unions)  # REMOVE THE Group()
+        output = {k: v for k, v in unions.items()}  # REMOVE THE Group()
     else:
         unions = list(unions)
-        sources = scrub([unions[i] for i in range(0, len(unions), 2)])
-        operators = [
-            "_".join(listwrap(scrub(unions[i]))) for i in range(1, len(unions), 2)
-        ]
+        sources = [unions[i] for i in range(0, len(unions), 2)]
+        operators = ["_".join(unions[i]) for i in range(1, len(unions), 2)]
         acc = sources[-1]
         last_union = None
         for op, so in reversed(list(zip(operators, sources))):
@@ -364,8 +337,8 @@ def to_union_call(tokens):
 
 
 def to_statement(tokens):
-    output = scrub(tokens["query"])
-    output["with"] = scrub(tokens["with"])
+    output = tokens["query"][0]
+    output["with"] = tokens["with"]
     return output
 
 
@@ -398,16 +371,16 @@ realNum = (
     .addParseAction(lambda t: float(t[0]))
 )
 
+
 def parse_int(tokens):
     if "e" in tokens[0].lower():
         return int(float(tokens[0]))
     else:
         return int(tokens[0])
 
+
 intNum = (
-    Regex(r"[+-]?\d+([eE]\+?\d+)?")
-    .set_parser_name("int")
-    .addParseAction(parse_int)
+    Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int").addParseAction(parse_int)
 )
 hexNum = (
     Regex(r"0x[0-9a-fA-F]+")

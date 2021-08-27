@@ -10,7 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
 from mo_sql_parsing import parse
 
 
@@ -45,8 +44,7 @@ class TestSqlServer(TestCase):
     def test_issue13_top(self):
         # https://docs.microsoft.com/en-us/sql/t-sql/queries/top-transact-sql?view=sql-server-ver15
         sql = "SELECT TOP 3 * FROM Customers"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         self.assertEqual(result, {"top": 3, "select": "*", "from": "Customers",})
 
         sql = "SELECT TOP func(value) WITH TIES *"

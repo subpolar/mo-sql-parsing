@@ -1,7 +1,7 @@
 from mo_sql_parsing.utils import *
 
 # SQL CONSTANTS
-NULL = Keyword("null", caseless=True).addParseAction(lambda: "null")
+NULL = Keyword("null", caseless=True).addParseAction(lambda: SQL_NULL)
 TRUE = Keyword("true", caseless=True).addParseAction(lambda: True)
 FALSE = Keyword("false", caseless=True).addParseAction(lambda: False)
 NOCASE = Keyword("nocase", caseless=True)
@@ -13,6 +13,8 @@ AS = Keyword("as", caseless=True).suppress()
 ALL = Keyword("all", caseless=True)
 BY = Keyword("by", caseless=True).suppress()
 CAST = Keyword("cast", caseless=True)
+CONSTRAINT = Keyword("constraint", caseless=True).suppress()
+CREATE = Keyword("create", caseless=True).suppress()
 CROSS = Keyword("cross", caseless=True)
 DISTINCT = Keyword("distinct", caseless=True)
 FROM = Keyword("from", caseless=True).suppress()
@@ -35,6 +37,7 @@ PARTITION = Keyword("partition", caseless=True).suppress()
 RIGHT = Keyword("right", caseless=True)
 RLIKE = Keyword("rlike", caseless=True)
 SELECT = Keyword("select", caseless=True).suppress()
+TABLE = Keyword("table", caseless=True).suppress()
 THEN = Keyword("then", caseless=True).suppress()
 TOP = Keyword("top", caseless=True).suppress()
 UNION = Keyword("union", caseless=True)
@@ -43,6 +46,15 @@ WHEN = Keyword("when", caseless=True).suppress()
 WHERE = Keyword("where", caseless=True).suppress()
 WITH = Keyword("with", caseless=True).suppress()
 WITHIN = Keyword("within", caseless=True).suppress()
+PRIMARY = Keyword("primary", caseless=True).suppress()
+FOREIGN = Keyword("foreign", caseless=True).suppress()
+KEY = Keyword("key", caseless=True).suppress()
+UNIQUE = Keyword("unique", caseless=True).suppress()
+INDEX = Keyword("index", caseless=True).suppress()
+REFERENCES = Keyword("references", caseless=True).suppress()
+
+PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
+FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
 # SIMPLE OPERATORS
 CASTING = Literal("::").set_parser_name("concat")
@@ -60,7 +72,12 @@ GTE = Literal(">=").set_parser_name("gte")
 LTE = Literal("<=").set_parser_name("lte")
 LT = Literal("<").set_parser_name("lt")
 GT = Literal(">").set_parser_name("gt")
-EQ = (Literal("==") | Literal("=")).set_parser_name("eq")
+EQ = (
+    Literal("==") | Literal("=")
+).set_parser_name("eq")  # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
+DEQ = (
+    Literal("<=>").set_parser_name("eq!")
+)  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 
 AND = Keyword("and", caseless=True)
@@ -75,19 +92,20 @@ NOT = Keyword("not", caseless=True)
 OR = Keyword("or", caseless=True)
 
 # COMPOUND KEYWORDS
-CROSS_JOIN = Group(CROSS + JOIN).set_parser_name("cross join")
-FULL_JOIN = Group(FULL + JOIN).set_parser_name("full join")
-FULL_OUTER_JOIN = Group(FULL + OUTER + JOIN).set_parser_name("full outer join")
+CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
+CROSS_JOIN = (CROSS + JOIN).set_parser_name("cross join")
+FULL_JOIN = (FULL + JOIN).set_parser_name("full join")
+FULL_OUTER_JOIN = (FULL + OUTER + JOIN).set_parser_name("full outer join")
 GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
-INNER_JOIN = Group(INNER + JOIN).set_parser_name("inner join")
-LEFT_JOIN = Group(LEFT + JOIN).set_parser_name("left join")
-LEFT_OUTER_JOIN = Group(LEFT + OUTER + JOIN).set_parser_name("left outer join")
+INNER_JOIN = (INNER + JOIN).set_parser_name("inner join")
+LEFT_JOIN = (LEFT + JOIN).set_parser_name("left join")
+LEFT_OUTER_JOIN = (LEFT + OUTER + JOIN).set_parser_name("left outer join")
 ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
 PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
-RIGHT_JOIN = Group(RIGHT + JOIN).set_parser_name("right join")
-RIGHT_OUTER_JOIN = Group(RIGHT + OUTER + JOIN).set_parser_name("right outer join")
+RIGHT_JOIN = (RIGHT + JOIN).set_parser_name("right join")
+RIGHT_OUTER_JOIN = (RIGHT + OUTER + JOIN).set_parser_name("right outer join")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
-UNION_ALL = Group(UNION + ALL).set_parser_name("union_all")
+UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS
@@ -112,6 +130,9 @@ RESERVED = MatchFirst([
     CASE,
     CAST,
     COLLATE,
+    CONSTRAINT,
+    CREATE_TABLE,
+    CREATE,
     CROSS_JOIN,
     CROSS,
     DESC,
@@ -119,6 +140,8 @@ RESERVED = MatchFirst([
     ELSE,
     END,
     FALSE,
+    FOREIGN_KEY,
+    FOREIGN,
     FROM,
     FULL_JOIN,
     FULL_OUTER_JOIN,
@@ -127,12 +150,14 @@ RESERVED = MatchFirst([
     GROUP,
     HAVING,
     IN,
+    INDEX,
     INNER_JOIN,
     INNER,
     INTERVAL,
     IS_NOT,
     IS,
     JOIN,
+    KEY,
     LEFT_JOIN,
     LEFT_OUTER_JOIN,
     LEFT,
@@ -155,6 +180,9 @@ RESERVED = MatchFirst([
     PARTITION_BY,
     PARTITION,
     # PERCENT,
+    PRIMARY_KEY,
+    PRIMARY,
+    REFERENCES,
     RIGHT_JOIN,
     RIGHT_OUTER_JOIN,
     RIGHT,
@@ -165,6 +193,7 @@ RESERVED = MatchFirst([
     TRUE,
     UNION_ALL,
     UNION,
+    UNIQUE,
     USING,
     WHEN,
     WHERE,
@@ -237,7 +266,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EQ | NEQ,
+    EQ | NEQ | DEQ,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
     IN,
@@ -350,6 +379,10 @@ BLOB = (Keyword("blob", caseless=True)("op") + _size).addParseAction(to_json_cal
 BYTES = (Keyword("bytes", caseless=True)("op") + _size).addParseAction(to_json_call)
 CHAR = (Keyword("char", caseless=True)("op") + _size).addParseAction(to_json_call)
 VARCHAR = (Keyword("varchar", caseless=True)("op") + _size).addParseAction(to_json_call)
+VARBINARY = (
+    Keyword("varbinary", caseless=True)("op") + _size
+).addParseAction(to_json_call)
+TINYINT = (Keyword("tinyint", caseless=True)("op") + _size).addParseAction(to_json_call)
 
 DECIMAL = (
     Keyword("decimal", caseless=True)("op") + _sizes
@@ -412,4 +445,6 @@ known_types = MatchFirst([
     TIMESTAMPTZ_TYPE,
     TIMETZ_TYPE,
     VARCHAR,
+    VARBINARY,
+    TINYINT,
 ])

@@ -1886,7 +1886,7 @@ order by number_sites desc"""
                             "when": {"eq": ["some_columns", {"literal": "Bob"}]},
                             "then": {"literal": "helloworld"},
                         },
-                        None,
+                        {"null": {}},
                     ]},
                     "name": "some_columns",
                 },

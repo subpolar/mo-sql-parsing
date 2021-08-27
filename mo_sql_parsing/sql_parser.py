@@ -9,13 +9,14 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from mo_parsing.engine import Engine
+from mo_parsing import whitespaces
 from mo_parsing.helpers import delimitedList, restOfLine
+from mo_parsing.whitespaces import NO_WHITESPACE
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import sortColumn, window
 
-engine = Engine().use()
+engine = whitespaces.STANDARD_WHITESPACE.use()
 engine.add_ignore(Literal("--") + restOfLine)
 engine.add_ignore(Literal("#") + restOfLine)
 
@@ -26,16 +27,15 @@ sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
 ident = Combine(
     ~RESERVED
     + (delimitedList(
-        literal_string
-        | mysql_ident
-        | sqlserver_ident
-        | Word(IDENT_CHAR),
+        literal_string | mysql_ident | sqlserver_ident | Word(IDENT_CHAR),
         separator=".",
         combine=True,
     ))
 ).set_parser_name("identifier")
 
 # EXPRESSIONS
+column_definition = Forward()
+column_type = Forward()
 
 # CASE
 case = (
@@ -106,17 +106,20 @@ ordered_sql = Forward()
 call_function = (
     ident("op")
     + LB
-    + Optional(Group(ordered_sql) | delimitedList(expr))("params")
+    + Optional(Group(ordered_sql) | delimitedList(Group(expr)))("params")
     + Optional(
         Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True)
     )("ignore_nulls")
     + RB
 ).addParseAction(to_json_call)
 
-with Engine(white=""):
-    def scale(tokens):
-        return {"mul":[tokens[0], tokens[1]]}
 
+with NO_WHITESPACE:
+
+    def scale(tokens):
+        return {"mul": [tokens[0], tokens[1]]}
+
+    # TODO: THE call_function IS CONSUMING WHITESPACE PREFIX leaveWhitespace() DOES NOT APPEAR TO STOP IT
     scale_function = ((realNum | intNum) + call_function).addParseAction(scale)
     scale_ident = ((realNum | intNum) + ident).addParseAction(scale)
 
@@ -147,8 +150,8 @@ compound = (
 
 expr << (
     (
-        Literal("*") |
-        infixNotation(
+        Literal("*")
+        | infixNotation(
             compound,
             [
                 (
@@ -191,7 +194,7 @@ table_source = (
 )
 
 join = (
-    (
+    Group(
         CROSS_JOIN
         | FULL_JOIN
         | FULL_OUTER_JOIN
@@ -224,7 +227,7 @@ unordered_sql = Group(
 ).set_parser_name("unordered sql")
 
 ordered_sql << (
-    (unordered_sql + ZeroOrMore((UNION_ALL | UNION) + unordered_sql))("union")
+    (unordered_sql + ZeroOrMore(Group(UNION_ALL | UNION) + unordered_sql))("union")
     + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
     + Optional(LIMIT + expr("limit"))
     + Optional(OFFSET + expr("offset"))
@@ -238,5 +241,100 @@ statement << (
     + Group(ordered_sql)("query")
 ).addParseAction(to_statement)
 
-SQLParser = statement
+
+# CREATE TABLE
+createStmt = Forward()
+
+BigQuery_STRUCT = (
+    Keyword("struct", caseless=True)("op")
+    + Literal("<").suppress()
+    + delimitedList(column_definition)("params")
+    + Literal(">").suppress()
+).addParseAction(to_json_call)
+
+BigQuery_ARRAY = (
+    Keyword("array", caseless=True)("op")
+    + Literal("<").suppress()
+    + delimitedList(column_type)("params")
+    + Literal(">").suppress()
+).addParseAction(to_json_call)
+
+column_type << (
+    BigQuery_STRUCT
+    | BigQuery_ARRAY
+    | Group(
+        ident("op") + Optional(LB + delimitedList(intNum)("params") + RB)
+    ).addParseAction(to_json_call)
+)
+
+column_def_references = (
+    REFERENCES + ident("table") + LB + delimitedList(ident)("columns") + RB
+)("references")
+
+column_def_check = Keyword("check", caseless=True).suppress() + LB + expr + RB
+
+column_def_default = Keyword("default", caseless=True).suppress() + expr("default")
+
+column_options = ZeroOrMore(Group(
+    (NOT + NULL).addParseAction(lambda: "not null")
+    | NULL.addParseAction(lambda t: "nullable")
+    | Keyword("unique", caseless=True)
+    | Keyword("primary key", caseless=True)
+    | column_def_references
+    | column_def_check("check")
+    | column_def_default
+)).set_parser_name("column_options")
+
+column_definition << Group(
+    ident("name").addParseAction(lambda t: t[0].lower())
+    + column_type("type")
+    + Optional(column_options)("option")
+).set_parser_name("column_definition")
+
+# MySQL's index_type := Using + ( "BTREE" | "HASH" )
+index_type = Optional(USING + ident("index_type"))
+
+index_column_names = LB + delimitedList(ident("columns")) + RB
+
+column_def_foreign_key = FOREIGN_KEY + Optional(
+    ident("index_name") + index_column_names + column_def_references
+)
+
+index_options = ZeroOrMore(ident)("table_constraint_options")
+
+
+table_constraint_definition = Optional(CONSTRAINT + ident("name")) + (
+    (PRIMARY_KEY + index_type + index_column_names + index_options)("primary_key")
+    | (
+        UNIQUE
+        + Optional(INDEX | KEY)
+        + Optional(ident("index_name"))
+        + index_type
+        + index_column_names
+        + index_options
+    )("unique")
+    | (
+        (INDEX | KEY)
+        + Optional(ident("index_name"))
+        + index_type
+        + index_column_names
+        + index_options
+    )("index")
+    | column_def_check("check")
+    | column_def_foreign_key("foreign_key")
+)
+
+
+table_element = column_definition("columns") | table_constraint_definition("constraint")
+
+createStmt << (
+    CREATE_TABLE
+    + (
+        ident("name")
+        + Optional(LB + delimitedList(table_element) + RB)
+        + Optional(AS.suppress() + infixNotation(statement, []))("select_statement")
+    )("create table")
+)
+
+SQLParser = (statement | createStmt).finalize()
 engine.release()

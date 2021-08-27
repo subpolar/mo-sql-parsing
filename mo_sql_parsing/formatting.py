@@ -77,7 +77,10 @@ def Operator(op):
             if isinstance(v, (text, int, float, long)):
                 acc.append(sql)
                 continue
-
+            # Error when formating NULL operators #7
+            if v is None:
+                acc.append("NULL")
+                continue
             p = precedence.get(first(v.keys()))
             if p is None:
                 acc.append(sql)

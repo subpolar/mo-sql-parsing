@@ -7,15 +7,17 @@
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: SQL",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
     ],
     "description": "Extract Parse Tree from SQL",
+    "extras_require": {"dev": []},
     "include_package_data": true,
-    "install_requires": ["mo-dots==4.22.21108", "mo-future==3.147.20327", "mo-logs==4.23.21108"],
+    "install_requires": ["mo-dots==5.22.21182", "mo-future==5.17.21182", "mo-parsing==5.40.21239"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
-            "# Moz SQL Parser",
+            "# More SQL Parsing!",
             "",
             "Let's make a SQL parser so we can provide a familiar interface to non-sql datastores!",
             "",
@@ -149,8 +151,8 @@
     },
     "long_description_content_type": "text/markdown",
     "name": "mo-sql-parsing",
-    "packages": ["mo_sql_parsing", "mo_parsing"],
+    "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "5.0",
+    "version": "5.41.21239",
     "zip_safe": true
 }
