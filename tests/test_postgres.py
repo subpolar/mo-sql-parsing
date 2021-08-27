@@ -41,3 +41,20 @@ class TestPostgres(TestCase):
                 ],
             },
         )
+
+    def test_issue_20(self):
+        sql = """SELECT Status FROM city WHERE Population > 1500 INTERSECT SELECT Status FROM city WHERE Population < 500"""
+        result = parse(sql)
+        expected = {"intersect": [
+            {
+                "from": "city",
+                "select": {"value": "Status"},
+                "where": {"gt": ["Population", 1500]},
+            },
+            {
+                "from": "city",
+                "select": {"value": "Status"},
+                "where": {"lt": ["Population", 500]},
+            },
+        ]}
+        self.assertEqual(result, expected)
