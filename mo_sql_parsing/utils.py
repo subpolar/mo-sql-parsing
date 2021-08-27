@@ -22,6 +22,7 @@ SQL_NULL = {"null": {}}
 
 null_locations = []
 
+
 def scrub(result):
     if result is SQL_NULL:
         return SQL_NULL
@@ -53,12 +54,7 @@ def scrub(result):
             kv_pairs = list(result.items())
         except Exception as c:
             print(c)
-        output = {
-            k: vv
-            for k, v in kv_pairs
-            for vv in [scrub(v)]
-            if not is_null(vv)
-        }
+        output = {k: vv for k, v in kv_pairs for vv in [scrub(v)] if not is_null(vv)}
         if isinstance(result, dict) or output:
             for k, v in output.items():
                 if v is SQL_NULL:
@@ -319,9 +315,7 @@ def to_union_call(tokens):
     else:
         unions = list(unions)
         sources = [unions[i] for i in range(0, len(unions), 2)]
-        operators = [
-            "_".join(unions[i]) for i in range(1, len(unions), 2)
-        ]
+        operators = ["_".join(unions[i]) for i in range(1, len(unions), 2)]
         acc = sources[-1]
         last_union = None
         for op, so in reversed(list(zip(operators, sources))):
@@ -377,16 +371,16 @@ realNum = (
     .addParseAction(lambda t: float(t[0]))
 )
 
+
 def parse_int(tokens):
     if "e" in tokens[0].lower():
         return int(float(tokens[0]))
     else:
         return int(tokens[0])
 
+
 intNum = (
-    Regex(r"[+-]?\d+([eE]\+?\d+)?")
-    .set_parser_name("int")
-    .addParseAction(parse_int)
+    Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int").addParseAction(parse_int)
 )
 hexNum = (
     Regex(r"0x[0-9a-fA-F]+")

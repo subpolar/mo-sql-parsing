@@ -27,11 +27,7 @@ class TestNull(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {
-                    "name": "name",
-                    "type": {"varchar": {}},
-                    "option": {"default": None},
-                },
+                {"name": "name", "type": {"varchar": {}}, "option": {"default": None},},
                 {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
             ],
         }}
@@ -101,9 +97,5 @@ class TestNull(TestCase):
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
         result = parse(sql, null=None)
-        expected = {"select": {"value": {"decode": [
-            "A",
-            None,
-            {"literal": "b"},
-        ]}}}
+        expected = {"select": {"value": {"decode": ["A", None, {"literal": "b"},]}}}
         self.assertEqual(result, expected)

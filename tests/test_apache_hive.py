@@ -19,10 +19,5 @@ class TestApacheHive(TestCase):
         result = parse(sql)
 
         self.assertEqual(
-            result,
-            {
-                "select": {"value": {"eq!":["a", "b"]}},
-                "from": "table"
-            }
+            result, {"select": {"value": {"eq!": ["a", "b"]}}, "from": "table"}
         )
-

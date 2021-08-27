@@ -898,7 +898,7 @@ class TestSimple(TestCase):
                 {"name": "a", "value": {"select": {"value": 1}}},
                 {"name": "b", "value": {"select": {"value": 2}}},
             ],
-            "union_all": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"}]
+            "union_all": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"}],
         }
         self.assertEqual(result, expected)
 
@@ -1082,7 +1082,11 @@ class TestSimple(TestCase):
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
         result = parse(sql)
-        expected = {"select": {"value": {"decode": ["A", {"null":{}}, {"literal": "b"}]}}}
+        expected = {"select": {"value": {"decode": [
+            "A",
+            {"null": {}},
+            {"literal": "b"},
+        ]}}}
         self.assertEqual(result, expected)
 
     def test_issue143a(self):

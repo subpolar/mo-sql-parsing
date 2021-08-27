@@ -38,4 +38,3 @@ class TestSimple(TestCase):
             pattern = regex_range(c)
             found = re.match(pattern, c)
             self.assertTrue(bool(found))
-
