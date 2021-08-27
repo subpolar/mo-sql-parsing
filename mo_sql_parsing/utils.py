@@ -20,9 +20,12 @@ from mo_parsing.utils import is_number, listwrap, alphanums
 IDENT_CHAR = alphanums + "@_$"
 SQL_NULL = {"null": {}}
 
+null_locations = []
 
-def scrub(result, nulls=SQL_NULL):
-    if result == None:
+def scrub(result):
+    if result is SQL_NULL:
+        return SQL_NULL
+    elif result == None:
         return None
     elif isinstance(result, text):
         return result
@@ -40,6 +43,9 @@ def scrub(result, nulls=SQL_NULL):
         elif len(output) == 1:
             return output[0]
         else:
+            for i, v in enumerate(output):
+                if v is SQL_NULL:
+                    null_locations.append((output, i))
             return scrub_literal(output)
     else:
         # ATTEMPT A DICT INTERPRETATION
@@ -48,17 +54,17 @@ def scrub(result, nulls=SQL_NULL):
         except Exception as c:
             print(c)
         output = {
-            k: nulls if vv is SQL_NULL else vv
+            k: vv
             for k, v in kv_pairs
             for vv in [scrub(v)]
             if not is_null(vv)
         }
-        if isinstance(result, dict):
+        if isinstance(result, dict) or output:
+            for k, v in output.items():
+                if v is SQL_NULL:
+                    null_locations.append((output, k))
             return output
-        elif output:
-            return output
-        temp = list(result)
-        return scrub(temp)
+        return scrub(list(result))
 
 
 def scrub_literal(candidate):
@@ -104,12 +110,12 @@ def to_json_operator(tokens):
     if op == "eq":
         if tokens[2] is SQL_NULL:
             return {"missing": tokens[0]}
-        elif tokens[0] == "null":
+        elif tokens[0] is SQL_NULL:
             return {"missing": tokens[2]}
     elif op == "neq":
         if tokens[2] is SQL_NULL:
             return {"exists": tokens[0]}
-        elif tokens[0] == "null":
+        elif tokens[0] is SQL_NULL:
             return {"exists": tokens[2]}
     elif op == "is":
         if tokens[2] is SQL_NULL:

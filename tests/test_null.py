@@ -20,7 +20,7 @@ except ImportError:
     from .util import assertRaises  # RELATIVE IMPORT SO WE CAN RUN IN pyLibrary
 
 
-class TestSimple(TestCase):
+class TestNull(TestCase):
 
     maxDiff = 50000
 

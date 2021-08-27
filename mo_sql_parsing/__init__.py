@@ -13,15 +13,26 @@ import json
 from threading import Lock
 
 from mo_sql_parsing.sql_parser import SQLParser, scrub_literal, scrub
+from mo_sql_parsing.utils import SQL_NULL
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 
 
-def parse(sql):
+def parse(sql, null=SQL_NULL):
+    """
+    :param sql: String of SQL
+    :param null: What value to use as NULL (default is the null function `{"null":{}}`)
+    :return: parse tree
+    """
     with parseLocker:
+        utils.null_locations = []
         sql = sql.rstrip().rstrip(";")
         parse_result = SQLParser.parseString(sql, parseAll=True)
-        return scrub(parse_result)
+        output = scrub(parse_result)
+        if null is not SQL_NULL:
+            for o, n in utils.null_locations:
+                o[n] = null
+        return output
 
 
 def format(json, **kwargs):
