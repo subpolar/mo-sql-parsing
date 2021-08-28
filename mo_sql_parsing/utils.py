@@ -396,6 +396,6 @@ hexNum = (
 )
 
 # STRINGS
-sqlString = Regex(r"\'(\'\'|[^'])*\'").addParseAction(to_string)
+ansi_string = Regex(r"\'(\'\'|[^'])*\'").addParseAction(to_string)
 
 expr = Forward()

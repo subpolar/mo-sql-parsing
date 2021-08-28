@@ -20,15 +20,27 @@ engine = whitespaces.STANDARD_WHITESPACE.use()
 engine.add_ignore(Literal("--") + restOfLine)
 engine.add_ignore(Literal("#") + restOfLine)
 
-# IDENTIFIER
-literal_string = Regex(r'\"(\"\"|[^"])*\"').addParseAction(unquote)
-mysql_ident = Regex(r"\`(\`\`|[^`])*\`").addParseAction(unquote)
+# BASIC STRINGS AND IDENTITY
+ansi_ident = Regex(r'\"(\"\"|[^"])*\"').addParseAction(unquote)
+mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`").addParseAction(unquote)
 sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
-ident = Combine(delimitedList(
-    literal_string | mysql_ident | sqlserver_ident | Word(IDENT_CHAR),
+combined_ident = Combine(delimitedList(
+    ansi_ident | mysql_backtick_ident | sqlserver_ident | Word(IDENT_CHAR),
     separator=".",
     combine=True,
 )).set_parser_name("identifier")
+
+# MYSQL WEIRDNESS
+mysql_string = ansi_string | ansi_ident
+mysql_ident = Combine(delimitedList(
+    mysql_backtick_ident | sqlserver_ident | Word(IDENT_CHAR),
+    separator=".",
+    combine=True,
+)).set_parser_name("mysql identifier")
+
+# DEFAULT BEHAVIOUR
+literal_string = Forward() << ansi_string  #  ALLOW CHANGING THE DEFINITION OF LITERAL STRING
+ident = Forward() << combined_ident  #  ALLOW CHANGING THE DEFINITION OF IDENTITY
 var_name = ~RESERVED + ident
 
 
@@ -82,8 +94,8 @@ interval = (
 timestamp = (
     time_functions("op")
     + (
-        sqlString("params")
-        | MatchFirst([
+            literal_string("params")
+            | MatchFirst([
             Keyword(t, caseless=True).addParseAction(lambda t: t.lower()) for t in times
         ])("params")
     )
@@ -129,29 +141,29 @@ with NO_WHITESPACE:
     scale_ident = ((realNum | intNum) + ident).addParseAction(scale)
 
 compound = (
-    NULL
-    | TRUE
-    | FALSE
-    | NOCASE
-    | interval
-    | timestamp
-    | extract
-    | case
-    | switch
-    | cast
-    | distinct
-    | trim
-    | (LB + Group(ordered_sql) + RB)
-    | (LB + Group(delimitedList(expr)).addParseAction(to_tuple_call) + RB)
-    | sqlString.set_parser_name("string")
-    | hexNum.set_parser_name("hex")
-    | scale_function
-    | scale_ident
-    | realNum.set_parser_name("float")
-    | intNum.set_parser_name("int")
-    | call_function
-    | known_types
-    | Combine(var_name + Optional(".*"))
+        NULL
+        | TRUE
+        | FALSE
+        | NOCASE
+        | interval
+        | timestamp
+        | extract
+        | case
+        | switch
+        | cast
+        | distinct
+        | trim
+        | (LB + Group(ordered_sql) + RB)
+        | (LB + Group(delimitedList(expr)).addParseAction(to_tuple_call) + RB)
+        | literal_string.set_parser_name("string")
+        | hexNum.set_parser_name("hex")
+        | scale_function
+        | scale_ident
+        | realNum.set_parser_name("float")
+        | intNum.set_parser_name("int")
+        | call_function
+        | known_types
+        | Combine(var_name + Optional(".*"))
 )
 
 expr << (

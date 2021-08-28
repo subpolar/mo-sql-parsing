@@ -12,8 +12,17 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from threading import Lock
 
-from mo_sql_parsing.sql_parser import SQLParser, scrub_literal, scrub
-from mo_sql_parsing.utils import SQL_NULL
+from mo_sql_parsing.sql_parser import (
+    SQLParser,
+    scrub_literal,
+    scrub,
+    literal_string,
+    mysql_string,
+    mysql_ident,
+    ident,
+    combined_ident,
+)
+from mo_sql_parsing.utils import SQL_NULL, ansi_string
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 
@@ -39,6 +48,21 @@ def format(json, **kwargs):
     from mo_sql_parsing.formatting import Formatter
 
     return Formatter(**kwargs).format(json)
+
+
+def parse_mysql(sql, null=SQL_NULL):
+    """
+    PARSE MySQL ASSUME DOUBLE QUOTED STRINGS ARE LITERALS
+    """
+    raise NotImplemented()
+    try:
+        literal_string << mysql_string
+        ident << mysql_ident
+
+        return parse(sql, null)
+    finally:
+        literal_string << ansi_string
+        ident << combined_ident
 
 
 _ = json.dumps

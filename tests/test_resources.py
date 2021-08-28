@@ -947,15 +947,6 @@ class TestResources(TestCase):
         }
         self.assertEqual(result, expected)
 
-    def test_115(self):
-        sql = 'SELECT "t3".*, t4.b FROM t3, t4'
-        result = parse(sql)
-        expected = {
-            "from": ["t3", "t4"],
-            "select": [{"value": "t3.*"}, {"value": "t4.b"}],
-        }
-        self.assertEqual(result, expected)
-
     def test_116(self):
         sql = "SELECT t3.b, t4.* FROM t3, t4"
         result = parse(sql)
