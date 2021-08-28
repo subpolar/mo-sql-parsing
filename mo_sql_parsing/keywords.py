@@ -41,6 +41,7 @@ TABLE = Keyword("table", caseless=True).suppress()
 THEN = Keyword("then", caseless=True).suppress()
 TOP = Keyword("top", caseless=True).suppress()
 UNION = Keyword("union", caseless=True)
+INTERSECT = Keyword("intersect", caseless=True)
 USING = Keyword("using", caseless=True).suppress()
 WHEN = Keyword("when", caseless=True).suppress()
 WHERE = Keyword("where", caseless=True).suppress()
@@ -109,6 +110,7 @@ UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS
+AT_TIME_ZONE = Group(Keyword("at", caseless=True) + Keyword("time", caseless=True) + Keyword("zone", caseless=True))
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
@@ -121,6 +123,7 @@ SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("is_not")
 NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("is_not")
 
 RESERVED = MatchFirst([
+    # ONY INCLUDE SINGLE WORDS
     ALL,
     AND,
     AS,
@@ -131,7 +134,6 @@ RESERVED = MatchFirst([
     CAST,
     COLLATE,
     CONSTRAINT,
-    CREATE_TABLE,
     CREATE,
     CROSS_JOIN,
     CROSS,
@@ -140,65 +142,46 @@ RESERVED = MatchFirst([
     ELSE,
     END,
     FALSE,
-    FOREIGN_KEY,
     FOREIGN,
     FROM,
-    FULL_JOIN,
-    FULL_OUTER_JOIN,
     FULL,
     GROUP_BY,
     GROUP,
     HAVING,
     IN,
     INDEX,
-    INNER_JOIN,
     INNER,
     INTERVAL,
     IS_NOT,
     IS,
     JOIN,
     KEY,
-    LEFT_JOIN,
-    LEFT_OUTER_JOIN,
     LEFT,
     LIKE,
     LIMIT,
     NOCASE,
-    NOT_BETWEEN,
-    NOT_IN,
-    NOT_LIKE,
-    NOT_RLIKE,
     NOT,
     NULL,
     OFFSET,
     ON,
     OR,
-    ORDER_BY,
     ORDER,
     OUTER,
     OVER,
-    PARTITION_BY,
     PARTITION,
-    # PERCENT,
-    PRIMARY_KEY,
     PRIMARY,
     REFERENCES,
-    RIGHT_JOIN,
-    RIGHT_OUTER_JOIN,
     RIGHT,
     RLIKE,
-    SELECT_DISTINCT,
     SELECT,
     THEN,
     TRUE,
-    UNION_ALL,
     UNION,
     UNIQUE,
     USING,
     WHEN,
     WHERE,
     WITH,
-    WITHIN_GROUP,
     WITHIN,
 ])
 
@@ -239,6 +222,7 @@ precedence = {
     "gt": 6,
     "eq": 7,
     "neq": 7,
+    "at_time_zone": 8,
     "between": 8,
     "not_between": 8,
     "in": 8,
@@ -267,6 +251,7 @@ KNOWN_OPS = [
     BINARY_OR,
     GTE | LTE | LT | GT,
     EQ | NEQ | DEQ,
+    AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
     IN,
@@ -405,7 +390,7 @@ TIMETZ = Keyword("timetz", caseless=True)
 time_functions = DATE | DATETIME | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ
 
 # KNOWNN TIME TYPES
-_format = Optional(Regex(r'\"(\"\"|[^"])*\"')("params").addParseAction(unquote))
+_format = Optional((ansi_string | ansi_ident)("params"))
 
 DATE_TYPE = (DATE("op") + _format).addParseAction(to_json_call)
 DATETIME_TYPE = (DATETIME("op") + _format).addParseAction(to_json_call)

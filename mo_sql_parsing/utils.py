@@ -47,7 +47,7 @@ def scrub(result):
             for i, v in enumerate(output):
                 if v is SQL_NULL:
                     null_locations.append((output, i))
-            return scrub_literal(output)
+            return output
     else:
         # ATTEMPT A DICT INTERPRETATION
         try:
@@ -183,6 +183,13 @@ binary_ops = {
     "or": "or",
     "and": "and",
 }
+
+
+def to_trim_call(tokens):
+    frum = tokens['from']
+    if not frum:
+        return {"trim": tokens["chars"]}
+    return {"trim": frum, "characters": tokens['chars']}
 
 
 def to_json_call(tokens):
@@ -389,6 +396,12 @@ hexNum = (
 )
 
 # STRINGS
-sqlString = Regex(r"\'(\'\'|[^'])*\'").addParseAction(to_string)
+ansi_string = Regex(r"\'(\'\'|[^'])*\'").addParseAction(to_string)
+mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"').addParseAction(to_string)
+
+# BASIC IDENTIFIERS
+ansi_ident = Regex(r'\"(\"\"|[^"])*\"').addParseAction(unquote)
+mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`").addParseAction(unquote)
+sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
 
 expr = Forward()

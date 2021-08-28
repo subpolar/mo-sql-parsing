@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 
@@ -154,7 +156,6 @@ class TestRedshift(TestCase):
         self.assertEqual(result, {"select": {"value": {"interval": [0.5, "day"]}}})
 
     def test_issue5a_of_fork_date_cast_as_date(self):
-
         sql = 'select * from t left join ex on t.date = ex.date_at :: date""'
         result = parse(sql)
         self.assertEqual(
@@ -166,7 +167,7 @@ class TestRedshift(TestCase):
                         "left join": "ex",
                         "on": {"eq": [
                             "t.date",
-                            {"cast": ["ex.date_at", {"date": {}}]},
+                            {"cast": ["ex.date_at", {"date": {"literal": ""}}]},
                         ]},
                     },
                 ],
@@ -175,7 +176,6 @@ class TestRedshift(TestCase):
         )
 
     def test_issue5b_of_fork_date_cast_as_date(self):
-
         sql = "select distinct date_at :: date as date_at from t"
         result = parse(sql)
         self.assertEqual(
@@ -190,7 +190,6 @@ class TestRedshift(TestCase):
         )
 
     def test_issue5c_of_fork_date_cast_as_date(self):
-
         sql = """
             select
                 datediff('day', u.birth_date :: date, us.date_at :: date) as day_diff
@@ -511,3 +510,9 @@ class TestRedshift(TestCase):
                 "select": {"value": {"f_bigint_to_hhmmss": "device_timezone"}},
             },
         )
+
+    def test_issue_23_right(self):
+        sql = """SELECT RIGHT(a,6) FROM b"""
+        result = parse(sql)
+        expected = {'from': 'b', 'select': {'value': {'right': ['a', 6]}}}
+        self.assertEqual(result, expected)

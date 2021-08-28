@@ -408,3 +408,11 @@ class TestSimple(TestCase):
             ],
         })
         self.assertEqual(result, expected)
+
+    def test_concat(self):
+        expected = "SELECT 'a' || 'a'"
+        result = format({"select": {"value": {"concat": [
+            {"literal": "a"},
+            {"literal": "a"},
+        ]}}})
+        self.assertEqual(result, expected)

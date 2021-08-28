@@ -17,16 +17,9 @@ SQL is a familiar language used to access databases. Although, each database ven
 
 The primary objective of this library is to convert SQL queries to JSON-izable parse trees. This originally targeted MySQL, but has grown to include other database vendors. *Please [paste some SQL into a new issue](https://github.com/klahnakoski/mo-sql-parsing/issues) if it does not work for you*
 
-## Non-Objectives 
-
-* No plans to provide update statements, like `update` or `insert`
-* No plans to provide data access tools 
-
-It is my sincere hope you can convert the JSON into queries for your particular backend datastore  
-
 ## Project Status
 
-Jan 2021 -There are [almost 500 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  There is still a lot missing to support BigQuery and Redshift queries.  
+August 2021 -There are [almost 600 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  
 
 ## Install
 
@@ -46,13 +39,24 @@ Each SQL query is parsed to an object: Each clause is assigned to an object prop
 
 The `SELECT` clause is an array of objects containing `name` and `value` properties. 
 
-### Recursion Limit 
 
-Python's default recursion limit (1000) is not hit when parsing the test suite, but this may not be the case for large SQL. You can increase the recursion limit before you `parse`:
+### SQL Flavours 
 
-    >>> from mo_sql_parsing import parse
-    >>> sys.setrecursionlimit(3000)
-    >>> parse(complicated_sql)
+There are a few parsing modes you may be interested in:
+
+#### NULL is None
+
+The default output for this parser is to emit a null function `{"null":{}}` wherever `NULL` is encountered in the SQL.  If you would like something different, you can replace nulls with `None` (or anything else for that matter):
+
+    result = parse(sql, null=None)
+    
+this has been implemented with a post-parse rewriting of the parse tree.
+
+#### MySQL literal strings (broken)
+
+MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour.  A specific parse function is provided: 
+
+    result = parse_mysql(sql)
 
 
 ## Generating SQL
@@ -118,11 +122,14 @@ for select in listwrap(parsed_result.get('select')):
 you may find it easier if all JSON expressions had a list of operands:
 
 ```
-def normalize(expression)
-    # ensure parameters are in a list
-    return {
-        op: params
-        for op, param = expression.items()
-        for params in [[normalize(p) for p in listwrap(param)]]
-    }
+def normalize(expression):
+    if isinstance(expression, dict):
+        return [
+            {"operator": operator, "operands": [normalize(p) for p in listwrap(operands)]}
+            for operator, operands in expression.items()
+        ][0]
+    return expression
 ```
+
+[see the smoke test for working example](https://github.com/klahnakoski/mo-sql-parsing/blob/dev/tests/smoke_test.py)
+ 

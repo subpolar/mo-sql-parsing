@@ -6,9 +6,26 @@
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+import json
+
+from mo_parsing.utils import listwrap
 
 from mo_sql_parsing import parse
 
-parse("select *")
 
+def normalize(expression):
+    if isinstance(expression, dict):
+        items = list(expression.items())
+        if len(items) == 1:
+            return [
+                {"operator": operator, "args": [normalize(p) for p in listwrap(args)]}
+                for operator, args in items
+            ][0]
+        else:
+            raise NotImplemented()
+    return expression
+
+
+result = parse("select myFunction(a, b+c)")
+print(json.dumps(normalize(result['select']['value'])))
 print("done")
