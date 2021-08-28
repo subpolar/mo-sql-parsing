@@ -11,8 +11,6 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from unittest import TestCase
 
-from mo_json import value2json
-
 from mo_sql_parsing import parse
 
 
@@ -179,7 +177,6 @@ class TestBigSql(TestCase):
         """
 
         result = parse(sql)
-        print(value2json(result, pretty=True))
         expected = {
             "from": {
                 "name": "x",
