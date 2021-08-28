@@ -47,7 +47,7 @@ def scrub(result):
             for i, v in enumerate(output):
                 if v is SQL_NULL:
                     null_locations.append((output, i))
-            return scrub_literal(output)
+            return output
     else:
         # ATTEMPT A DICT INTERPRETATION
         try:

@@ -1908,3 +1908,11 @@ order by number_sites desc"""
             "from": "a",
         }
         self.verify_formatting(expected_sql, expected_json)
+
+    def test_concat(self):
+        expected_sql = "SELECT 'a' || 'a'"
+        expected_json = {"select": {"value": {"concat": [
+            {"literal": "a"},
+            {"literal": "a"},
+        ]}}}
+        self.verify_formatting(expected_sql, expected_json)
