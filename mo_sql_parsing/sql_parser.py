@@ -24,14 +24,13 @@ engine.add_ignore(Literal("#") + restOfLine)
 literal_string = Regex(r'\"(\"\"|[^"])*\"').addParseAction(unquote)
 mysql_ident = Regex(r"\`(\`\`|[^`])*\`").addParseAction(unquote)
 sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
-ident = Combine(
-    ~RESERVED
-    + (delimitedList(
-        literal_string | mysql_ident | sqlserver_ident | Word(IDENT_CHAR),
-        separator=".",
-        combine=True,
-    ))
-).set_parser_name("identifier")
+ident = Combine(delimitedList(
+    literal_string | mysql_ident | sqlserver_ident | Word(IDENT_CHAR),
+    separator=".",
+    combine=True,
+)).set_parser_name("identifier")
+var_name = ~RESERVED + ident
+
 
 # EXPRESSIONS
 column_definition = Forward()
@@ -100,7 +99,7 @@ extract = (
 ).addParseAction(to_json_call)
 
 namedColumn = Group(
-    Group(expr)("value") + Optional(Optional(AS) + Group(ident))("name")
+    Group(expr)("value") + Optional(Optional(AS) + Group(var_name))("name")
 )
 
 distinct = (
@@ -152,7 +151,7 @@ compound = (
     | intNum.set_parser_name("int")
     | call_function
     | known_types
-    | Combine(ident + Optional(".*"))
+    | Combine(var_name + Optional(".*"))
 )
 
 expr << (
@@ -176,7 +175,7 @@ expr << (
 
 
 alias = (
-    (Group(ident) + Optional(LB + delimitedList(ident("col")) + RB))("name")
+    (Group(var_name) + Optional(LB + delimitedList(ident("col")) + RB))("name")
     .set_parser_name("alias")
     .addParseAction(to_alias)
 )
@@ -196,8 +195,8 @@ selectColumn = (
 table_source = (
     ((LB + ordered_sql + RB) | call_function)("value").set_parser_name("table source")
     + Optional(Optional(AS) + alias)
-    | (ident("value").set_parser_name("table name") + Optional(AS) + alias)
-    | ident.set_parser_name("table name")
+    | (var_name("value").set_parser_name("table name") + Optional(AS) + alias)
+    | var_name.set_parser_name("table name")
 )
 
 join = (
@@ -243,7 +242,7 @@ ordered_sql << (
 statement = Forward()
 statement << (
     Optional(
-        WITH + delimitedList(Group(ident("name") + AS + LB + statement("value") + RB))
+        WITH + delimitedList(Group(var_name("name") + AS + LB + statement("value") + RB))
     )("with")
     + Group(ordered_sql)("query")
 ).addParseAction(to_statement)
@@ -275,7 +274,7 @@ column_type << (
 )
 
 column_def_references = (
-    REFERENCES + ident("table") + LB + delimitedList(ident)("columns") + RB
+    REFERENCES + var_name("table") + LB + delimitedList(var_name)("columns") + RB
 )("references")
 
 column_def_check = Keyword("check", caseless=True).suppress() + LB + expr + RB
@@ -293,7 +292,7 @@ column_options = ZeroOrMore(Group(
 )).set_parser_name("column_options")
 
 column_definition << Group(
-    ident("name").addParseAction(lambda t: t[0].lower())
+    var_name("name").addParseAction(lambda t: t[0].lower())
     + column_type("type")
     + Optional(column_options)("option")
 ).set_parser_name("column_definition")
@@ -301,28 +300,28 @@ column_definition << Group(
 # MySQL's index_type := Using + ( "BTREE" | "HASH" )
 index_type = Optional(USING + ident("index_type"))
 
-index_column_names = LB + delimitedList(ident("columns")) + RB
+index_column_names = LB + delimitedList(var_name("columns")) + RB
 
 column_def_foreign_key = FOREIGN_KEY + Optional(
-    ident("index_name") + index_column_names + column_def_references
+    var_name("index_name") + index_column_names + column_def_references
 )
 
-index_options = ZeroOrMore(ident)("table_constraint_options")
+index_options = ZeroOrMore(var_name)("table_constraint_options")
 
 
-table_constraint_definition = Optional(CONSTRAINT + ident("name")) + (
+table_constraint_definition = Optional(CONSTRAINT + var_name("name")) + (
     (PRIMARY_KEY + index_type + index_column_names + index_options)("primary_key")
     | (
         UNIQUE
         + Optional(INDEX | KEY)
-        + Optional(ident("index_name"))
+        + Optional(var_name("index_name"))
         + index_type
         + index_column_names
         + index_options
     )("unique")
     | (
         (INDEX | KEY)
-        + Optional(ident("index_name"))
+        + Optional(var_name("index_name"))
         + index_type
         + index_column_names
         + index_options
@@ -337,7 +336,7 @@ table_element = column_definition("columns") | table_constraint_definition("cons
 createStmt << (
     CREATE_TABLE
     + (
-        ident("name")
+        var_name("name")
         + Optional(LB + delimitedList(table_element) + RB)
         + Optional(AS.suppress() + infixNotation(statement, []))("select_statement")
     )("create table")
