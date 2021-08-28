@@ -390,7 +390,7 @@ TIMETZ = Keyword("timetz", caseless=True)
 time_functions = DATE | DATETIME | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ
 
 # KNOWNN TIME TYPES
-_format = Optional(Regex(r'\"(\"\"|[^"])*\"')("params").addParseAction(unquote))
+_format = Optional((ansi_string | ansi_ident)("params"))
 
 DATE_TYPE = (DATE("op") + _format).addParseAction(to_json_call)
 DATETIME_TYPE = (DATETIME("op") + _format).addParseAction(to_json_call)

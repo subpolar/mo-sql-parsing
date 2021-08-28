@@ -167,7 +167,7 @@ class TestRedshift(TestCase):
                         "left join": "ex",
                         "on": {"eq": [
                             "t.date",
-                            {"cast": ["ex.date_at", {"date": {}}]},
+                            {"cast": ["ex.date_at", {"date": {"literal": ""}}]},
                         ]},
                     },
                 ],

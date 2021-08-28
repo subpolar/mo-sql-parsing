@@ -12,19 +12,12 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from threading import Lock
 
-from mo_sql_parsing.sql_parser import (
-    SQLParser,
-    scrub_literal,
-    scrub,
-    literal_string,
-    mysql_string,
-    mysql_ident,
-    ident,
-    combined_ident,
-)
+from mo_sql_parsing.sql_parser import scrub_literal, scrub
 from mo_sql_parsing.utils import SQL_NULL, ansi_string
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
+combined_parser = None
+mysql_parser = None
 
 
 def parse(sql, null=SQL_NULL):
@@ -33,36 +26,44 @@ def parse(sql, null=SQL_NULL):
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
     :return: parse tree
     """
+    global combined_parser
+
     with parseLocker:
-        utils.null_locations = []
-        sql = sql.rstrip().rstrip(";")
-        parse_result = SQLParser.parseString(sql, parseAll=True)
-        output = scrub(parse_result)
-        if null is not SQL_NULL:
-            for o, n in utils.null_locations:
-                o[n] = null
-        return output
+        if not combined_parser:
+            combined_parser = sql_parser.combined_parser()
+        return _parse(combined_parser, sql, null)
+
+
+def parse_mysql(sql, null=SQL_NULL):
+    """
+    PARSE MySQL ASSUME DOUBLE QUOTED STRINGS ARE LITERALS
+    :param sql: String of SQL
+    :param null: What value to use as NULL (default is the null function `{"null":{}}`)
+    :return: parse tree
+    """
+    global mysql_parser
+
+    with parseLocker:
+        if not mysql_parser:
+            mysql_parser = sql_parser.mysql_parser()
+        return _parse(mysql_parser, sql, null)
+
+
+def _parse(parser, sql, null=SQL_NULL):
+    utils.null_locations = []
+    sql = sql.rstrip().rstrip(";")
+    parse_result = parser.parseString(sql, parseAll=True)
+    output = scrub(parse_result)
+    if null is not SQL_NULL:
+        for o, n in utils.null_locations:
+            o[n] = null
+    return output
 
 
 def format(json, **kwargs):
     from mo_sql_parsing.formatting import Formatter
 
     return Formatter(**kwargs).format(json)
-
-
-def parse_mysql(sql, null=SQL_NULL):
-    """
-    PARSE MySQL ASSUME DOUBLE QUOTED STRINGS ARE LITERALS
-    """
-    raise NotImplemented()
-    try:
-        literal_string << mysql_string
-        ident << mysql_ident
-
-        return parse(sql, null)
-    finally:
-        literal_string << ansi_string
-        ident << combined_ident
 
 
 _ = json.dumps
