@@ -185,6 +185,13 @@ binary_ops = {
 }
 
 
+def to_trim_call(tokens):
+    frum = tokens['from']
+    if not frum:
+        return {"trim": tokens["chars"]}
+    return {"trim": frum, "characters": tokens['chars']}
+
+
 def to_json_call(tokens):
     # ARRANGE INTO {op: params} FORMAT
     op = tokens["op"].lower()

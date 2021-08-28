@@ -15,10 +15,14 @@ from mo_sql_parsing import parse
 
 def normalize(expression):
     if isinstance(expression, dict):
-        return [
-            {"operator": operator, "operands": [normalize(p) for p in listwrap(operands)]}
-            for operator, operands in expression.items()
-        ][0]
+        items = list(expression.items())
+        if len(items) == 1:
+            return [
+                {"operator": operator, "args": [normalize(p) for p in listwrap(args)]}
+                for operator, args in items
+            ][0]
+        else:
+            raise NotImplemented()
     return expression
 
 

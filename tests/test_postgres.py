@@ -58,3 +58,25 @@ class TestPostgres(TestCase):
             },
         ]}
         self.assertEqual(result, expected)
+
+    def test_issue_19a(self):
+        # https: // docs.microsoft.com / en - us / sql / t - sql / functions / trim - transact - sql?view = sql - server - ver15
+        sql = "select trim(' ' from ' This is a test') from dual"
+        result = parse(sql)
+        expected = {
+            "from": "dual",
+            "select": {"value": {
+                "trim": {"literal": " This is a test"},
+                "characters": {"literal": " "}
+            }},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_19b(self):
+        sql = "select trim(' testing  ') from dual"
+        result = parse(sql)
+        expected = {
+            "from": "dual",
+            "select": {"value": {"trim": {"literal": " testing  "}}},
+        }
+        self.assertEqual(result, expected)

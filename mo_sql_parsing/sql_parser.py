@@ -63,6 +63,12 @@ cast = Group(
     CAST("op") + LB + expr("params") + AS + known_types("params") + RB
 ).addParseAction(to_json_call)
 
+# TRIM
+trim = Group(
+    Keyword("trim", caseless=True).suppress() + LB + expr("chars") + Optional(FROM + expr("from")) + RB
+).addParseAction(to_trim_call)
+
+
 _standard_time_intervals = MatchFirst([
     Keyword(d, caseless=True).addParseAction(lambda t: durations[t[0].lower()])
     for d in durations.keys()
@@ -135,6 +141,7 @@ compound = (
     | switch
     | cast
     | distinct
+    | trim
     | (LB + Group(ordered_sql) + RB)
     | (LB + Group(delimitedList(expr)).addParseAction(to_tuple_call) + RB)
     | sqlString.set_parser_name("string")
