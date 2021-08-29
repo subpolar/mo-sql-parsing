@@ -7,8 +7,6 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from __future__ import absolute_import, division, unicode_literals
-
 from mo_parsing.helpers import delimitedList, restOfLine
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 

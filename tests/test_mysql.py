@@ -10,12 +10,15 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse_mysql
 
 
 class TestMySql(TestCase):
     def test_issue_22(self):
         sql = 'SELECT "fred"'
-        result = parse_mysql(sql)
+        with Debugger():
+            result = parse_mysql(sql)
         expected = {"select": {"value": {"literal": "fred"}}}
         self.assertEqual(result, expected)

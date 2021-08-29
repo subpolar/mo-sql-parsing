@@ -15,7 +15,6 @@ from mo_sql_parsing import parse
 
 
 class TestCreateSimple(TestCase):
-
     maxDiff = None
 
     def test_one_column(self):
@@ -442,10 +441,13 @@ class TestTableConstraint(TestCase):
         self.assertEqual(result, expected)
 
     def test_reference_composite(self):
-        result = parse(
-            "create table student (name varchar not null, id varchar not null, "
-            "foreign key frn_student(name, id) references person (colname, pid)  )"
-        )
+        result = parse("""
+            create table student (
+                name varchar not null, 
+                id varchar not null, 
+                foreign key frn_student(name, id) references person (colname, pid)  
+            )
+        """)
         expected = {"create table": {
             "name": "student",
             "columns": [
@@ -457,6 +459,36 @@ class TestTableConstraint(TestCase):
                 "columns": ["name", "id"],
                 "references": {"table": "person", "columns": ["colname", "pid"]},
             }},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_2_foreign_key(self):
+        result = parse("""
+            create table student (
+                name varchar not null, 
+                id varchar not null, 
+                foreign key frn_student(name, id) references person (colname, pid),
+                foreign key Z(name, id) references B(colname, pid)  
+            )
+        """)
+        expected = {"create table": {
+            "name": "student",
+            "columns": [
+                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+            ],
+            "constraint": [
+                {"foreign_key": {
+                    "index_name": "frn_student",
+                    "columns": ["name", "id"],
+                    "references": {"table": "person", "columns": ["colname", "pid"]},
+                }},
+                {"foreign_key": {
+                    "index_name": "Z",
+                    "columns": ["name", "id"],
+                    "references": {"table": "B", "columns": ["colname", "pid"]},
+                }}
+            ]
         }}
         self.assertEqual(result, expected)
 
@@ -472,6 +504,29 @@ class TestTableConstraint(TestCase):
                 "name": "chk_01",
                 "check": {"like": ["name", {"literal": "%Doe"}]},
             },
+        }}
+        self.assertEqual(result, expected)
+
+    def test_2_constraints(self):
+        result = parse("""create table student (
+            name varchar, 
+            constraint chk_01 check (name like '%Doe'), 
+            constraint chk_02 check (A = 0) 
+            )
+        """)
+        expected = {"create table": {
+            "name": "student",
+            "columns": {"name": "name", "type": {"varchar": {}}},
+            "constraint": [
+                {
+                    "name": "chk_01",
+                    "check": {"like": ["name", {"literal": "%Doe"}]},
+                },
+                {
+                    "name": "chk_02",
+                    "check": {"eq": ["A", 0]},
+                }
+            ]
         }}
         self.assertEqual(result, expected)
 

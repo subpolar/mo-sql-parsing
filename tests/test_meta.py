@@ -22,9 +22,9 @@ from mo_sql_parsing import sql_parser
 _ensure_imported = sql_parser
 
 
-class TestSimple(TestCase):
+class TestMeta(TestCase):
     """
-    THESE TESTS ARE FOR VERIFYING THE STATE OF THE REPO, NOT HTE STATE OF THE CODE
+    THESE TESTS ARE FOR VERIFYING THE STATE OF THE REPO, NOT THE STATE OF THE CODE
     """
 
     def test_recursion_limit(self):
