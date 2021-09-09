@@ -280,6 +280,20 @@ class TestSimple(TestCase):
         }
         self.assertEqual(result, expected)
 
+    def test_switch_else(self):
+        result = parse(
+            "select case table0.y1 when 'a' then 1 else 0 end from table0"
+        )
+        expected = {
+            "select": {
+                "value": {
+                    "case": [{"when": {"eq": ["table0.y1", {"literal": "a"}]}, "then": 1}, 0]
+                }
+            },
+            "from": "table0",
+        }
+        self.assertEqual(result, expected)
+
     def test_not_like_in_select(self):
         result = parse(
             "select case when A not like 'bb%' then 1 else 0 end as bb from table1"
