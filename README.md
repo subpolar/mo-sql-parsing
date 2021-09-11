@@ -52,7 +52,7 @@ The default output for this parser is to emit a null function `{"null":{}}` wher
     
 this has been implemented with a post-parse rewriting of the parse tree.
 
-#### MySQL literal strings (broken)
+#### MySQL literal strings
 
 MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour.  A specific parse function is provided: 
 
