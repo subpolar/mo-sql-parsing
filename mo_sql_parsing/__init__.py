@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from threading import Lock
 
-from mo_sql_parsing.sql_parser import scrub_literal, scrub
+from mo_sql_parsing.sql_parser import scrub
 from mo_sql_parsing.utils import SQL_NULL, ansi_string
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME

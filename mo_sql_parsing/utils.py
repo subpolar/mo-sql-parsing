@@ -63,18 +63,6 @@ def scrub(result):
         return scrub(list(result))
 
 
-def scrub_literal(candidate):
-    # IF ALL MEMBERS OF A LIST ARE LITERALS, THEN MAKE THE LIST LITERAL
-    if all(isinstance(r, number_types) for r in candidate):
-        pass
-    elif all(
-        isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
-        for r in candidate
-    ):
-        candidate = {"literal": [r["literal"] if is_data(r) else r for r in candidate]}
-    return candidate
-
-
 def _chunk(values, size):
     acc = []
     for v in values:
@@ -150,7 +138,16 @@ def to_tuple_call(tokens):
     tokens = list(tokens)
     if len(tokens) == 1:
         return [tokens[0]]
-    return [scrub_literal(tokens)]
+    if all(isinstance(r, number_types) for r in tokens):
+        return [tokens]
+    if all(
+        isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
+        for r in tokens
+    ):
+        candidate = {"literal": [r["literal"] if is_data(r) else r for r in tokens]}
+        return candidate
+
+    return [tokens]
 
 
 binary_ops = {
