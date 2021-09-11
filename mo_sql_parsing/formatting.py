@@ -13,6 +13,8 @@ import re
 
 from mo_dots import split_field
 from mo_future import first, is_text, long, string_types, text
+from mo_parsing import listwrap
+
 from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
 from mo_sql_parsing.utils import binary_ops
 
@@ -141,7 +143,7 @@ class Formatter:
 
     def dispatch(self, json):
         if isinstance(json, list):
-            return self.delimited_list(json)
+            return self.sql_list(json)
         if isinstance(json, dict):
             if len(json) == 0:
                 return ""
@@ -169,8 +171,8 @@ class Formatter:
 
         return text(json)
 
-    def delimited_list(self, json):
-        return ", ".join(self.dispatch(element) for element in json)
+    def sql_list(self, json):
+        return "(" + ", ".join(self.dispatch(element) for element in json) + ")"
 
     def value(self, json):
         parts = [self.dispatch(json["value"])]
@@ -187,7 +189,7 @@ class Formatter:
         # check if the attribute exists, and call the corresponding method;
         # note that we disallow keys that start with `_` to avoid giving access
         # to magic methods
-        attr = "_{0}".format(key)
+        attr = f"_{key}"
         if hasattr(self, attr) and not key.startswith("_"):
             method = getattr(self, attr)
             return method(value)
@@ -198,7 +200,8 @@ class Formatter:
                 key.upper() + "()"
             )  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.dispatch()
         else:
-            return "{0}({1})".format(key.upper(), self.dispatch(value))
+            params = ", ".join(self.dispatch(p) for p in listwrap(value))
+            return f"{key.upper()}({params})"
 
     def _binary_not(self, value):
         return "~{0}".format(self.dispatch(value))
@@ -230,13 +233,12 @@ class Formatter:
         return "{0} COLLATE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
 
     def _in(self, json):
-        valid = self.dispatch(json[1])
-        # `(10, 11, 12)` does not get parsed as literal, so it's formatted as
-        # `10, 11, 12`. This fixes it.
-        if not valid.startswith("("):
-            valid = "({0})".format(valid)
+        value, many = json
 
-        return "{0} IN {1}".format(json[0], valid)
+        value = self.dispatch(value)
+        many = self.dispatch(many)
+
+        return "{0} IN {1}".format(value, many)
 
     def _nin(self, json):
         valid = self.dispatch(json[1])
@@ -330,12 +332,12 @@ class Formatter:
 
     def select(self, json):
         if "select" in json:
+            param = ", ".join(self.dispatch(s) for s in listwrap(json["select"]))
             if "top" in json:
-                return "SELECT TOP ({0}) {1} ".format(
-                    self.dispatch(json["top"]), self.dispatch(json["select"]),
-                )
+                top = self.dispatch(json["top"])
+                return f"SELECT TOP ({top}) {param}"
             else:
-                return "SELECT {0}".format(self.dispatch(json["select"]))
+                return f"SELECT {param}"
 
     def select_distinct(self, json):
         if "select_distinct" in json:
@@ -367,7 +369,8 @@ class Formatter:
 
     def groupby(self, json):
         if "groupby" in json:
-            return "GROUP BY {0}".format(self.dispatch(json["groupby"]))
+            param = ", ".join(self.dispatch(s) for s in listwrap(json["groupby"]))
+            return f"GROUP BY {param}"
 
     def having(self, json):
         if "having" in json:
@@ -375,13 +378,11 @@ class Formatter:
 
     def orderby(self, json):
         if "orderby" in json:
-            orderby = json["orderby"]
-            if isinstance(orderby, dict):
-                orderby = [orderby]
-            return "ORDER BY {0}".format(",".join([
-                "{0} {1}".format(self.dispatch(o), o.get("sort", "").upper()).strip()
-                for o in orderby
-            ]))
+            param = ", ".join(
+                (self.dispatch(s['value']) + " " + s.get("sort", "").upper()).strip()
+                for s in listwrap(json["orderby"])
+            )
+            return f"ORDER BY {param}"
 
     def limit(self, json):
         if "limit" in json:
