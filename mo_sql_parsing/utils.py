@@ -239,7 +239,7 @@ def to_switch_call(tokens):
     for c in cases:
         c["when"] = {"eq": [value, c["when"]]}
     elze = tokens["else"]
-    if elze:
+    if elze != None:
         cases.append(elze)
     return {"case": cases}
 

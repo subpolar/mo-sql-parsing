@@ -8,10 +8,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-import json
 from unittest import TestCase
-
-from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import parse
 
@@ -280,6 +277,20 @@ class TestSimple(TestCase):
                     0,
                 ]},
             },
+        }
+        self.assertEqual(result, expected)
+
+    def test_switch_else(self):
+        result = parse(
+            "select case table0.y1 when 'a' then 1 else 0 end from table0"
+        )
+        expected = {
+            "select": {
+                "value": {
+                    "case": [{"when": {"eq": ["table0.y1", {"literal": "a"}]}, "then": 1}, 0]
+                }
+            },
+            "from": "table0",
         }
         self.assertEqual(result, expected)
 

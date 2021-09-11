@@ -97,5 +97,5 @@ class TestNull(TestCase):
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
         result = parse(sql, null=None)
-        expected = {"select": {"value": {"decode": ["A", None, {"literal": "b"},]}}}
+        expected = {"select": {"value": {"decode": ["A", None, {"literal": "b"}]}}}
         self.assertEqual(result, expected)

@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_sql_parsing import format
+from mo_sql_parsing import format, parse
 
 
 class TestSimple(TestCase):
@@ -71,7 +71,7 @@ class TestSimple(TestCase):
 
     def select_many_column(self):
         result = format({
-            "select": [{"value": "a"}, {"value": "b"}, {"value": "c"},],
+            "select": [{"value": "a"}, {"value": "b"}, {"value": "c"}],
             "from": ["dual"],
         })
         expected = "SELECT a, b, c FROM dual"
@@ -90,7 +90,7 @@ class TestSimple(TestCase):
         result = format({
             "select": {"value": "a"},
             "from": "dual",
-            "where": {"in": ["a", {"literal": ["r", "g", "b"]},]},
+            "where": {"in": ["a", {"literal": ["r", "g", "b"]}]},
         })
         expected = "SELECT a FROM dual WHERE a IN ('r', 'g', 'b')"
         self.assertEqual(result, expected)
@@ -100,7 +100,7 @@ class TestSimple(TestCase):
             "select": {"value": "a"},
             "from": "dual",
             "where": {"and": [
-                {"in": ["a", {"literal": ["r", "g", "b"]},]},
+                {"in": ["a", {"literal": ["r", "g", "b"]}]},
                 {"in": ["b", [10, 11, 12],]},
             ]},
         })
@@ -109,7 +109,7 @@ class TestSimple(TestCase):
 
     def test_eq(self):
         result = format({
-            "select": [{"value": "a"}, {"value": "b"},],
+            "select": [{"value": "a"}, {"value": "b"}],
             "from": ["t1", "t2"],
             "where": {"eq": ["t1.a", "t2.b"]},
         })
@@ -118,7 +118,7 @@ class TestSimple(TestCase):
 
     def test_is_null(self):
         result = format({
-            "select": [{"value": "a"}, {"value": "b"},],
+            "select": [{"value": "a"}, {"value": "b"}],
             "from": "t1",
             "where": {"missing": "t1.a"},
         })
@@ -127,7 +127,7 @@ class TestSimple(TestCase):
 
     def test_is_not_null(self):
         result = format({
-            "select": [{"value": "a"}, {"value": "b"},],
+            "select": [{"value": "a"}, {"value": "b"}],
             "from": "t1",
             "where": {"exists": "t1.a"},
         })
@@ -136,7 +136,7 @@ class TestSimple(TestCase):
 
     def test_groupby(self):
         result = format({
-            "select": [{"value": "a"}, {"name": "b", "value": {"count": 1}},],
+            "select": [{"value": "a"}, {"name": "b", "value": {"count": 1}}],
             "from": "mytable",
             "groupby": {"value": "a"},
         })
@@ -300,7 +300,7 @@ class TestSimple(TestCase):
 
     def test_union(self):
         result = format({
-            "union": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"},],
+            "union": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"}],
         })
         expected = "SELECT * FROM a UNION SELECT * FROM b"
         self.assertEqual(result, expected)
@@ -358,7 +358,7 @@ class TestSimple(TestCase):
             ' des notes", ROUND(AVG(Complexite), 2) AS "Complexite moyenne" FROM'
             " Propriete, Categorie, Jeu WHERE IdPropriete = IdCategorie AND"
             " Categorie.IdJeu = Jeu.IdJeu AND NotePonderee > 0 GROUP BY IdPropriete,"
-            ' NomPropriete ORDER BY "Moyenne des notes" DESC,"Complexite moyenne" DESC'
+            ' NomPropriete ORDER BY "Moyenne des notes" DESC, "Complexite moyenne" DESC'
         )
         result = format({
             "select": [
@@ -416,3 +416,20 @@ class TestSimple(TestCase):
             {"literal": "a"},
         ]}}})
         self.assertEqual(result, expected)
+
+    def test_issue_28(self):
+        original_sql = "select * from T where (a, b) in (('a', 'b'), ('c', 'd'))"
+        parse_result = parse(original_sql)
+        expected_result = {
+            "select": "*",
+            "from": "T",
+            "where": {"in": [
+                ["a", "b"],
+                [{"literal": ["a", "b"]}, {"literal": ["c", "d"]}],
+            ]},
+        }
+        self.assertEqual(parse_result, expected_result)
+
+        expected_sql = "SELECT * FROM T WHERE (a, b) IN (('a', 'b'), ('c', 'd'))"
+        format_result = format(expected_result)
+        self.assertEqual(format_result, expected_sql)

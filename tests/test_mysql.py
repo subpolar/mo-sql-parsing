@@ -20,5 +20,5 @@ class TestMySql(TestCase):
         sql = 'SELECT "fred"'
         with Debugger():
             result = parse_mysql(sql)
-            expected = {"select": {"value": {"literal": "fred"}}}
-            self.assertEqual(result, expected)
+        expected = {"select": {"value": {"literal": "fred"}}}
+        self.assertEqual(result, expected)
