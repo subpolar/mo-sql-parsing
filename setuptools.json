@@ -16,7 +16,7 @@
         "tests": ["mo-testing", "mo-threads"]
     },
     "include_package_data": true,
-    "install_requires": ["mo-dots==5.22.21182", "mo-future==5.17.21182", "mo-parsing==5.54.21254"],
+    "install_requires": ["mo-dots==5.22.21182", "mo-future==5.17.21182", "mo-parsing==5.56.21258"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -74,7 +74,7 @@
             "    ",
             "this has been implemented with a post-parse rewriting of the parse tree.",
             "",
-            "#### MySQL literal strings (broken)",
+            "#### MySQL literal strings",
             "",
             "MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour.  A specific parse function is provided: ",
             "",
@@ -162,6 +162,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "5.54.21254",
+    "version": "5.56.21258",
     "zip_safe": true
 }
