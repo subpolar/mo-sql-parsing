@@ -80,3 +80,15 @@ class TestPostgres(TestCase):
             "select": {"value": {"trim": {"literal": " testing  "}}},
         }
         self.assertEqual(result, expected)
+
+    def test_except(self):
+        sql = """select name from employee
+        except
+        select 'Alan' from dual
+        """
+        result = parse(sql)
+        expected = {"except": [
+            {"from": "employee", "select": {"value": "name"}},
+            {"from": "dual", "select": {"value": {"literal": "Alan"}}},
+        ]}
+        self.assertEqual(result, expected)

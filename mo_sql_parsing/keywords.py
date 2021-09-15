@@ -17,6 +17,7 @@ CONSTRAINT = Keyword("constraint", caseless=True).suppress()
 CREATE = Keyword("create", caseless=True).suppress()
 CROSS = Keyword("cross", caseless=True)
 DISTINCT = Keyword("distinct", caseless=True)
+EXCEPT = Keyword("except", caseless=True)
 FROM = Keyword("from", caseless=True).suppress()
 FULL = Keyword("full", caseless=True)
 GROUP = Keyword("group", caseless=True).suppress()
@@ -27,6 +28,7 @@ JOIN = Keyword("join", caseless=True)
 LEFT = Keyword("left", caseless=True)
 LIKE = Keyword("like", caseless=True)
 LIMIT = Keyword("limit", caseless=True).suppress()
+MINUS = Keyword("minus", caseless=True)
 OFFSET = Keyword("offset", caseless=True).suppress()
 ON = Keyword("on", caseless=True).suppress()
 ORDER = Keyword("order", caseless=True).suppress()
@@ -139,6 +141,7 @@ RESERVED = MatchFirst([
     CROSS,
     DESC,
     DISTINCT,
+    EXCEPT,
     ELSE,
     END,
     FALSE,
@@ -159,6 +162,7 @@ RESERVED = MatchFirst([
     LEFT,
     LIKE,
     LIMIT,
+    MINUS,
     NOCASE,
     NOT,
     NULL,

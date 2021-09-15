@@ -15,9 +15,9 @@ from mo_dots import is_data, is_null
 from mo_future import text, number_types, binary_type
 
 from mo_parsing import *
-from mo_parsing.utils import is_number, listwrap, alphanums
+from mo_parsing.utils import is_number, listwrap
 
-IDENT_CHAR = alphanums + "@_$"
+IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
 SQL_NULL = {"null": {}}
 
 null_locations = []
@@ -61,18 +61,6 @@ def scrub(result):
                     null_locations.append((output, k))
             return output
         return scrub(list(result))
-
-
-def scrub_literal(candidate):
-    # IF ALL MEMBERS OF A LIST ARE LITERALS, THEN MAKE THE LIST LITERAL
-    if all(isinstance(r, number_types) for r in candidate):
-        pass
-    elif all(
-        isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
-        for r in candidate
-    ):
-        candidate = {"literal": [r["literal"] if is_data(r) else r for r in candidate]}
-    return candidate
 
 
 def _chunk(values, size):
@@ -150,7 +138,16 @@ def to_tuple_call(tokens):
     tokens = list(tokens)
     if len(tokens) == 1:
         return [tokens[0]]
-    return [scrub_literal(tokens)]
+    if all(isinstance(r, number_types) for r in tokens):
+        return [tokens]
+    if all(
+        isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
+        for r in tokens
+    ):
+        candidate = {"literal": [r["literal"] if is_data(r) else r for r in tokens]}
+        return candidate
+
+    return [tokens]
 
 
 binary_ops = {
