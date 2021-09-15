@@ -1434,3 +1434,9 @@ class TestSimple(TestCase):
             {"from": "dual", "select": {"value": {"literal": "Alan"}}},
         ]}
         self.assertEqual(result, expected)
+
+    def test_issue_32_not_ascii(self):
+        sql = """select äce from motorhead"""
+        result = parse(sql)
+        expected = {'from': 'motorhead', 'select': {'value': 'äce'}}
+        self.assertEqual(result, expected)
