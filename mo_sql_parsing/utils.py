@@ -17,8 +17,7 @@ from mo_future import text, number_types, binary_type
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
 
-alphanums = alphas = Regex("[0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
-IDENT_CHAR = alphanums + "@_$"
+IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
 SQL_NULL = {"null": {}}
 
 null_locations = []
