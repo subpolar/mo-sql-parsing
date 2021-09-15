@@ -281,15 +281,12 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_switch_else(self):
-        result = parse(
-            "select case table0.y1 when 'a' then 1 else 0 end from table0"
-        )
+        result = parse("select case table0.y1 when 'a' then 1 else 0 end from table0")
         expected = {
-            "select": {
-                "value": {
-                    "case": [{"when": {"eq": ["table0.y1", {"literal": "a"}]}, "then": 1}, 0]
-                }
-            },
+            "select": {"value": {"case": [
+                {"when": {"eq": ["table0.y1", {"literal": "a"}]}, "then": 1},
+                0,
+            ]}},
             "from": "table0",
         }
         self.assertEqual(result, expected)
@@ -1426,3 +1423,14 @@ class TestSimple(TestCase):
             },
         )
 
+    def test_minus(self):
+        sql = """select name from employee
+        minus
+        select 'Alan' from dual
+        """
+        result = parse(sql)
+        expected = {"minus": [
+            {"from": "employee", "select": {"value": "name"}},
+            {"from": "dual", "select": {"value": {"literal": "Alan"}}},
+        ]}
+        self.assertEqual(result, expected)
