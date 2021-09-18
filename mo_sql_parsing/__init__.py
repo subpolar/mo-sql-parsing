@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from threading import Lock
 
-from mo_sql_parsing.operators import normalize
 from mo_sql_parsing.sql_parser import scrub
 from mo_sql_parsing.utils import ansi_string, simple_op
 
@@ -35,7 +34,6 @@ def parse(sql, null=SQL_NULL, calls=simple_op):
         if not combined_parser:
             combined_parser = sql_parser.combined_parser()
         result = _parse(combined_parser, sql, null)
-        normalize(result)
         return result
 
 
