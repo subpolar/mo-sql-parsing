@@ -320,13 +320,13 @@ def to_union_call(tokens):
         unions = list(unions)
         sources = [unions[i] for i in range(0, len(unions), 2)]
         operators = ["_".join(unions[i]) for i in range(1, len(unions), 2)]
-        acc = sources[-1]
+        acc = sources[0]
         last_union = None
-        for op, so in reversed(list(zip(operators, sources))):
-            if op == last_union:
-                acc[op] = [so] + acc[op]
+        for op, so in list(zip(operators, sources[1:])):
+            if op == last_union and "union" in op:
+                acc[op] = acc[op] + [so]
             else:
-                acc = {op: [so, acc]}
+                acc = {op: [acc, so]}
             last_union = op
 
         if not tokens["orderby"] and not tokens["offset"] and not tokens["limit"]:

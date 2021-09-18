@@ -436,12 +436,9 @@ class TestRedshift(TestCase):
         result = parse(sql)
         self.assertEqual(
             result,
-            {"union": [
-                {"from": "a", "select": "*"},
-                {"union_all": [
-                    {"from": "b", "select": "*"},
-                    {"from": "c", "select": "*"},
-                ]},
+            {"union_all": [
+                {"union": [{"from": "a", "select": "*"}, {"from": "b", "select": "*"}]},
+                {"from": "c", "select": "*"},
             ]},
         )
 
@@ -512,5 +509,5 @@ class TestRedshift(TestCase):
     def test_issue_23_right(self):
         sql = """SELECT RIGHT(a,6) FROM b"""
         result = parse(sql)
-        expected = {'from': 'b', 'select': {'value': {'right': ['a', 6]}}}
+        expected = {"from": "b", "select": {"value": {"right": ["a", 6]}}}
         self.assertEqual(result, expected)

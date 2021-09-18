@@ -266,7 +266,9 @@ def parser(literal_string, ident):
             + Group(ordered_sql)("query")
         ).addParseAction(to_statement)
 
+        #####################################################################
         # CREATE TABLE
+        #####################################################################
         createStmt = Forward()
 
         BigQuery_STRUCT = (
