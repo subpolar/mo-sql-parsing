@@ -17,10 +17,31 @@ from mo_future import text, number_types, binary_type
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
 
+
+class Call(object):
+    __slots__ = ['op', 'args', 'kwargs']
+
+    def __init__(self, op, args, kwargs):
+        self.op = op
+        self.args = args
+        self.kwargs = kwargs
+
+
 IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
-SQL_NULL = {"null": {}}
+SQL_NULL = Call("null", [], {})
 
 null_locations = []
+
+def simple_op(op, args, kwargs):
+    kwargs[op] = args
+    return kwargs
+
+
+def normal_op(op, args, kwargs):
+    return {"op": op, "args": args, "kwargs": kwargs}
+
+
+scrub_op = simple_op
 
 
 def scrub(result):
@@ -34,6 +55,12 @@ def scrub(result):
         return result.decode("utf8")
     elif isinstance(result, number_types):
         return result
+    elif isinstance(result, Call):
+        kwargs = scrub(result.kwargs)
+        args = scrub(result.args)
+        if args is SQL_NULL:
+            null_locations.append((kwargs, result.op))
+        return scrub_op(result.op, args, kwargs)
     elif isinstance(result, dict) and not result:
         return result
     elif isinstance(result, list):
@@ -82,10 +109,10 @@ def to_json_operator(tokens):
         op = tokens.tokens[0].type.parser_name
         if op == "neg" and is_number(tokens[1]):
             return -tokens[1]
-        return {op: tokens[1]}
+        return Call(op, tokens[1], {})
     elif length == 5:
         # TRINARY OPERATOR
-        return {tokens.tokens[1].type.parser_name: [tokens[0], tokens[2], tokens[4]]}
+        return Call(tokens.tokens[1].type.parser_name, [tokens[0], tokens[2], tokens[4]], {})
 
     op = tokens[1]
     if not isinstance(op, text):
@@ -93,27 +120,27 @@ def to_json_operator(tokens):
     op = binary_ops.get(op, op)
     if op == "eq":
         if tokens[2] is SQL_NULL:
-            return {"missing": tokens[0]}
+            return Call("missing", tokens[0], {})
         elif tokens[0] is SQL_NULL:
-            return {"missing": tokens[2]}
+            return Call("missing", tokens[2], {})
     elif op == "neq":
         if tokens[2] is SQL_NULL:
-            return {"exists": tokens[0]}
+            return Call("exists", tokens[0], {})
         elif tokens[0] is SQL_NULL:
-            return {"exists": tokens[2]}
+            return Call("exists", tokens[2], {})
     elif op == "is":
         if tokens[2] is SQL_NULL:
-            return {"missing": tokens[0]}
+            return Call("missing", tokens[0], {})
         else:
-            return {"exists": tokens[0]}
+            return Call("exists", tokens[0], {})
     elif op == "is_not":
         if tokens[2] is SQL_NULL:
-            return {"exists": tokens[0]}
+            return Call("exists", tokens[0], {})
         else:
-            return {"missing": tokens[0]}
+            return Call("missing", tokens[0], {})
 
     operands = [tokens[0], tokens[2]]
-    binary_op = {op: operands}
+    binary_op = Call(op, operands, {})
 
     if op in {"add", "mul", "and", "or"}:
         # ASSOCIATIVE OPERATORS
@@ -123,13 +150,15 @@ def to_json_operator(tokens):
                 # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
 
-            if isinstance(operand, list):
+            if isinstance(operand, Call) and operand.op==op:
+                acc.extend(operand.args)
+            elif isinstance(operand, list):
                 acc.append(operand)
             elif isinstance(operand, dict) and operand.get(op):
                 acc.extend(operand.get(op))
             else:
                 acc.append(operand)
-        binary_op = {op: acc}
+        binary_op = Call(op, acc, {})
     return binary_op
 
 
@@ -185,8 +214,8 @@ binary_ops = {
 def to_trim_call(tokens):
     frum = tokens['from']
     if not frum:
-        return {"trim": tokens["chars"]}
-    return {"trim": frum, "characters": tokens['chars']}
+        return Call("trim", tokens["chars"], {})
+    return Call("trim", [frum], {"characters": tokens['chars']})
 
 
 def to_json_call(tokens):
@@ -206,7 +235,7 @@ def to_json_call(tokens):
         tokens.type,
         tokens.start,
         tokens.end,
-        [{op: params, "ignore_nulls": ignore_nulls}],
+        [Call(op, params, {"ignore_nulls": ignore_nulls})]
     )
 
 
@@ -216,9 +245,9 @@ def to_interval_call(tokens):
     if not params:
         params = {}
     if params.length() == 2:
-        return {"interval": params}
+        return Call("interval", params, {})
 
-    return {"add": [{"interval": p} for p in _chunk(params, size=2)]}
+    return Call("add", [Call("interval", p, {}) for p in _chunk(params, size=2)], {})
 
 
 def to_case_call(tokens):
@@ -226,39 +255,54 @@ def to_case_call(tokens):
     elze = tokens["else"]
     if elze != None:
         cases.append(elze)
-    return {"case": cases}
+    return Call("case", cases, {})
 
 
 def to_switch_call(tokens):
     # CONVERT TO CLASSIC CASE STATEMENT
     value = tokens["value"]
-    cases = list(tokens["case"])
-    for c in cases:
-        c["when"] = {"eq": [value, c["when"]]}
+    acc = []
+    for c in list(tokens["case"]):
+        acc.append(Call("when", [Call("eq", [value] + c.args, {})], c.kwargs))
     elze = tokens["else"]
     if elze != None:
-        cases.append(elze)
-    return {"case": cases}
+        acc.append(elze)
+    return Call("case", acc, {})
 
 
 def to_when_call(tokens):
     tok = tokens
-    return {"when": tok["when"], "then": tok["then"]}
+    return Call("when", [tok["when"]], {"then": tok["then"]})
 
 
-def to_join_call(tokens):
-    op = " ".join(tokens["op"])
-    if tokens["join"]["name"]:
-        output = {op: {
-            "name": tokens["join"]["name"],
-            "value": tokens["join"]["value"],
-        }}
-    else:
-        output = {op: tokens["join"]}
-
-    output["on"] = tokens["on"]
-    output["using"] = tokens["using"]
-    return output
+def to_from_call(tokens):
+    tokens = list(tokens)
+    if len(tokens) == 1:
+        return tokens
+    acc = [tokens[0]]
+    for source in tokens[1:]:
+        op = " ".join(source["op"])
+        if not op:
+            # FULL OUTER JOIN
+            if source["name"]:
+                acc.append({
+                    "name": source["name"],
+                    "value": source["value"],
+                })
+            else:
+                acc.append(source)
+        else:
+            if source['join']["name"]:
+                output = {op: {
+                    "name": source['join']["name"],
+                    "value": source['join']["value"],
+                }}
+            else:
+                output = {op: source['join']}
+            output["on"] = source["on"]
+            output["using"] = source["using"]
+            acc.append(output)
+    return acc
 
 
 def to_expression_call(tokens):

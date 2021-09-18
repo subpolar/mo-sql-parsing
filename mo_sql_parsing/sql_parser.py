@@ -212,7 +212,7 @@ def parser(literal_string, ident):
             | var_name.set_parser_name("table name")
         )
 
-        join = (
+        join = Group(
             Group(
                 CROSS_JOIN
                 | FULL_JOIN
@@ -226,7 +226,7 @@ def parser(literal_string, ident):
             )("op")
             + Group(table_source)("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
-        ).addParseAction(to_join_call)
+        )
 
         unordered_sql = Group(
             SELECT
@@ -238,7 +238,7 @@ def parser(literal_string, ident):
             )("top").addParseAction(to_top_clause)
             + delimitedList(selectColumn)("select")
             + Optional(
-                (FROM + delimitedList(Group(table_source)) + ZeroOrMore(join))("from")
+                (FROM + delimitedList(Group(table_source)) + ZeroOrMore(join)).addParseAction(to_from_call)("from")
                 + Optional(WHERE + expr("where"))
                 + Optional(GROUP_BY + delimitedList(Group(namedColumn))("groupby"))
                 + Optional(HAVING + expr("having"))
