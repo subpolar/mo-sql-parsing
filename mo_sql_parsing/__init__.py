@@ -33,7 +33,7 @@ def parse(sql, null=SQL_NULL, calls=simple_op):
     with parseLocker:
         if not combined_parser:
             combined_parser = sql_parser.combined_parser()
-        result = _parse(combined_parser, sql, null)
+        result = _parse(combined_parser, sql, null, calls)
         return result
 
 

@@ -17,37 +17,15 @@ from tests.util import assertRaises
 parse = lambda s: sql_parse(s, calls=normal_op)
 
 
-class TestSimple(TestCase):
-
-    # @classmethod
-    # def setUpClass(cls):
-    #     from mo_parsing.profile import Profiler
-    #     cls.profiler = Profiler("test_simple")
-    #     cls.profiler.__enter__()
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     cls.profiler.__exit__(None, None, None)
-
+class TestSimpleUsingOperators(TestCase):
     def test_two_tables(self):
         result = parse("SELECT * from XYZZY, ABC")
-        expected = {
-            "args": [{
-                "args": [{"value": "XYZZY"}, {"value": "ABC"}],
-                "op": "outer join",
-            }],
-            "kwargs": {"select": ["*"]},
-            "op": "from",
-        }
+        expected = {"from": ["XYZZY", "ABC"], "select": "*"}
         self.assertEqual(result, expected)
 
     def test_dot_table_name(self):
         result = parse("select * from SYS.XYZZY")
-        expected = {
-            "args": [{"value": "SYS.XYZZY"}],
-            "kwargs": {"select": ["*"]},
-            "op": "from",
-        }
+        expected = {"from": "SYS.XYZZY", "select": "*"}
         self.assertEqual(result, expected)
 
     def test_select_one_column(self):
@@ -76,13 +54,16 @@ class TestSimple(TestCase):
         #               0123456789012345678901234567890123456789012345678901234567890123456789
         result = parse("SELECT a + b/2 + 45*c + (2/d) from dual")
         expected = {
-            "select": {"value": {"add": [
-                "a",
-                {"div": ["b", 2]},
-                {"mul": [45, "c"]},
-                {"div": [2, "d"]},
-            ]}},
             "from": "dual",
+            "select": {"value": {
+                "args": [
+                    "a",
+                    {"args": ["b", 2], "op": "div"},
+                    {"args": [45, "c"], "op": "mul"},
+                    {"args": [2, "d"], "op": "div"},
+                ],
+                "op": "add",
+            }},
         }
         self.assertEqual(result, expected)
 
@@ -134,18 +115,18 @@ class TestSimple(TestCase):
         #               0123456789012345678901234567890123456789012345678901234567890123456789
         result = parse("SELECT * FROM dual WHERE a<>'test'")
         expected = {
-            "select": "*",
             "from": "dual",
-            "where": {"neq": ["a", {"literal": "test"}]},
+            "select": "*",
+            "where": {"args": ["a", {"literal": "test"}], "op": "neq"},
         }
         self.assertEqual(result, expected)
 
     def test_where_in(self):
         result = parse("SELECT a FROM dual WHERE a in ('r', 'g', 'b')")
         expected = {
-            "select": {"value": "a"},
             "from": "dual",
-            "where": {"in": ["a", {"literal": ["r", "g", "b"]}]},
+            "select": {"value": "a"},
+            "where": {"args": ["a", {"literal": ["r", "g", "b"]}], "op": "in"},
         }
         self.assertEqual(result, expected)
 
@@ -156,63 +137,54 @@ class TestSimple(TestCase):
             "SELECT a FROM dual WHERE a in ('r', 'g', 'b') AND b in (10, 11, 12)"
         )
         expected = {
-            "select": {"value": "a"},
             "from": "dual",
-            "where": {"and": [
-                {"in": ["a", {"literal": ["r", "g", "b"]}]},
-                {"in": ["b", [10, 11, 12]]},
-            ]},
+            "select": {"value": "a"},
+            "where": {
+                "args": [
+                    {"args": ["a", {"literal": ["r", "g", "b"]}], "op": "in"},
+                    {"args": ["b", [10, 11, 12]], "op": "in"},
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
     def test_eq(self):
         result = parse("SELECT a, b FROM t1, t2 WHERE t1.a=t2.b")
         expected = {
-            "args": [{"args": [{"value": "t1"}, {"value": "t2"}], "op": "outer join"}],
-            "kwargs": {
-                "select": [{"value": "a"}, {"value": "b"}],
-                "where": [{"args": ["t1.a", "t2.b"], "op": "eq"}],
-            },
-            "op": "from",
+            "from": ["t1", "t2"],
+            "select": [{"value": "a"}, {"value": "b"}],
+            "where": {"args": ["t1.a", "t2.b"], "op": "eq"},
         }
         self.assertEqual(result, expected)
 
     def test_is_null(self):
         result = parse("SELECT a, b FROM t1 WHERE t1.a IS NULL")
         expected = {
-            "args": [{"value": "t1"}],
-            "kwargs": {
-                "select": [{"value": "a"}, {"value": "b"}],
-                "where": [{"args": ["t1.a"], "op": "missing"}],
-            },
-            "op": "from",
+            "from": "t1",
+            "select": [{"value": "a"}, {"value": "b"}],
+            "where": {"args": ["t1.a"], "op": "missing"},
         }
         self.assertEqual(result, expected)
 
     def test_is_not_null(self):
         result = parse("SELECT a, b FROM t1 WHERE t1.a IS NOT NULL")
         expected = {
-            "args": [{"value": "t1"}],
-            "kwargs": {
-                "select": [{"value": "a"}, {"value": "b"}],
-                "where": [{"args": ["t1.a"], "op": "exists"}],
-            },
-            "op": "from",
+            "from": "t1",
+            "select": [{"value": "a"}, {"value": "b"}],
+            "where": {"args": ["t1.a"], "op": "exists"},
         }
         self.assertEqual(result, expected)
 
     def test_groupby(self):
         result = parse("select a, count(1) as b from mytable group by a")
         expected = {
-            "args": [{"value": "mytable"}],
-            "kwargs": {
-                "groupby": [{"args": ["a"], "op": "value"}],
-                "select": [
-                    {"value": "a"},
-                    {"name": "b", "value": {"args": [1], "op": "count"}},
-                ],
-            },
-            "op": "from",
+            "from": "mytable",
+            "groupby": {"value": "a"},
+            "select": [
+                {"value": "a"},
+                {"name": "b", "value": {"args": [1], "op": "count"}},
+            ],
         }
         self.assertEqual(result, expected)
 
@@ -221,9 +193,8 @@ class TestSimple(TestCase):
         #               0123456789012345678901234567890
         result = parse("select count(1) from mytable")
         expected = {
-            "args": [{"value": "mytable"}],
-            "kwargs": {"select": [{"value": {"args": [1], "op": "count"}}]},
-            "op": "from",
+            "from": "mytable",
+            "select": {"value": {"args": [1], "op": "count"}},
         }
         self.assertEqual(result, expected)
 
@@ -232,30 +203,29 @@ class TestSimple(TestCase):
         #               0123456789012345678901234567890
         result = parse("select DATE_TRUNC('2019-04-12', WEEK) from mytable")
         expected = {
-            "args": [{"value": "mytable"}],
-            "kwargs": {"select": [{"value": {
-                "args": [{"args": ["2019-04-12"], "op": "literal"}, "WEEK"],
+            "from": "mytable",
+            "select": {"value": {
+                "args": [{"literal": "2019-04-12"}, "WEEK"],
                 "op": "date_trunc",
-            }}]},
-            "op": "from",
+            }},
         }
         self.assertEqual(result, expected)
 
     def test_order_by(self):
         result = parse("select count(1) from dual order by a")
         expected = {
-            "select": {"value": {"count": 1}},
             "from": "dual",
             "orderby": {"value": "a"},
+            "select": {"value": {"args": [1], "op": "count"}},
         }
         self.assertEqual(result, expected)
 
     def test_order_by_asc(self):
         result = parse("select count(1) from dual order by a asc")
         expected = {
-            "select": {"value": {"count": 1}},
             "from": "dual",
-            "orderby": {"value": "a", "sort": "asc"},
+            "orderby": {"sort": "asc", "value": "a"},
+            "select": {"value": {"args": [1], "op": "count"}},
         }
         self.assertEqual(result, expected)
 
@@ -263,8 +233,14 @@ class TestSimple(TestCase):
         result = parse("select B,C from table1 where A=-900 or B=100")
         expected = {
             "from": "table1",
-            "where": {"or": [{"eq": ["A", -900]}, {"eq": ["B", 100]}]},
             "select": [{"value": "B"}, {"value": "C"}],
+            "where": {
+                "args": [
+                    {"args": ["A", -900], "op": "eq"},
+                    {"args": ["B", 100], "op": "eq"},
+                ],
+                "op": "or",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -272,23 +248,17 @@ class TestSimple(TestCase):
         result = parse("select a from table1 where A=-900")
         expected = {
             "from": "table1",
-            "where": {"eq": ["A", -900]},
             "select": {"value": "a"},
+            "where": {"args": ["A", -900], "op": "eq"},
         }
         self.assertEqual(result, expected)
 
     def test_like_in_where(self):
         result = parse("select a from table1 where A like '%20%'")
         expected = {
-            "args": [{"value": "table1"}],
-            "kwargs": {
-                "select": [{"value": "a"}],
-                "where": [{
-                    "args": ["A", {"args": ["%20%"], "op": "literal"}],
-                    "op": "like",
-                }],
-            },
-            "op": "from",
+            "from": "table1",
+            "select": {"value": "a"},
+            "where": {"args": ["A", {"literal": "%20%"}], "op": "like"},
         }
         self.assertEqual(result, expected)
 
@@ -296,8 +266,8 @@ class TestSimple(TestCase):
         result = parse("select a from table1 where A not like '%20%'")
         expected = {
             "from": "table1",
-            "where": {"not_like": ["A", {"literal": "%20%"}]},
             "select": {"value": "a"},
+            "where": {"args": ["A", {"literal": "%20%"}], "op": "not_like"},
         }
         self.assertEqual(result, expected)
 
@@ -308,36 +278,39 @@ class TestSimple(TestCase):
             "select case when A like 'bb%' then 1 else 0 end as bb from table1"
         )
         expected = {
-            "args": [{"value": "table1"}],
-            "kwargs": {"select": [{
+            "from": "table1",
+            "select": {
                 "name": "bb",
                 "value": {
                     "args": [
                         {
-                            "args": [{
-                                "args": ["A", {"args": ["bb%"], "op": "literal"}],
-                                "op": "like",
-                            }],
-                            "kwargs": {"then": [1]},
+                            "args": [{"args": ["A", {"literal": "bb%"}], "op": "like"}],
+                            "kwargs": {"then": 1},
                             "op": "when",
                         },
                         0,
                     ],
                     "op": "case",
                 },
-            }]},
-            "op": "from",
+            },
         }
         self.assertEqual(result, expected)
 
     def test_switch_else(self):
         result = parse("select case table0.y1 when 'a' then 1 else 0 end from table0")
         expected = {
-            "select": {"value": {"case": [
-                {"when": {"eq": ["table0.y1", {"literal": "a"}]}, "then": 1},
-                0,
-            ]}},
             "from": "table0",
+            "select": {"value": {
+                "args": [
+                    {
+                        "args": [{"args": ["table0.y1", {"literal": "a"}], "op": "eq"}],
+                        "kwargs": {"then": 1},
+                        "op": "when",
+                    },
+                    0,
+                ],
+                "op": "case",
+            }},
         }
         self.assertEqual(result, expected)
 
@@ -349,10 +322,20 @@ class TestSimple(TestCase):
             "from": "table1",
             "select": {
                 "name": "bb",
-                "value": {"case": [
-                    {"when": {"not_like": ["A", {"literal": "bb%"}]}, "then": 1},
-                    0,
-                ]},
+                "value": {
+                    "args": [
+                        {
+                            "args": [{
+                                "args": ["A", {"literal": "bb%"}],
+                                "op": "not_like",
+                            }],
+                            "kwargs": {"then": 1},
+                            "op": "when",
+                        },
+                        0,
+                    ],
+                    "op": "case",
+                },
             },
         }
         self.assertEqual(result, expected)
@@ -364,12 +347,15 @@ class TestSimple(TestCase):
         )
         expected = {
             "from": "trade",
-            "where": {"and": [
-                {"like": ["school", {"literal": "%shool"}]},
-                {"eq": ["name", {"literal": "abc"}]},
-                {"in": ["id", {"literal": ["1", "2"]}]},
-            ]},
             "select": "*",
+            "where": {
+                "args": [
+                    {"args": ["school", {"literal": "%shool"}], "op": "like"},
+                    {"args": ["name", {"literal": "abc"}], "op": "eq"},
+                    {"args": ["id", {"literal": ["1", "2"]}], "op": "in"},
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -377,8 +363,8 @@ class TestSimple(TestCase):
         result = parse("select a from table1 where A rlike '.*20.*'")
         expected = {
             "from": "table1",
-            "where": {"rlike": ["A", {"literal": ".*20.*"}]},
             "select": {"value": "a"},
+            "where": {"args": ["A", {"literal": ".*20.*"}], "op": "rlike"},
         }
         self.assertEqual(result, expected)
 
@@ -386,8 +372,8 @@ class TestSimple(TestCase):
         result = parse("select a from table1 where A not rlike '.*20.*'")
         expected = {
             "from": "table1",
-            "where": {"not_rlike": ["A", {"literal": ".*20.*"}]},
             "select": {"value": "a"},
+            "where": {"args": ["A", {"literal": ".*20.*"}], "op": "not_rlike"},
         }
         self.assertEqual(result, expected)
 
@@ -399,10 +385,20 @@ class TestSimple(TestCase):
             "from": "table1",
             "select": {
                 "name": "bb",
-                "value": {"case": [
-                    {"when": {"rlike": ["A", {"literal": "bb.*"}]}, "then": 1},
-                    0,
-                ]},
+                "value": {
+                    "args": [
+                        {
+                            "args": [{
+                                "args": ["A", {"literal": "bb.*"}],
+                                "op": "rlike",
+                            }],
+                            "kwargs": {"then": 1},
+                            "op": "when",
+                        },
+                        0,
+                    ],
+                    "op": "case",
+                },
             },
         }
         self.assertEqual(result, expected)
@@ -415,10 +411,20 @@ class TestSimple(TestCase):
             "from": "table1",
             "select": {
                 "name": "bb",
-                "value": {"case": [
-                    {"when": {"not_rlike": ["A", {"literal": "bb.*"}]}, "then": 1},
-                    0,
-                ]},
+                "value": {
+                    "args": [
+                        {
+                            "args": [{
+                                "args": ["A", {"literal": "bb.*"}],
+                                "op": "not_rlike",
+                            }],
+                            "kwargs": {"then": 1},
+                            "op": "when",
+                        },
+                        0,
+                    ],
+                    "op": "case",
+                },
             },
         }
         self.assertEqual(result, expected)
@@ -428,18 +434,12 @@ class TestSimple(TestCase):
             "select * from task where repo.branch.name in ('try', 'mozilla-central')"
         )
         expected = {
-            "args": [{"value": "task"}],
-            "kwargs": {
-                "select": ["*"],
-                "where": [{
-                    "args": [
-                        "repo.branch.name",
-                        {"args": ["try", "mozilla-central"], "op": "literal"},
-                    ],
-                    "op": "in",
-                }],
+            "from": "task",
+            "select": "*",
+            "where": {
+                "args": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}],
+                "op": "in",
             },
-            "op": "from",
         }
         self.assertEqual(result, expected)
 
@@ -451,10 +451,10 @@ class TestSimple(TestCase):
         expected = {
             "from": "task",
             "select": "*",
-            "where": {"nin": [
-                "repo.branch.name",
-                {"literal": ["try", "mozilla-central"]},
-            ]},
+            "where": {
+                "args": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}],
+                "op": "nin",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -465,8 +465,8 @@ class TestSimple(TestCase):
             "from": [
                 {"name": "t1", "value": "table1"},
                 {
-                    "on": {"eq": ["t1.id", "t3.id"]},
                     "join": {"name": "t3", "value": "table3"},
+                    "on": {"args": ["t1.id", "t3.id"], "op": "eq"},
                 },
             ],
             "select": "*",
@@ -482,12 +482,15 @@ class TestSimple(TestCase):
         )
 
         expected = {
-            "select": "*",
             "from": "task",
-            "where": {"and": [
-                {"exists": "build.product"},
-                {"neq": ["build.product", {"literal": "firefox"}]},
-            ]},
+            "select": "*",
+            "where": {
+                "args": [
+                    {"args": ["build.product"], "op": "exists"},
+                    {"args": ["build.product", {"literal": "firefox"}], "op": "neq"},
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -495,16 +498,19 @@ class TestSimple(TestCase):
         result = parse("select empid from emp where ename like 's%' ")
         expected = {
             "from": "emp",
-            "where": {"like": ["ename", {"literal": "s%"}]},
             "select": {"value": "empid"},
+            "where": {"args": ["ename", {"literal": "s%"}], "op": "like"},
         }
         self.assertEqual(result, expected)
 
     def test_left_join(self):
         result = parse("SELECT t1.field1 FROM t1 LEFT JOIN t2 ON t1.id = t2.id")
         expected = {
+            "from": [
+                "t1",
+                {"left join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
+            ],
             "select": {"value": "t1.field1"},
-            "from": ["t1", {"left join": "t2", "on": {"eq": ["t1.id", "t2.id"]}}],
         }
         self.assertEqual(result, expected)
 
@@ -516,20 +522,12 @@ class TestSimple(TestCase):
             "LEFT JOIN t3 ON t1.id = t3.id"
         )
         expected = {
-            "args": [{
-                "args": [
-                    {
-                        "args": [{"value": "t1"}, {"value": "t2"}],
-                        "kwargs": {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
-                        "op": "left join",
-                    },
-                    {"value": "t3"},
-                ],
-                "kwargs": {"on": {"args": ["t1.id", "t3.id"], "op": "eq"}},
-                "op": "left join",
-            }],
-            "kwargs": {"select": [{"value": "t1.field1"}]},
-            "op": "from",
+            "from": [
+                "t1",
+                {"left join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
+                {"left join": "t3", "on": {"args": ["t1.id", "t3.id"], "op": "eq"}},
+            ],
+            "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
 
@@ -547,53 +545,64 @@ class TestSimple(TestCase):
     def test_left_outer_join(self):
         result = parse("SELECT t1.field1 FROM t1 LEFT OUTER JOIN t2 ON t1.id = t2.id")
         expected = {
+            "from": [
+                "t1",
+                {
+                    "left outer join": "t2",
+                    "on": {"args": ["t1.id", "t2.id"], "op": "eq"},
+                },
+            ],
             "select": {"value": "t1.field1"},
-            "from": ["t1", {"left outer join": "t2", "on": {"eq": ["t1.id", "t2.id"]}}],
         }
         self.assertEqual(result, expected)
 
     def test_right_join(self):
         result = parse("SELECT t1.field1 FROM t1 RIGHT JOIN t2 ON t1.id = t2.id")
         expected = {
+            "from": [
+                "t1",
+                {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}, "right join": "t2"},
+            ],
             "select": {"value": "t1.field1"},
-            "from": ["t1", {"right join": "t2", "on": {"eq": ["t1.id", "t2.id"]}}],
         }
         self.assertEqual(result, expected)
 
     def test_right_outer_join(self):
         result = parse("SELECT t1.field1 FROM t1 RIGHT OUTER JOIN t2 ON t1.id = t2.id")
         expected = {
-            "select": {"value": "t1.field1"},
             "from": [
                 "t1",
-                {"right outer join": "t2", "on": {"eq": ["t1.id", "t2.id"]}},
+                {
+                    "on": {"args": ["t1.id", "t2.id"], "op": "eq"},
+                    "right outer join": "t2",
+                },
             ],
+            "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
 
     def test_full_join(self):
         result = parse("SELECT t1.field1 FROM t1 FULL JOIN t2 ON t1.id = t2.id")
         expected = {
-            "args": [{
-                "args": [{"value": "t1"}, {"value": "t2"}],
-                "kwargs": {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
-                "op": "full join",
-            }],
-            "kwargs": {"select": [{"value": "t1.field1"}]},
-            "op": "from",
+            "from": [
+                "t1",
+                {"full join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
+            ],
+            "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
 
     def test_full_outer_join(self):
         result = parse("SELECT t1.field1 FROM t1 FULL OUTER JOIN t2 ON t1.id = t2.id")
         expected = {
-            "args": [{
-                "args": [{"value": "t1"}, {"value": "t2"}],
-                "kwargs": {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
-                "op": "full outer join",
-            }],
-            "kwargs": {"select": [{"value": "t1.field1"}]},
-            "op": "from",
+            "from": [
+                "t1",
+                {
+                    "full outer join": "t2",
+                    "on": {"args": ["t1.id", "t2.id"], "op": "eq"},
+                },
+            ],
+            "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
 
@@ -608,18 +617,18 @@ class TestSimple(TestCase):
     def test_where_between(self):
         result = parse("SELECT a FROM dual WHERE a BETWEEN 1 and 2")
         expected = {
-            "select": {"value": "a"},
             "from": "dual",
-            "where": {"between": ["a", 1, 2]},
+            "select": {"value": "a"},
+            "where": {"args": ["a", 1, 2], "op": "between"},
         }
         self.assertEqual(result, expected)
 
     def test_where_not_between(self):
         result = parse("SELECT a FROM dual WHERE a NOT BETWEEN 1 and 2")
         expected = {
-            "select": {"value": "a"},
             "from": "dual",
-            "where": {"not_between": ["a", 1, 2]},
+            "select": {"value": "a"},
+            "where": {"args": ["a", 1, 2], "op": "not_between"},
         }
         self.assertEqual(result, expected)
 
@@ -641,41 +650,46 @@ class TestSimple(TestCase):
     def test_issue68(self):
         result = parse("select deflate(sum(int(mobile_price.price))) from mobile")
         expected = {
-            "args": [{"value": "mobile"}],
-            "kwargs": {"select": [{"value": {
+            "from": "mobile",
+            "select": {"value": {
                 "args": [{
                     "args": [{"args": ["mobile_price.price"], "op": "int"}],
                     "op": "sum",
                 }],
                 "op": "deflate",
-            }}]},
-            "op": "from",
+            }},
         }
         self.assertEqual(result, expected)
 
     def test_issue_90(self):
         result = parse(
-            """SELECT MIN(cn.name) AS from_company
+            """
+        SELECT MIN(cn.name) AS from_company
         FROM company_name AS cn, company_type AS ct, keyword AS k, movie_link AS ml, title AS t
         WHERE cn.country_code !='[pl]' AND ct.kind IS NOT NULL AND t.production_year > 1950 AND ml.movie_id = t.id
         """
         )
-
         expected = {
-            "select": {"value": {"min": "cn.name"}, "name": "from_company"},
             "from": [
-                {"value": "company_name", "name": "cn"},
-                {"value": "company_type", "name": "ct"},
-                {"value": "keyword", "name": "k"},
-                {"value": "movie_link", "name": "ml"},
-                {"value": "title", "name": "t"},
+                {"name": "cn", "value": "company_name"},
+                {"name": "ct", "value": "company_type"},
+                {"name": "k", "value": "keyword"},
+                {"name": "ml", "value": "movie_link"},
+                {"name": "t", "value": "title"},
             ],
-            "where": {"and": [
-                {"neq": ["cn.country_code", {"literal": "[pl]"}]},
-                {"exists": "ct.kind"},
-                {"gt": ["t.production_year", 1950]},
-                {"eq": ["ml.movie_id", "t.id"]},
-            ]},
+            "select": {
+                "name": "from_company",
+                "value": {"args": ["cn.name"], "op": "min"},
+            },
+            "where": {
+                "args": [
+                    {"args": ["cn.country_code", {"literal": "[pl]"}], "op": "neq"},
+                    {"args": ["ct.kind"], "op": "exists"},
+                    {"args": ["t.production_year", 1950], "op": "gt"},
+                    {"args": ["ml.movie_id", "t.id"], "op": "eq"},
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -717,44 +731,68 @@ class TestSimple(TestCase):
                 {"name": "t", "value": "title"},
             ],
             "select": "*",
-            "where": {"and": [
-                {"exists": "an.name"},
-                {"or": [
-                    {"like": ["an.name", {"literal": "%a%"}]},
-                    {"like": ["an.name", {"literal": "A%"}]},
-                ]},
-                {"eq": ["it.info", {"literal": "mini biography"}]},
-                {"in": [
-                    "lt.link",
-                    {"literal": [
-                        "references",
-                        "referenced in",
-                        "features",
-                        "featured in",
-                    ]},
-                ]},
-                {"between": ["n.name_pcode_cf", {"literal": "A"}, {"literal": "F"}]},
-                {"or": [
-                    {"eq": ["n.gender", {"literal": "m"}]},
-                    {"and": [
-                        {"eq": ["n.gender", {"literal": "f"}]},
-                        {"like": ["n.name", {"literal": "A%"}]},
-                    ]},
-                ]},
-                {"exists": "pi.note"},
-                {"between": ["t.production_year", 1980, 2010]},
-                {"eq": ["n.id", "an.person_id"]},
-                {"eq": ["n.id", "pi.person_id"]},
-                {"eq": ["ci.person_id", "n.id"]},
-                {"eq": ["t.id", "ci.movie_id"]},
-                {"eq": ["ml.linked_movie_id", "t.id"]},
-                {"eq": ["lt.id", "ml.link_type_id"]},
-                {"eq": ["it.id", "pi.info_type_id"]},
-                {"eq": ["pi.person_id", "an.person_id"]},
-                {"eq": ["pi.person_id", "ci.person_id"]},
-                {"eq": ["an.person_id", "ci.person_id"]},
-                {"eq": ["ci.movie_id", "ml.linked_movie_id"]},
-            ]},
+            "where": {
+                "args": [
+                    {"args": ["an.name"], "op": "exists"},
+                    {
+                        "args": [
+                            {"args": ["an.name", {"literal": "%a%"}], "op": "like"},
+                            {"args": ["an.name", {"literal": "A%"}], "op": "like"},
+                        ],
+                        "op": "or",
+                    },
+                    {"args": ["it.info", {"literal": "mini biography"}], "op": "eq"},
+                    {
+                        "args": [
+                            "lt.link",
+                            {"literal": [
+                                "references",
+                                "referenced in",
+                                "features",
+                                "featured in",
+                            ]},
+                        ],
+                        "op": "in",
+                    },
+                    {
+                        "args": ["n.name_pcode_cf", {"literal": "A"}, {"literal": "F"}],
+                        "op": "between",
+                    },
+                    {
+                        "args": [
+                            {"args": ["n.gender", {"literal": "m"}], "op": "eq"},
+                            {
+                                "args": [
+                                    {
+                                        "args": ["n.gender", {"literal": "f"}],
+                                        "op": "eq",
+                                    },
+                                    {
+                                        "args": ["n.name", {"literal": "A%"}],
+                                        "op": "like",
+                                    },
+                                ],
+                                "op": "and",
+                            },
+                        ],
+                        "op": "or",
+                    },
+                    {"args": ["pi.note"], "op": "exists"},
+                    {"args": ["t.production_year", 1980, 2010], "op": "between"},
+                    {"args": ["n.id", "an.person_id"], "op": "eq"},
+                    {"args": ["n.id", "pi.person_id"], "op": "eq"},
+                    {"args": ["ci.person_id", "n.id"], "op": "eq"},
+                    {"args": ["t.id", "ci.movie_id"], "op": "eq"},
+                    {"args": ["ml.linked_movie_id", "t.id"], "op": "eq"},
+                    {"args": ["lt.id", "ml.link_type_id"], "op": "eq"},
+                    {"args": ["it.id", "pi.info_type_id"], "op": "eq"},
+                    {"args": ["pi.person_id", "an.person_id"], "op": "eq"},
+                    {"args": ["pi.person_id", "ci.person_id"], "op": "eq"},
+                    {"args": ["an.person_id", "ci.person_id"], "op": "eq"},
+                    {"args": ["ci.movie_id", "ml.linked_movie_id"], "op": "eq"},
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -767,15 +805,24 @@ class TestSimple(TestCase):
         )
         result = parse(sql)
         expected = {
-            "select": {"value": {"count": "*"}, "name": "CNT"},
             "from": "test.tb",
-            "where": {"and": [
-                {"in": [
-                    "id",
-                    [{"unhex": {"literal": "1"}}, {"unhex": {"literal": "2"}}],
-                ]},
-                {"eq": ["status", 1]},
-            ]},
+            "select": {"name": "CNT", "value": {"args": ["*"], "op": "count"}},
+            "where": {
+                "args": [
+                    {
+                        "args": [
+                            "id",
+                            [
+                                {"args": [{"literal": "1"}], "op": "unhex"},
+                                {"args": [{"literal": "2"}], "op": "unhex"},
+                            ],
+                        ],
+                        "op": "in",
+                    },
+                    {"args": ["status", 1], "op": "eq"},
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -783,12 +830,9 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM t WHERE  c & 4;"
         result = parse(sql)
         expected = {
-            "args": [{"value": "t"}],
-            "kwargs": {
-                "select": ["*"],
-                "where": [{"args": ["c", 4], "op": "binary_and"}],
-            },
-            "op": "from",
+            "from": "t",
+            "select": "*",
+            "where": {"args": ["c", 4], "op": "binary_and"},
         }
         self.assertEqual(result, expected)
 
@@ -796,12 +840,9 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM t WHERE c | 4;"
         result = parse(sql)
         expected = {
-            "args": ["t"],
-            "kwargs": {
-                "select": ["*"],
-                "where": [{"args": ["c", 4], "op": "binary_or"}],
-            },
-            "op": "from",
+            "from": "t",
+            "select": "*",
+            "where": {"args": ["c", 4], "op": "binary_or"},
         }
         self.assertEqual(result, expected)
 
@@ -811,9 +852,9 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM t WHERE ~c;"
         result = parse(sql)
         expected = {
-            "args": [{"value": "t"}],
-            "kwargs": {"select": ["*"], "where": [{"args": ["c"], "op": "binary_not"}]},
-            "op": "from",
+            "from": "t",
+            "select": "*",
+            "where": {"args": ["c"], "op": "binary_not"},
         }
         self.assertEqual(result, expected)
 
@@ -821,9 +862,9 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM dual WHERE a OR b AND c"
         result = parse(sql)
         expected = {
-            "select": "*",
             "from": "dual",
-            "where": {"or": ["a", {"and": ["b", "c"]}]},
+            "select": "*",
+            "where": {"args": ["a", {"args": ["b", "c"], "op": "and"}], "op": "or"},
         }
         self.assertEqual(result, expected)
 
@@ -831,40 +872,28 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM dual WHERE a AND b or c"
         result = parse(sql)
         expected = {
-            "args": [{"value": "dual"}],
-            "kwargs": {
-                "select": ["*"],
-                "where": [{
-                    "args": [{"args": ["a", "b"], "op": "and"}, "c"],
-                    "op": "or",
-                }],
-            },
-            "op": "from",
+            "from": "dual",
+            "select": "*",
+            "where": {"args": [{"args": ["a", "b"], "op": "and"}, "c"], "op": "or"},
         }
         self.assertEqual(result, expected)
 
     def test_underscore_function1(self):
         sql = "SELECT _()"
         result = parse(sql)
-        expected = {
-            "select": {"value": {"_": {}}},
-        }
+        expected = {"select": {"value": {"op": "_"}}}
         self.assertEqual(result, expected)
 
     def test_underscore_function2(self):
         sql = "SELECT _a(a$b)"
         result = parse(sql)
-        expected = {
-            "select": {"value": {"_a": "a$b"}},
-        }
+        expected = {"select": {"value": {"args": ["a$b"], "op": "_a"}}}
         self.assertEqual(result, expected)
 
     def test_underscore_function3(self):
         sql = "SELECT _$$_(a, b$)"
         result = parse(sql)
-        expected = {
-            "select": {"value": {"_$$_": ["a", "b$"]}},
-        }
+        expected = {"select": {"value": {"args": ["a", "b$"], "op": "_$$_"}}}
         self.assertEqual(result, expected)
 
     def test_union_all1(self):
@@ -900,62 +929,50 @@ class TestSimple(TestCase):
         """
         )
         expected = {
-            "args": [{"value": "MyTable"}],
-            "kwargs": {
-                "groupby": [{"args": ["Col"], "op": "value"}],
-                "having": [{"value": {
-                    "args": [
-                        {
-                            "args": [
-                                {
-                                    "args": [{"args": ["X"], "op": "avg"}, 2],
-                                    "op": "gte",
-                                },
-                                {
-                                    "args": [{"args": ["X"], "op": "avg"}, 4],
-                                    "op": "lte",
-                                },
-                            ],
-                            "op": "and",
-                        },
-                        {"args": [{"args": ["X"], "op": "avg"}, 5], "op": "eq"},
-                    ],
-                    "op": "or",
-                }}],
-                "select": ["*"],
+            "from": "MyTable",
+            "groupby": {"value": "Col"},
+            "having": {
+                "args": [
+                    {
+                        "args": [
+                            {"args": [{"args": ["X"], "op": "avg"}, 2], "op": "gte"},
+                            {"args": [{"args": ["X"], "op": "avg"}, 4], "op": "lte"},
+                        ],
+                        "op": "and",
+                    },
+                    {"args": [{"args": ["X"], "op": "avg"}, 5], "op": "eq"},
+                ],
+                "op": "or",
             },
-            "op": "from",
+            "select": "*",
         }
         self.assertEqual(result, expected)
 
     def test_issue97_function_names(self):
         sql = "SELECT ST_AsText(ST_MakePoint(174, -36));"
         result = parse(sql)
-        expected = {"select": {"value": {"st_astext": {"st_makepoint": [174, -36]}}}}
+        expected = {"select": {"value": {
+            "args": [{"args": [174, -36], "op": "st_makepoint"}],
+            "op": "st_astext",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue91_order_of_operations1(self):
         sql = "select 5-4+2"
         result = parse(sql)
-        expected = {
-            "args": [{"value": {
-                "args": [{"args": [5, 4], "op": "sub"}, 2],
-                "op": "add",
-            }}],
-            "op": "select",
-        }
+        expected = {"select": {"value": {
+            "args": [{"args": [5, 4], "op": "sub"}, 2],
+            "op": "add",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue91_order_of_operations2(self):
         sql = "select 5/4*2"
         result = parse(sql)
-        expected = {
-            "args": [{"value": {
-                "args": [{"args": [5, 4], "op": "div"}, 2],
-                "op": "mul",
-            }}],
-            "op": "select",
-        }
+        expected = {"select": {"value": {
+            "args": [{"args": [5, 4], "op": "div"}, 2],
+            "op": "mul",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue_92(self):
@@ -988,17 +1005,6 @@ class TestSimple(TestCase):
         )
         result = parse(sql)
         expected = {
-            "with": {
-                "name": "dept_count",
-                "value": {
-                    "from": "emp",
-                    "groupby": {"value": "deptno"},
-                    "select": [
-                        {"value": "deptno"},
-                        {"name": "dept_count", "value": {"count": "*"}},
-                    ],
-                },
-            },
             "from": [
                 {"name": "e", "value": "emp"},
                 {"name": "dc1", "value": "dept_count"},
@@ -1011,11 +1017,25 @@ class TestSimple(TestCase):
                 {"name": "manager_name", "value": "m.ename"},
                 {"name": "mgr_dept_count", "value": "dc2.dept_count"},
             ],
-            "where": {"and": [
-                {"eq": ["e.deptno", "dc1.deptno"]},
-                {"eq": ["e.mgr", "m.empno"]},
-                {"eq": ["m.deptno", "dc2.deptno"]},
-            ]},
+            "where": {
+                "args": [
+                    {"args": ["e.deptno", "dc1.deptno"], "op": "eq"},
+                    {"args": ["e.mgr", "m.empno"], "op": "eq"},
+                    {"args": ["m.deptno", "dc2.deptno"], "op": "eq"},
+                ],
+                "op": "and",
+            },
+            "with": {
+                "name": "dept_count",
+                "value": {
+                    "from": "emp",
+                    "groupby": {"value": "deptno"},
+                    "select": [
+                        {"value": "deptno"},
+                        {"name": "dept_count", "value": {"args": ["*"], "op": "count"}},
+                    ],
+                },
+            },
         }
 
         self.assertEqual(result, expected)
@@ -1029,31 +1049,30 @@ class TestSimple(TestCase):
         )
         result = parse(sql)
         expected = {
-            "args": [{
-                "args": [
-                    {"args": ["a"], "op": "from", "kwargs": {"select": ["*"]}},
-                    {"args": ["b"], "op": "from", "kwargs": {"select": ["*"]}},
-                ],
-                "op": "union_all",
-            }],
-            "kwargs": {"assign": [
-                {"name": "a", "value": {"args": [{"value": 1}], "op": "select"}},
-                {"name": "b", "value": {"args": [{"value": 2}], "op": "select"}},
-            ]},
-            "op": "with",
+            "union_all": [{"from": "a", "select": "*"}, {"from": "b", "select": "*"}],
+            "with": [
+                {"name": "a", "value": {"select": {"value": 1}}},
+                {"name": "b", "value": {"select": {"value": 2}}},
+            ],
         }
         self.assertEqual(result, expected)
 
     def test_issue_38a(self):
         sql = "SELECT a IN ('abc',3,'def')"
         result = parse(sql)
-        expected = {"select": {"value": {"in": ["a", {"literal": ["abc", 3, "def"]}]}}}
+        expected = {"select": {"value": {
+            "args": ["a", {"literal": ["abc", 3, "def"]}],
+            "op": "in",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue_38b(self):
         sql = "SELECT a IN (abc,3,'def')"
         result = parse(sql)
-        expected = {"select": {"value": {"in": ["a", ["abc", 3, {"literal": "def"}]]}}}
+        expected = {"select": {"value": {
+            "args": ["a", ["abc", 3, {"literal": "def"}]],
+            "op": "in",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue_107_recursion(self):
@@ -1072,58 +1091,41 @@ class TestSimple(TestCase):
         )
         result = parse(sql)
         expected = {
-            "args": [{"value": "city"}],
-            "kwargs": {
-                "select": [{"value": "city_name"}],
-                "where": [{
-                    "args": [
-                        "population",
-                        {
-                            "args": [{"value": "city"}],
-                            "kwargs": {
-                                "select": [{"value": {
-                                    "args": ["population"],
-                                    "op": "max",
-                                }}],
-                                "where": [{
-                                    "args": [
-                                        "state_name",
-                                        {
-                                            "args": [{"value": "state"}],
-                                            "kwargs": {
-                                                "select": [{"value": "state_name"}],
-                                                "where": [{
-                                                    "args": [
-                                                        "area",
-                                                        {
-                                                            "args": [{
-                                                                "value": "state"
-                                                            }],
-                                                            "kwargs": {
-                                                                "select": [{"value": {
-                                                                    "args": ["area"],
-                                                                    "op": "min",
-                                                                }}]
-                                                            },
-                                                            "op": "from",
-                                                        },
-                                                    ],
-                                                    "op": "eq",
-                                                }],
+            "from": "city",
+            "select": {"value": "city_name"},
+            "where": {
+                "args": [
+                    "population",
+                    {
+                        "from": "city",
+                        "select": {"value": {"args": ["population"], "op": "max"}},
+                        "where": {
+                            "args": [
+                                "state_name",
+                                {
+                                    "from": "state",
+                                    "select": {"value": "state_name"},
+                                    "where": {
+                                        "args": [
+                                            "area",
+                                            {
+                                                "from": "state",
+                                                "select": {"value": {
+                                                    "args": ["area"],
+                                                    "op": "min",
+                                                }},
                                             },
-                                            "op": "from",
-                                        },
-                                    ],
-                                    "op": "in",
-                                }],
-                            },
-                            "op": "from",
+                                        ],
+                                        "op": "eq",
+                                    },
+                                },
+                            ],
+                            "op": "in",
                         },
-                    ],
-                    "op": "eq",
-                }],
+                    },
+                ],
+                "op": "eq",
             },
-            "op": "from",
         }
         self.assertEqual(result, expected)
 
@@ -1133,49 +1135,39 @@ class TestSimple(TestCase):
         sql = "select * from some_table.some_function('parameter', 1, some_col)"
         result = parse(sql)
         expected = {
+            "from": {"value": {
+                "args": [{"literal": "parameter"}, 1, "some_col"],
+                "op": "some_table.some_function",
+            }},
             "select": "*",
-            "from": {"value": {"some_table.some_function": [
-                {"literal": "parameter"},
-                1,
-                "some_col",
-            ]}},
         }
         self.assertEqual(result, expected)
 
     def test_date(self):
         sql = "select DATE '2020 01 25'"
         result = parse(sql)
-        expected = {
-            "args": [{"value": {
-                "args": [{"args": ["2020 01 25"], "op": "literal"}],
-                "op": "date",
-            }}],
-            "op": "select",
-        }
+        expected = {"select": {"value": {
+            "args": [{"literal": "2020 01 25"}],
+            "op": "date",
+        }}}
         self.assertEqual(result, expected)
 
     def test_interval(self):
         sql = "select INTErval 30.5 monthS"
         result = parse(sql)
-        expected = {
-            "args": [{"value": {"args": [30.5, "month"], "op": "interval"}}],
-            "op": "select",
-        }
+        expected = {"select": {"value": {"args": [30.5, "month"], "op": "interval"}}}
         self.assertEqual(result, expected)
 
     def test_date_less_interval(self):
         sql = "select DATE '2020 01 25' - interval 4 seconds"
         result = parse(sql)
-        expected = {
-            "args": [{"value": {
-                "args": [
-                    {"args": [{"args": ["2020 01 25"], "op": "literal"}], "op": "date"},
-                    {"args": [4, "second"], "op": "interval"},
-                ],
-                "op": "sub",
-            }}],
-            "op": "select",
-        }
+        expected = {"select": {"value": {
+            "args": [
+                {"args": [{"literal": "2020 01 25"}], "op": "date"},
+                {"args": [4, "second"], "op": "interval"},
+            ],
+            "op": "sub",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue_141(self):
@@ -1201,31 +1193,52 @@ class TestSimple(TestCase):
         )
         result = parse(sql)
         expected = {
-            "select": {"value": {"count": "url"}},
             "from": "crawl_urls",
-            "where": {"and": [
-                {"eq": ["http_status_code", 200]},
-                {"eq": ["meta_redirect", False]},
-                {"eq": ["primary_page", True]},
-                {"eq": ["indexable", True]},
-                {"eq": ["canonicalized_page", False]},
-                {"or": [
-                    {"eq": ["paginated_page", False]},
-                    {"and": [
-                        {"eq": ["paginated_page", True]},
-                        {"eq": ["page_1", True]},
-                    ]},
-                ]},
-                {"neq": ["css", True]},
-                {"neq": ["js", True]},
-                {"neq": ["is_image", True]},
-                {"eq": ["internal", True]},
-                {"or": [
-                    {"eq": ["header_content_type", {"literal": "text/html"}]},
-                    {"eq": ["header_content_type", {"literal": ""}]},
-                ]},
-            ]},
-            "orderby": {"value": {"count": "url"}, "sort": "desc"},
+            "orderby": {"sort": "desc", "value": {"args": ["url"], "op": "count"}},
+            "select": {"value": {"args": ["url"], "op": "count"}},
+            "where": {
+                "args": [
+                    {"args": ["http_status_code", 200], "op": "eq"},
+                    {"args": ["meta_redirect", False], "op": "eq"},
+                    {"args": ["primary_page", True], "op": "eq"},
+                    {"args": ["indexable", True], "op": "eq"},
+                    {"args": ["canonicalized_page", False], "op": "eq"},
+                    {
+                        "args": [
+                            {"args": ["paginated_page", False], "op": "eq"},
+                            {
+                                "args": [
+                                    {"args": ["paginated_page", True], "op": "eq"},
+                                    {"args": ["page_1", True], "op": "eq"},
+                                ],
+                                "op": "and",
+                            },
+                        ],
+                        "op": "or",
+                    },
+                    {"args": ["css", True], "op": "neq"},
+                    {"args": ["js", True], "op": "neq"},
+                    {"args": ["is_image", True], "op": "neq"},
+                    {"args": ["internal", True], "op": "eq"},
+                    {
+                        "args": [
+                            {
+                                "args": [
+                                    "header_content_type",
+                                    {"literal": "text/html"},
+                                ],
+                                "op": "eq",
+                            },
+                            {
+                                "args": ["header_content_type", {"literal": ""}],
+                                "op": "eq",
+                            },
+                        ],
+                        "op": "or",
+                    },
+                ],
+                "op": "and",
+            },
         }
         self.assertEqual(result, expected)
 
@@ -1235,44 +1248,40 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM a WHERE ((a = 1 AND (b=2 AND c=3, False)))"
         result = parse(sql)
         expected = {
-            "args": [{"value": "a"}],
-            "kwargs": {
-                "select": ["*"],
-                "where": [{
-                    "args": [
-                        {"args": ["a", 1], "op": "eq"},
-                        [
-                            {
-                                "args": [
-                                    {"args": ["b", 2], "op": "eq"},
-                                    {"args": ["c", 3], "op": "eq"},
-                                ],
-                                "op": "and",
-                            },
-                            False,
-                        ],
+            "from": "a",
+            "select": "*",
+            "where": {
+                "args": [
+                    {"args": ["a", 1], "op": "eq"},
+                    [
+                        {
+                            "args": [
+                                {"args": ["b", 2], "op": "eq"},
+                                {"args": ["c", 3], "op": "eq"},
+                            ],
+                            "op": "and",
+                        },
+                        False,
                     ],
-                    "op": "and",
-                }],
+                ],
+                "op": "and",
             },
-            "op": "from",
         }
         self.assertEqual(result, expected)
 
     def test_and_w_tuple2(self):
         sql = "SELECT ('a', 'b', 'c')"
         result = parse(sql)
-        expected = {"args": [{"value": {"literal": ["a", "b", "c"]}}], "op": "select"}
+        expected = {"select": {"value": {"literal": ["a", "b", "c"]}}}
         self.assertEqual(result, expected)
 
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
         result = parse(sql)
-        expected = {"select": {"value": {"decode": [
-            "A",
-            {"null": {}},
-            {"literal": "b"},
-        ]}}}
+        expected = {"select": {"value": {
+            "args": ["A", {"null": {}}, {"literal": "b"}],
+            "op": "decode",
+        }}}
         self.assertEqual(result, expected)
 
     def test_issue143a(self):
@@ -1284,79 +1293,63 @@ class TestSimple(TestCase):
     def test_issue143b(self):
         sql = "Select [A] from [dual]"
         result = parse(sql)
-        expected = {
-            "args": [{"value": "dual"}],
-            "kwargs": {"select": [{"value": "A"}]},
-            "op": "from",
-        }
+        expected = {"from": "dual", "select": {"value": "A"}}
         self.assertEqual(result, expected)
 
     def test_issue143c(self):
         sql = "Select [A] from dual [T1]"
         result = parse(sql)
-        expected = {
-            "args": [{"name": "T1", "value": "dual"}],
-            "kwargs": {"select": [{"value": "A"}]},
-            "op": "from",
-        }
+        expected = {"from": {"name": "T1", "value": "dual"}, "select": {"value": "A"}}
         self.assertEqual(result, expected)
 
     def test_issue143d_quote(self):
         sql = 'Select ["]'
         result = parse(sql)
-        expected = {"args": [{"value": '"'}], "op": "select"}
+        expected = {"select": {"value": '"'}}
         self.assertEqual(result, expected)
 
     def test_issue143e_close(self):
         sql = "Select []]]"
         result = parse(sql)
-        expected = {"args": [{"value": "]"}], "op": "select"}
+        expected = {"select": {"value": "]"}}
         self.assertEqual(result, expected)
 
     def test_issue140(self):
         sql = "select rank(*) over (partition by a order by b, c) from tab"
         result = parse(sql)
         expected = {
-            "args": [{"value": "tab"}],
-            "kwargs": {"select": [{
+            "from": "tab",
+            "select": {
                 "over": {
                     "orderby": [{"value": "b"}, {"value": "c"}],
                     "partitionby": "a",
                 },
                 "value": {"args": ["*"], "op": "rank"},
-            }]},
-            "op": "from",
+            },
         }
         self.assertEqual(result, expected)
 
     def test_issue119(self):
         sql = "SELECT 1 + CAST(1 AS INT) result"
         result = parse(sql)
-        expected = {
-            "args": [{
-                "name": "result",
-                "value": {
-                    "args": [
-                        1,
-                        {"args": [1, {"args": [{}], "op": "int"}], "op": "cast"},
-                    ],
-                    "op": "add",
-                },
-            }],
-            "op": "select",
-        }
+        expected = {"select": {
+            "name": "result",
+            "value": {
+                "args": [1, {"args": [1, {"op": "int"}], "op": "cast"}],
+                "op": "add",
+            },
+        }}
         self.assertEqual(result, expected)
 
     def test_issue120(self):
         sql = "SELECT DISTINCT Country, City FROM Customers"
         result = parse(sql)
         expected = {
-            "args": [{"value": "Customers"}],
-            "kwargs": {"select": [{"value": {
+            "from": "Customers",
+            "select": {"value": {
                 "args": [{"value": "Country"}, {"value": "City"}],
                 "op": "distinct",
-            }}]},
-            "op": "from"
+            }},
         }
         self.assertEqual(result, expected)
 
@@ -1365,11 +1358,7 @@ class TestSimple(TestCase):
         #      012345678901234567890123456789
         sql = "SELECT * FROM jobs LIMIT 10"
         result = parse(sql)
-        expected = {
-            "args": [{"value": "jobs"}],
-            "kwargs": {"limit": [10], "select": ["*"]},
-            "op": "from",
-        }
+        expected = {"from": "jobs", "limit": 10, "select": "*"}
         self.assertEqual(result, expected)
 
     def test_issue2a_of_fork(self):
@@ -1378,15 +1367,11 @@ class TestSimple(TestCase):
         self.assertEqual(
             result,
             {
-                "args": [{"value": "A"}],
-                "kwargs": {"select": [{"value": {
-                    "args": [{
-                        "args": [{"args": ["Y"], "op": "value"}],
-                        "op": "distinct",
-                    }],
+                "from": "A",
+                "select": {"value": {
+                    "args": [{"args": [{"value": "Y"}], "op": "distinct"}],
                     "op": "count",
-                }}]},
-                "op": "from",
+                }},
             },
         )
 
@@ -1396,25 +1381,19 @@ class TestSimple(TestCase):
         self.assertEqual(
             result,
             {
-                "args": [{"value": "C"}],
-                "kwargs": {
-                    "groupby": [{"args": ["A"], "op": "value"}],
-                    "select": [
-                        {"value": {
-                            "args": [{
-                                "args": [
-                                    {"args": ["B"], "op": "value"},
-                                    {"args": ["E"], "op": "value"},
-                                ],
-                                "op": "distinct",
-                            }],
-                            "op": "count",
-                        }},
-                        {"value": "A"},
-                    ],
-                    "where": [{"args": ["D", "X"], "op": "eq"}],
-                },
-                "op": "from",
+                "from": "C",
+                "groupby": {"value": "A"},
+                "select": [
+                    {"value": {
+                        "args": [{
+                            "args": [{"value": "B"}, {"value": "E"}],
+                            "op": "distinct",
+                        }],
+                        "op": "count",
+                    }},
+                    {"value": "A"},
+                ],
+                "where": {"args": ["D", "X"], "op": "eq"},
             },
         )
 
@@ -1430,7 +1409,7 @@ class TestSimple(TestCase):
                         "orderby": [{"value": "b"}, {"sort": "desc", "value": "c"}],
                         "partitionby": "a",
                     },
-                    "value": {"rank": "*"},
+                    "value": {"args": ["*"], "op": "rank"},
                 },
             },
         )
@@ -1455,6 +1434,7 @@ class TestSimple(TestCase):
         self.assertEqual(
             result,
             {
+                "from": "Star",
                 "select": [
                     {"value": "u"},
                     {"value": "g"},
@@ -1466,27 +1446,80 @@ class TestSimple(TestCase):
                     {"value": "flags_r"},
                 ],
                 "top": 10,
-                "from": "Star",
-                "where": {"and": [
-                    {"between": ["ra", 180, 181]},
-                    {"between": ["dec", -0.5, 0.5]},
-                    {"neq": [{"binary_and": ["flags_r", {"hex": "10000000"}]}, 0]},
-                    {"eq": [{"binary_and": ["flags_r", {"hex": "8100000c00a4"}]}, 0]},
-                    {"or": [
-                        {"eq": [
-                            {"binary_and": ["flags_r", {"hex": "400000000000"}]},
-                            0,
-                        ]},
-                        {"lte": ["psfmagerr_r", 0.2]},
-                    ]},
-                    {"or": [
-                        {"eq": [
-                            {"binary_and": ["flags_r", {"hex": "100000000000"}]},
-                            0,
-                        ]},
-                        {"eq": [{"binary_and": ["flags_r", {"hex": "1000"}]}, 0]},
-                    ]},
-                ]},
+                "where": {
+                    "args": [
+                        {"args": ["ra", 180, 181], "op": "between"},
+                        {"args": ["dec", -0.5, 0.5], "op": "between"},
+                        {
+                            "args": [
+                                {
+                                    "args": ["flags_r", {"hex": "10000000"}],
+                                    "op": "binary_and",
+                                },
+                                0,
+                            ],
+                            "op": "neq",
+                        },
+                        {
+                            "args": [
+                                {
+                                    "args": ["flags_r", {"hex": "8100000c00a4"}],
+                                    "op": "binary_and",
+                                },
+                                0,
+                            ],
+                            "op": "eq",
+                        },
+                        {
+                            "args": [
+                                {
+                                    "args": [
+                                        {
+                                            "args": [
+                                                "flags_r",
+                                                {"hex": "400000000000"},
+                                            ],
+                                            "op": "binary_and",
+                                        },
+                                        0,
+                                    ],
+                                    "op": "eq",
+                                },
+                                {"args": ["psfmagerr_r", 0.2], "op": "lte"},
+                            ],
+                            "op": "or",
+                        },
+                        {
+                            "args": [
+                                {
+                                    "args": [
+                                        {
+                                            "args": [
+                                                "flags_r",
+                                                {"hex": "100000000000"},
+                                            ],
+                                            "op": "binary_and",
+                                        },
+                                        0,
+                                    ],
+                                    "op": "eq",
+                                },
+                                {
+                                    "args": [
+                                        {
+                                            "args": ["flags_r", {"hex": "1000"}],
+                                            "op": "binary_and",
+                                        },
+                                        0,
+                                    ],
+                                    "op": "eq",
+                                },
+                            ],
+                            "op": "or",
+                        },
+                    ],
+                    "op": "and",
+                },
             },
         )
 
@@ -1514,43 +1547,56 @@ class TestSimple(TestCase):
         self.assertEqual(
             result,
             {
-                "select": [
-                    {"value": "fld.run"},
-                    {"value": "fld.avg_sky_muJy"},
-                    {"name": "area", "value": "fld.runarea"},
-                    {"value": {"isnull": ["fp.nfirstmatch", 0]}},
-                ],
-                "top": 10,
                 "from": [
                     {
                         "name": "fld",
                         "value": {
-                            "select": [
-                                {"value": "run"},
-                                {"name": "runarea", "value": {"sum": "primaryArea"}},
-                                {
-                                    "name": "avg_sky_muJy",
-                                    "value": {"mul": [
-                                        3631000000,
-                                        {"avg": {"power": [
-                                            {"cast": [10, {"float": {}}]},
-                                            {"neg": {"mul": [0.4, "sky_r"]}},
-                                        ]}},
-                                    ]},
-                                },
-                            ],
                             "from": "Field",
                             "groupby": {"value": "run"},
+                            "select": [
+                                {"value": "run"},
+                                {
+                                    "name": "runarea",
+                                    "value": {"args": ["primaryArea"], "op": "sum"},
+                                },
+                                {
+                                    "name": "avg_sky_muJy",
+                                    "value": {
+                                        "args": [
+                                            3631000000,
+                                            {
+                                                "args": [{
+                                                    "args": [
+                                                        {
+                                                            "args": [
+                                                                10,
+                                                                {"op": "float"},
+                                                            ],
+                                                            "op": "cast",
+                                                        },
+                                                        {
+                                                            "args": [{
+                                                                "args": [0.4, "sky_r"],
+                                                                "op": "mul",
+                                                            }],
+                                                            "op": "neg",
+                                                        },
+                                                    ],
+                                                    "op": "power",
+                                                }],
+                                                "op": "avg",
+                                            },
+                                        ],
+                                        "op": "mul",
+                                    },
+                                },
+                            ],
                         },
                     },
                     {
                         "left outer join": {
                             "name": "fp",
                             "value": {
-                                "select": [
-                                    {"value": "p.run"},
-                                    {"name": "nfirstmatch", "value": {"count": "*"}},
-                                ],
                                 "from": [
                                     {"name": "fm", "value": "FIRST"},
                                     {
@@ -1558,16 +1604,33 @@ class TestSimple(TestCase):
                                             "name": "p",
                                             "value": "photoprimary",
                                         },
-                                        "on": {"eq": ["p.objid", "fm.objid"]},
+                                        "on": {
+                                            "args": ["p.objid", "fm.objid"],
+                                            "op": "eq",
+                                        },
                                     },
                                 ],
                                 "groupby": {"value": "p.run"},
+                                "select": [
+                                    {"value": "p.run"},
+                                    {
+                                        "name": "nfirstmatch",
+                                        "value": {"args": ["*"], "op": "count"},
+                                    },
+                                ],
                             },
                         },
-                        "on": {"eq": ["fld.run", "fp.run"]},
+                        "on": {"args": ["fld.run", "fp.run"], "op": "eq"},
                     },
                 ],
                 "orderby": {"value": "fld.run"},
+                "select": [
+                    {"value": "fld.run"},
+                    {"value": "fld.avg_sky_muJy"},
+                    {"name": "area", "value": "fld.runarea"},
+                    {"value": {"args": ["fp.nfirstmatch", 0], "op": "isnull"}},
+                ],
+                "top": 10,
             },
         )
 
@@ -1595,43 +1658,50 @@ class TestSimple(TestCase):
         self.assertEqual(
             result,
             {
-                "select": [
-                    {"value": "fld.run"},
-                    {"value": "fld.avg_sky_muJy"},
-                    {"name": "area", "value": "fld.runarea"},
-                    {"value": {"isnull": ["fp.nfirstmatch", 0]}},
-                ],
-                "top": 10,
                 "from": [
                     {
                         "name": "fld",
                         "value": {
+                            "from": "Field",
+                            "groupby": {"value": "run"},
                             "select": [
                                 {"value": "run"},
-                                {"name": "runarea", "value": {"sum": "primaryArea"}},
+                                {
+                                    "name": "runarea",
+                                    "value": {"args": ["primaryArea"], "op": "sum"},
+                                },
                                 {
                                     "name": "avg_sky_muJy",
                                     "value": {"mul": [
                                         3631000000,
-                                        {"avg": {"power": [
-                                            {"cast": [10.0, {"float": {}}]},
-                                            {"neg": {"mul": [0.4, "sky_r"]}},
-                                        ]}},
+                                        {
+                                            "args": [{
+                                                "args": [
+                                                    {
+                                                        "args": [10.0, {"op": "float"}],
+                                                        "op": "cast",
+                                                    },
+                                                    {
+                                                        "args": [{"mul": [
+                                                            0.4,
+                                                            "sky_r",
+                                                        ]}],
+                                                        "op": "neg",
+                                                    },
+                                                ],
+                                                "op": "power",
+                                            }],
+                                            "op": "avg",
+                                        },
                                     ]},
                                 },
                             ],
-                            "from": "Field",
-                            "groupby": {"value": "run"},
                         },
                     },
                     {
                         "left outer join": {
                             "name": "fp",
                             "value": {
-                                "select": [
-                                    {"value": "p.run"},
-                                    {"name": "nfirstmatch", "value": {"count": "*"}},
-                                ],
                                 "from": [
                                     {"name": "fm", "value": "FIRST"},
                                     {
@@ -1639,16 +1709,33 @@ class TestSimple(TestCase):
                                             "name": "p",
                                             "value": "photoprimary",
                                         },
-                                        "on": {"eq": ["p.objid", "fm.objid"]},
+                                        "on": {
+                                            "args": ["p.objid", "fm.objid"],
+                                            "op": "eq",
+                                        },
                                     },
                                 ],
                                 "groupby": {"value": "p.run"},
+                                "select": [
+                                    {"value": "p.run"},
+                                    {
+                                        "name": "nfirstmatch",
+                                        "value": {"args": ["*"], "op": "count"},
+                                    },
+                                ],
                             },
                         },
-                        "on": {"eq": ["fld.run", "fp.run"]},
+                        "on": {"args": ["fld.run", "fp.run"], "op": "eq"},
                     },
                 ],
                 "orderby": {"value": "fld.run"},
+                "select": [
+                    {"value": "fld.run"},
+                    {"value": "fld.avg_sky_muJy"},
+                    {"name": "area", "value": "fld.runarea"},
+                    {"value": {"args": ["fp.nfirstmatch", 0], "op": "isnull"}},
+                ],
+                "top": 10,
             },
         )
 
@@ -1658,24 +1745,10 @@ class TestSimple(TestCase):
         select 'Alan' from dual
         """
         result = parse(sql)
-        expected = {
-            "args": [
-                {
-                    "args": [{"value": "employee"}],
-                    "kwargs": {"select": [{"value": "name"}]},
-                    "op": "from",
-                },
-                {
-                    "args": [{"value": "dual"}],
-                    "kwargs": {"select": [{"value": {
-                        "args": ["Alan"],
-                        "op": "literal",
-                    }}]},
-                    "op": "from",
-                },
-            ],
-            "op": "minus",
-        }
+        expected = {"minus": [
+            {"from": "employee", "select": {"value": "name"}},
+            {"from": "dual", "select": {"value": {"literal": "Alan"}}},
+        ]}
         self.assertEqual(result, expected)
 
     def test_issue_32_not_ascii(self):
