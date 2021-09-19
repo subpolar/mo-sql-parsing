@@ -42,7 +42,7 @@ class TestPostgres(TestCase):
             },
         )
 
-    def test_issue_20(self):
+    def test_issue_20a(self):
         sql = """SELECT Status FROM city WHERE Population > 1500 INTERSECT SELECT Status FROM city WHERE Population < 500"""
         result = parse(sql)
         expected = {"intersect": [

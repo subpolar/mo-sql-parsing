@@ -1443,7 +1443,7 @@ class TestSimple(TestCase):
         expected = {"from": "motorhead", "select": {"value": "äce"}}
         self.assertEqual(result, expected)
 
-    def test_issue20_intersect(self):
+    def test_issue_20b_intersect(self):
         sql = (
             "SELECT login_name FROM Course_Authors_and_Tutors INTERSECT SELECT"
             " login_name FROM Students"
