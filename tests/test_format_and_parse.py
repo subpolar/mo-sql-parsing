@@ -10,12 +10,12 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import re
-from unittest import TestCase, skip
+from unittest import TestCase
 
 from mo_logs import Log
+
 from mo_sql_parsing import format, parse
 from mo_sql_parsing.keywords import join_keywords
-
 
 EXCEPTION_MESSAGE = """
 SQL:         {{expected_sql}}

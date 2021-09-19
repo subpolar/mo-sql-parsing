@@ -13,7 +13,6 @@ import ast
 
 from mo_dots import is_data, is_null, Data, from_data
 from mo_future import text, number_types, binary_type
-from mo_logs import Log
 
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
@@ -23,8 +22,6 @@ class Call(object):
     __slots__ = ["op", "args", "kwargs"]
 
     def __init__(self, op, args, kwargs):
-        if isinstance(args, dict):
-            Log.error("")
         self.op = op
         self.args = args
         self.kwargs = kwargs
