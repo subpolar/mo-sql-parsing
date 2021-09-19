@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 try:
@@ -1438,5 +1440,17 @@ class TestSimple(TestCase):
     def test_issue_32_not_ascii(self):
         sql = """select äce from motorhead"""
         result = parse(sql)
-        expected = {'from': 'motorhead', 'select': {'value': 'äce'}}
+        expected = {"from": "motorhead", "select": {"value": "äce"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_20b_intersect(self):
+        sql = (
+            "SELECT login_name FROM Course_Authors_and_Tutors INTERSECT SELECT"
+            " login_name FROM Students"
+        )
+        result = parse(sql)
+        expected = {"intersect": [
+            {"from": "Course_Authors_and_Tutors", "select": {"value": "login_name"}},
+            {"from": "Students", "select": {"value": "login_name"}},
+        ]}
         self.assertEqual(result, expected)
