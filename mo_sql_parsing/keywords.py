@@ -158,6 +158,7 @@ RESERVED = MatchFirst([
     IN,
     INDEX,
     INNER,
+    INTERSECT,
     INTERVAL,
     IS_NOT,
     IS,
