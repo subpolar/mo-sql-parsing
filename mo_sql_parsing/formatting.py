@@ -379,7 +379,7 @@ class Formatter:
     def orderby(self, json):
         if "orderby" in json:
             param = ", ".join(
-                (self.dispatch(s['value']) + " " + s.get("sort", "").upper()).strip()
+                (self.dispatch(s["value"]) + " " + s.get("sort", "").upper()).strip()
                 for s in listwrap(json["orderby"])
             )
             return f"ORDER BY {param}"
