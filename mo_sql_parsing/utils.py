@@ -46,7 +46,7 @@ def simple_op(op, args, kwargs):
 
 def normal_op(op, args, kwargs):
     output = Data(op=op)
-    args=listwrap(args)
+    args = listwrap(args)
     if args and (not isinstance(args[0], dict) or args[0]):
         output.args = args
     if kwargs:

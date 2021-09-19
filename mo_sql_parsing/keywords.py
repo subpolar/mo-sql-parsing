@@ -112,7 +112,11 @@ UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS
-AT_TIME_ZONE = Group(Keyword("at", caseless=True) + Keyword("time", caseless=True) + Keyword("zone", caseless=True))
+AT_TIME_ZONE = Group(
+    Keyword("at", caseless=True)
+    + Keyword("time", caseless=True)
+    + Keyword("zone", caseless=True)
+)
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")

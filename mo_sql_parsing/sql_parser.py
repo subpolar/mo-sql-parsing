@@ -248,7 +248,10 @@ def parser(literal_string, ident):
         ordered_sql << (
             (
                 unordered_sql
-                + ZeroOrMore(Group(UNION_ALL | UNION | INTERSECT | EXCEPT | MINUS) + unordered_sql)
+                + ZeroOrMore(
+                    Group(UNION_ALL | UNION | INTERSECT | EXCEPT | MINUS)
+                    + unordered_sql
+                )
             )("union")
             + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
             + Optional(LIMIT + expr("limit"))
