@@ -5,8 +5,8 @@ Let's make a SQL parser so we can provide a familiar interface to non-sql datast
 
 |Branch      |Status   |
 |------------|---------|
-|master      | [![Build Status](https://travis-ci.org/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.org/klahnakoski/mo-sql-parsing) |
-|dev         | [![Build Status](https://travis-ci.org/klahnakoski/mo-sql-parsing.svg?branch=dev)](https://travis-ci.org/klahnakoski/mo-sql-parsing)    |
+|master      | [![Build Status](https://travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/klahnakoski/mo-sql-parsing) |
+|dev         | [![Build Status](https://travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=dev)](https://travis-ci.com/klahnakoski/mo-sql-parsing)    |
 
 
 ## Problem Statement
@@ -52,9 +52,33 @@ The default output for this parser is to emit a null function `{"null":{}}` wher
     
 this has been implemented with a post-parse rewriting of the parse tree.
 
+
+#### Normalized function call form (experimental)
+
+The default behaviour of the parser is to output function calls in `simple_op` format: The operator being a key in the opbject; `{op: params}`.  This form can be difficult to work with because the object must be scanned for known operators, or possible optional arguments, or at least distinguished from the complex query object.
+
+You can have the parser emit function calls in `normal_op` format
+
+    sql = "select trim(' ' from b+c)"
+    result = parse(sql, calls=normal_op)
+    
+which produces calls in a normalized format
+
+    {"op": op, "args": args, "kwargs": kwargs}
+
+here is the JSON from the example above:
+
+```
+{'select': {'value': {
+    'op': 'trim', 
+    'args': [{'op': 'add', 'args': ['b', 'c']}], 
+    'kwargs': {'characters': {'literal': ' '}}
+}}}
+```
+
 #### MySQL literal strings
 
-MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour.  A specific parse function is provided: 
+MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour, but it is more forgiving for programmers coming from other languages. A specific parse function is provided: 
 
     result = parse_mysql(sql)
 
@@ -72,7 +96,7 @@ You may also generate SQL from the a given JSON document. This is done by the fo
 In the event that the parser is not working for you, you can help make this better but simply pasting your sql (or JSON) into a new issue. Extra points if you describe the problem. Even more points if you submit a PR with a test.  If you also submit a fix, then you also have my gratitude. 
 
 
-## Run Tests
+### Run Tests
 
 See [the tests directory](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests) for instructions running tests, or writing new ones.
 
@@ -118,18 +142,3 @@ then you may avoid all the is-it-a-list checks :
 for select in listwrap(parsed_result.get('select')):
     do_something(select)
 ```
-
-you may find it easier if all JSON expressions had a list of operands:
-
-```
-def normalize(expression):
-    if isinstance(expression, dict):
-        return [
-            {"operator": operator, "operands": [normalize(p) for p in listwrap(operands)]}
-            for operator, operands in expression.items()
-        ][0]
-    return expression
-```
-
-[see the smoke test for working example](https://github.com/klahnakoski/mo-sql-parsing/blob/dev/tests/smoke_test.py)
- 

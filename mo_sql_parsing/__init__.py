@@ -13,14 +13,16 @@ import json
 from threading import Lock
 
 from mo_sql_parsing.sql_parser import scrub
-from mo_sql_parsing.utils import SQL_NULL, ansi_string
+from mo_sql_parsing.utils import ansi_string, simple_op
 
 parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 combined_parser = None
 mysql_parser = None
 
+SQL_NULL = {"null": {}}
 
-def parse(sql, null=SQL_NULL):
+
+def parse(sql, null=SQL_NULL, calls=simple_op):
     """
     :param sql: String of SQL
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
@@ -31,10 +33,11 @@ def parse(sql, null=SQL_NULL):
     with parseLocker:
         if not combined_parser:
             combined_parser = sql_parser.combined_parser()
-        return _parse(combined_parser, sql, null)
+        result = _parse(combined_parser, sql, null, calls)
+        return result
 
 
-def parse_mysql(sql, null=SQL_NULL):
+def parse_mysql(sql, null=SQL_NULL, calls=simple_op):
     """
     PARSE MySQL ASSUME DOUBLE QUOTED STRINGS ARE LITERALS
     :param sql: String of SQL
@@ -46,17 +49,17 @@ def parse_mysql(sql, null=SQL_NULL):
     with parseLocker:
         if not mysql_parser:
             mysql_parser = sql_parser.mysql_parser()
-        return _parse(mysql_parser, sql, null)
+        return _parse(mysql_parser, sql, null, calls)
 
 
-def _parse(parser, sql, null=SQL_NULL):
+def _parse(parser, sql, null, calls):
     utils.null_locations = []
+    utils.scrub_op = calls
     sql = sql.rstrip().rstrip(";")
     parse_result = parser.parseString(sql, parseAll=True)
     output = scrub(parse_result)
-    if null is not SQL_NULL:
-        for o, n in utils.null_locations:
-            o[n] = null
+    for o, n in utils.null_locations:
+        o[n] = null
     return output
 
 

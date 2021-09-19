@@ -15,6 +15,7 @@ from mo_sql_parsing import parse
 
 class TestApacheHive(TestCase):
     def test_decisive_equailty(self):
+        # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/#hive-relational-operators
         sql = "select a<=>b from table"
         result = parse(sql)
 
