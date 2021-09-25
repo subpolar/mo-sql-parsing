@@ -28,6 +28,9 @@ Once you have written a failing test, you can use `with Debugger():` in your tes
  
 ## History
 
+* **September 2021** - added option for `{"op": op, "args":args}` form
+* **August 2021** - good work of ykawakamy added  [create table](https://github.com/klahnakoski/mo-sql-parsing/pull/16) syntax
+* **June 2021** - moved to `mo-sql-parsing`
 * **November 2020** - Add `pip install` tests
 * **October 2020** - Use mo-parsing for less recursion and faster parsing 
 * **January 2018** - fixes for Python3
