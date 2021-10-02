@@ -12,7 +12,7 @@ from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.utils import *
-from mo_sql_parsing.windows import sortColumn, window
+from mo_sql_parsing.windows import window
 
 
 def combined_parser():
@@ -46,6 +46,7 @@ def parser(literal_string, ident):
         # EXPRESSIONS
         column_definition = Forward()
         column_type = Forward()
+        expr = Forward()
 
         # CASE
         case = (
@@ -134,11 +135,9 @@ def parser(literal_string, ident):
         ).addParseAction(to_json_call)
 
         with NO_WHITESPACE:
-
             def scale(tokens):
                 return {"mul": [tokens[0], tokens[1]]}
 
-            # TODO: THE call_function IS CONSUMING WHITESPACE PREFIX leaveWhitespace() DOES NOT APPEAR TO STOP IT
             scale_function = ((realNum | intNum) + call_function).addParseAction(scale)
             scale_ident = ((realNum | intNum) + ident).addParseAction(scale)
 
@@ -168,6 +167,11 @@ def parser(literal_string, ident):
             | Combine(var_name + Optional(".*"))
         )
 
+        sortColumn = expr("value").set_parser_name("sort1") + Optional(
+            DESC("sort") | ASC("sort")
+        ) | expr("value").set_parser_name("sort2")
+
+
         expr << (
             (
                 Literal("*")
@@ -184,7 +188,7 @@ def parser(literal_string, ident):
                     ],
                 ).set_parser_name("expression")
             )("value")
-            + Optional(window)
+            + Optional(window(expr, sortColumn))
         ).addParseAction(to_expression_call)
 
         alias = (
@@ -263,7 +267,7 @@ def parser(literal_string, ident):
             Optional(
                 WITH
                 + delimitedList(Group(
-                    var_name("name") + AS + LB + statement("value") + RB
+                    var_name("name") + AS + LB + (statement|expr)("value") + RB
                 ))
             )("with")
             + Group(ordered_sql)("query")

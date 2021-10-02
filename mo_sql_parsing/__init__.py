@@ -52,6 +52,9 @@ def parse_mysql(sql, null=SQL_NULL, calls=simple_op):
         return _parse(mysql_parser, sql, null, calls)
 
 
+parse_bigquery = parse_mysql
+
+
 def _parse(parser, sql, null, calls):
     utils.null_locations = []
     utils.scrub_op = calls
@@ -71,4 +74,4 @@ def format(json, **kwargs):
 
 _ = json.dumps
 
-__all__ = ["parse", "format"]
+__all__ = ["parse", "format", "parse_mysql", "parse_bigquery"]
