@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 from unittest import TestCase
 
+from mo_future import get_function_name
 from mo_logs import Log
 
 from mo_sql_parsing import format, parse
@@ -26,7 +27,6 @@ JSON:
 Broken JSON:
 {{new_json}}
 """
-
 
 def remove_whitespace(sql):
     # WE ASSUME A WHITESPACE REMOVAL IS GOOD ENOUGH FOR COMPARE

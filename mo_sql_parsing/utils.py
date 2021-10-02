@@ -439,5 +439,3 @@ mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"').addParseAction(to_string)
 ansi_ident = Regex(r'\"(\"\"|[^"])*\"').addParseAction(unquote)
 mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`").addParseAction(unquote)
 sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
-
-expr = Forward()

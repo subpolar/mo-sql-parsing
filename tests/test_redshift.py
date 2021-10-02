@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 
@@ -165,7 +167,7 @@ class TestRedshift(TestCase):
                         "left join": "ex",
                         "on": {"eq": [
                             "t.date",
-                            {"cast": ["ex.date_at", {"date": {"literal": ""}}]},
+                            {"cast": ["ex.date_at", {"date": {}}]},
                         ]},
                     },
                 ],
@@ -511,3 +513,4 @@ class TestRedshift(TestCase):
         result = parse(sql)
         expected = {"from": "b", "select": {"value": {"right": ["a", 6]}}}
         self.assertEqual(result, expected)
+

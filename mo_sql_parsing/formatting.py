@@ -230,7 +230,7 @@ class Formatter:
         return "{0} IS {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
 
     def _collate(self, pair):
-        return "{0} COLLATE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
+        return "{0} COLLATE {1}".format(self.dispatch(pair[0]), pair[1])
 
     def _in(self, json):
         value, many = json

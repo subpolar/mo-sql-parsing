@@ -72,28 +72,25 @@ between = (BETWEEN + bound("min") + AND + bound("max")).addParseAction(_to_betwe
 
 row_clause = (ROWS | RANGE).suppress() + (between | bound)
 
-# SQL STATEMENT
-sortColumn = expr("value").set_parser_name("sort1") + Optional(
-    DESC("sort") | ASC("sort")
-) | expr("value").set_parser_name("sort2")
 
-window = (
-    # Optional((Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True))("ignore_nulls").addParseAction(lambda: True))
-    Optional(
-        WITHIN_GROUP
-        + LB
-        + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
-        + RB
-    )("within")
-    + Optional(
-        OVER
-        + LB
-        + Optional(PARTITION_BY + delimitedList(Group(expr))("partitionby"))
+def window(expr, sortColumn):
+    return (
+        # Optional((Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True))("ignore_nulls").addParseAction(lambda: True))
+        Optional(
+            WITHIN_GROUP
+            + LB
+            + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
+            + RB
+        )("within")
         + Optional(
-            ORDER_BY
-            + delimitedList(Group(sortColumn))("orderby")
-            + Optional(row_clause)("range")
-        )
-        + RB
-    )("over")
-)
+            OVER
+            + LB
+            + Optional(PARTITION_BY + delimitedList(Group(expr))("partitionby"))
+            + Optional(
+                ORDER_BY
+                + delimitedList(Group(sortColumn))("orderby")
+                + Optional(row_clause)("range")
+            )
+            + RB
+        )("over")
+    )
