@@ -18,6 +18,7 @@ from mo_parsing import listwrap
 from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
 from mo_sql_parsing.utils import binary_ops
 
+MAX_PRECEDENCE = 100
 VALID = re.compile(r"^[a-zA-Z_]\w*$")
 
 
@@ -62,9 +63,9 @@ def escape(ident, ansi_quotes, should_quote):
     return ".".join(esc(f) for f in split_field(ident))
 
 
-def Operator(op):
-    prec = precedence[binary_ops[op]]
-    op = " {0} ".format(op).upper()
+def Operator(_op):
+    prec = precedence[binary_ops[_op]]
+    op = " {0} ".format(_op).upper()
 
     def func(self, json):
         acc = []
@@ -75,25 +76,38 @@ def Operator(op):
             json = [k, {"literal": v}]
 
         for v in json if isinstance(json, list) else [json]:
-            sql = self.dispatch(v)
+            sql = self.format(v)
             if isinstance(v, (text, int, float, long)):
                 acc.append(sql)
                 continue
-            # Error when formating NULL operators #7
             if v is None:
                 acc.append("NULL")
                 continue
-            p = precedence.get(first(v.keys()))
-            if p is None:
+            if isinstance(v, list):
                 acc.append(sql)
                 continue
-            if p >= prec:
-                acc.append("(" + sql + ")")
-            else:
-                acc.append(sql)
+            acc.append(isolate(v, sql, prec))
         return op.join(acc)
 
     return func
+
+
+def isolate(expr, sql, prec):
+    """
+    RETURN sql IN PARENTHESIS IF PREEDENCE > prec
+    :param expr: expression to isolate
+    :param sql: sql to return
+    :param prec: current precedence
+    """
+    if is_text(expr):
+        return sql
+    ps = [p for k in expr.keys() for p in [precedence.get(k)] if p is not None]
+    if not ps:
+        return sql
+    elif min(ps) >= prec:
+        return f"({sql})"
+    else:
+        return sql
 
 
 class Formatter:
@@ -111,7 +125,7 @@ class Formatter:
         "offset",
     ]
 
-    # simple operators
+    # infix operators
     _concat = Operator("||")
     _mul = Operator("*")
     _div = Operator("/")
@@ -124,24 +138,23 @@ class Formatter:
     _gte = Operator(">=")
     _lte = Operator("<=")
     _eq = Operator("=")
+    _in = Operator("in")
+    _nin = Operator("not in")
     _or = Operator("or")
     _and = Operator("and")
     _binary_and = Operator("&")
     _binary_or = Operator("|")
+    _union = Operator("union")
+    _union_all = Operator("union all")
+    _intersect = Operator("intersect")
+    _minus = Operator("minus")
+    _except = Operator("except")
 
     def __init__(self, ansi_quotes=True, should_quote=should_quote):
         self.ansi_quotes = ansi_quotes
         self.should_quote = should_quote
 
     def format(self, json):
-        if "union" in json:
-            return self.union(json["union"])
-        elif "union_all" in json:
-            return self.union_all(json["union_all"])
-        else:
-            return self.query(json)
-
-    def dispatch(self, json):
         if isinstance(json, list):
             return self.sql_list(json)
         if isinstance(json, dict):
@@ -149,17 +162,8 @@ class Formatter:
                 return ""
             elif "value" in json:
                 return self.value(json)
-            elif "from" in json:
-                # Nested queries
-                return "({})".format(self.format(json))
-            elif "select" in json:
-                # Nested queries
-                return "({})".format(self.format(json))
-            elif "select_distinct" in json:
-                # Nested queries
-                return "({})".format(self.format(json))
-            elif "on" in json:
-                return self._join_on(json)
+            elif any(clause in json for clause in ("select", "select_distinct", "from")):
+                return self.query(json)
             elif "null" in json:
                 return "NULL"
             else:
@@ -172,12 +176,12 @@ class Formatter:
         return text(json)
 
     def sql_list(self, json):
-        return "(" + ", ".join(self.dispatch(element) for element in json) + ")"
+        return "(" + ", ".join(self.format(element) for element in json) + ")"
 
     def value(self, json):
-        parts = [self.dispatch(json["value"])]
+        parts = [self.format(json["value"])]
         if "name" in json:
-            parts.extend(["AS", self.dispatch(json["name"])])
+            parts.extend(["AS", self.format(json["name"])])
         return " ".join(parts)
 
     def op(self, json):
@@ -198,68 +202,51 @@ class Formatter:
         if isinstance(value, dict) and len(value) == 0:
             return (
                 key.upper() + "()"
-            )  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.dispatch()
+            )  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.format()
         else:
-            params = ", ".join(self.dispatch(p) for p in listwrap(value))
+            params = ", ".join(self.format(p) for p in listwrap(value))
             return f"{key.upper()}({params})"
 
     def _binary_not(self, value):
-        return "~{0}".format(self.dispatch(value))
+        return "~{0}".format(self.format(value))
 
     def _exists(self, value):
-        return "{0} IS NOT NULL".format(self.dispatch(value))
+        return "{0} IS NOT NULL".format(self.format(value))
 
     def _missing(self, value):
-        return "{0} IS NULL".format(self.dispatch(value))
+        return "{0} IS NULL".format(self.format(value))
 
     def _like(self, pair):
-        return "{0} LIKE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
+        return "{0} LIKE {1}".format(self.format(pair[0]), self.format(pair[1]))
 
     def _not_like(self, pair):
-        return "{0} NOT LIKE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
+        return "{0} NOT LIKE {1}".format(self.format(pair[0]), self.format(pair[1]))
 
     def _rlike(self, pair):
-        return "{0} RLIKE {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
+        return "{0} RLIKE {1}".format(self.format(pair[0]), self.format(pair[1]))
 
     def _not_rlike(self, pair):
         return "{0} NOT RLIKE {1}".format(
-            self.dispatch(pair[0]), self.dispatch(pair[1])
+            self.format(pair[0]), self.format(pair[1])
         )
 
     def _is(self, pair):
-        return "{0} IS {1}".format(self.dispatch(pair[0]), self.dispatch(pair[1]))
+        return "{0} IS {1}".format(self.format(pair[0]), self.format(pair[1]))
 
     def _collate(self, pair):
-        return "{0} COLLATE {1}".format(self.dispatch(pair[0]), pair[1])
-
-    def _in(self, json):
-        value, many = json
-
-        value = self.dispatch(value)
-        many = self.dispatch(many)
-
-        return "{0} IN {1}".format(value, many)
-
-    def _nin(self, json):
-        valid = self.dispatch(json[1])
-        # `(10, 11, 12)` does not get parsed as literal, so it's formatted as
-        # `10, 11, 12`. This fixes it.
-        if not valid.startswith("("):
-            valid = "({0})".format(valid)
-
-        return "{0} NOT IN {1}".format(json[0], valid)
+        return "{0} COLLATE {1}".format(self.format(pair[0]), pair[1])
 
     def _case(self, checks):
         parts = ["CASE"]
         for check in checks if isinstance(checks, list) else [checks]:
             if isinstance(check, dict):
                 if "when" in check and "then" in check:
-                    parts.extend(["WHEN", self.dispatch(check["when"])])
-                    parts.extend(["THEN", self.dispatch(check["then"])])
+                    parts.extend(["WHEN", self.format(check["when"])])
+                    parts.extend(["THEN", self.format(check["then"])])
                 else:
-                    parts.extend(["ELSE", self.dispatch(check)])
+                    parts.extend(["ELSE", self.format(check)])
             else:
-                parts.extend(["ELSE", self.dispatch(check)])
+                parts.extend(["ELSE", self.format(check)])
         parts.append("END")
         return " ".join(parts)
 
@@ -273,12 +260,12 @@ class Formatter:
 
     def _between(self, json):
         return "{0} BETWEEN {1} AND {2}".format(
-            self.dispatch(json[0]), self.dispatch(json[1]), self.dispatch(json[2])
+            self.format(json[0]), self.format(json[1]), self.format(json[2])
         )
 
     def _not_between(self, json):
         return "{0} NOT BETWEEN {1} AND {2}".format(
-            self.dispatch(json[0]), self.dispatch(json[1]), self.dispatch(json[2])
+            self.format(json[0]), self.format(json[1]), self.format(json[2])
         )
 
     def _join_on(self, json):
@@ -295,21 +282,15 @@ class Formatter:
 
         acc = []
         acc.append(join_keyword.upper())
-        acc.append(self.dispatch(json[join_keyword]))
+        acc.append(self.format(json[join_keyword]))
 
         if json.get("on"):
             acc.append("ON")
-            acc.append(self.dispatch(json["on"]))
+            acc.append(self.format(json["on"]))
         if json.get("using"):
             acc.append("USING")
-            acc.append(self.dispatch(json["using"]))
+            acc.append(self.format(json["using"]))
         return " ".join(acc)
-
-    def union(self, json):
-        return " UNION ".join(self.query(query) for query in json)
-
-    def union_all(self, json):
-        return " UNION ALL ".join(self.query(query) for query in json)
 
     def query(self, json):
         return " ".join(
@@ -325,61 +306,48 @@ class Formatter:
             if not isinstance(with_, list):
                 with_ = [with_]
             parts = ", ".join(
-                "{0} AS {1}".format(part["name"], self.dispatch(part["value"]))
+                "{0} AS ({1})".format(part["name"], self.format(part["value"]))
                 for part in with_
             )
             return "WITH {0}".format(parts)
 
     def select(self, json):
         if "select" in json:
-            param = ", ".join(self.dispatch(s) for s in listwrap(json["select"]))
+            param = ", ".join(self.format(s) for s in listwrap(json["select"]))
             if "top" in json:
-                top = self.dispatch(json["top"])
+                top = self.format(json["top"])
                 return f"SELECT TOP ({top}) {param}"
             else:
                 return f"SELECT {param}"
 
     def select_distinct(self, json):
         if "select_distinct" in json:
-            return "SELECT DISTINCT {0}".format(self.dispatch(json["select_distinct"]))
+            return "SELECT DISTINCT {0}".format(self.format(json["select_distinct"]))
 
     def from_(self, json):
-        is_join = False
         if "from" in json:
             from_ = json["from"]
-            if "union" in from_:
-                return self.union(from_["union"])
-            if not isinstance(from_, list):
-                from_ = [from_]
+            sql = self.format(from_)
 
-            parts = []
-            for token in from_:
-                if join_keywords & set(token):
-                    is_join = True
-                    parts.append(self._join_on(token))
-                else:
-                    parts.append(self.dispatch(token))
-            joiner = " " if is_join else ", "
-            rest = joiner.join(parts)
-            return "FROM {0}".format(rest)
+            return f"FROM {isolate(from_, sql, 30)}"
 
     def where(self, json):
         if "where" in json:
-            return "WHERE {0}".format(self.dispatch(json["where"]))
+            return "WHERE {0}".format(self.format(json["where"]))
 
     def groupby(self, json):
         if "groupby" in json:
-            param = ", ".join(self.dispatch(s) for s in listwrap(json["groupby"]))
+            param = ", ".join(self.format(s) for s in listwrap(json["groupby"]))
             return f"GROUP BY {param}"
 
     def having(self, json):
         if "having" in json:
-            return "HAVING {0}".format(self.dispatch(json["having"]))
+            return "HAVING {0}".format(self.format(json["having"]))
 
     def orderby(self, json):
         if "orderby" in json:
             param = ", ".join(
-                (self.dispatch(s["value"]) + " " + s.get("sort", "").upper()).strip()
+                (self.format(s["value"]) + " " + s.get("sort", "").upper()).strip()
                 for s in listwrap(json["orderby"])
             )
             return f"ORDER BY {param}"
@@ -387,8 +355,8 @@ class Formatter:
     def limit(self, json):
         if "limit" in json:
             if json["limit"]:
-                return "LIMIT {0}".format(self.dispatch(json["limit"]))
+                return "LIMIT {0}".format(self.format(json["limit"]))
 
     def offset(self, json):
         if "offset" in json:
-            return "OFFSET {0}".format(self.dispatch(json["offset"]))
+            return "OFFSET {0}".format(self.format(json["offset"]))

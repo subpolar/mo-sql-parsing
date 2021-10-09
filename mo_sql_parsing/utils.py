@@ -212,6 +212,7 @@ binary_ops = {
     "!=": "neq",
     "<>": "neq",
     "not in": "nin",
+    "in": "in",
     "is not": "neq",
     "is": "eq",
     "similar to": "similar_to",
@@ -220,6 +221,11 @@ binary_ops = {
     "not simlilar to": "not_similar_to",
     "or": "or",
     "and": "and",
+    "union": "union",
+    "union all": "union_all",
+    "except": "except",
+    "minus": "minus",
+    "intersect": "intersect",
 }
 
 
