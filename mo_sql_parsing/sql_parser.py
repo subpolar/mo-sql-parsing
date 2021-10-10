@@ -75,13 +75,17 @@ def parser(literal_string, ident):
         ).addParseAction(to_json_call)
 
         # TRIM
-        trim = Group(
-            Keyword("trim", caseless=True).suppress()
-            + LB
-            + expr("chars")
-            + Optional(FROM + expr("from"))
-            + RB
-        ).addParseAction(to_trim_call)
+        trim = (
+            Group(
+                Keyword("trim", caseless=True).suppress()
+                + LB
+                + expr("chars")
+                + Optional(FROM + expr("from"))
+                + RB
+            )
+            .addParseAction(to_trim_call)
+            .set_parser_name("trim")
+        )
 
         _standard_time_intervals = MatchFirst([
             Keyword(d, caseless=True).addParseAction(lambda t: durations[t[0].lower()])
@@ -135,6 +139,7 @@ def parser(literal_string, ident):
         ).addParseAction(to_json_call)
 
         with NO_WHITESPACE:
+
             def scale(tokens):
                 return {"mul": [tokens[0], tokens[1]]}
 
@@ -170,7 +175,6 @@ def parser(literal_string, ident):
         sortColumn = expr("value").set_parser_name("sort1") + Optional(
             DESC("sort") | ASC("sort")
         ) | expr("value").set_parser_name("sort2")
-
 
         expr << (
             (
@@ -267,7 +271,7 @@ def parser(literal_string, ident):
             Optional(
                 WITH
                 + delimitedList(Group(
-                    var_name("name") + AS + LB + (statement|expr)("value") + RB
+                    var_name("name") + AS + LB + (statement | expr)("value") + RB
                 ))
             )("with")
             + Group(ordered_sql)("query")

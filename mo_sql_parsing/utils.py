@@ -182,8 +182,8 @@ def to_tuple_call(tokens):
     if all(isinstance(r, number_types) for r in tokens):
         return [tokens]
     if all(
-        isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
-        for r in tokens
+            isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
+            for r in tokens
     ):
         candidate = {"literal": [r["literal"] if is_data(r) else r for r in tokens]}
         return candidate
@@ -254,6 +254,7 @@ def to_json_call(tokens):
         tokens.start,
         tokens.end,
         [Call(op, params, {"ignore_nulls": ignore_nulls})],
+        tokens.failures
     )
 
 
@@ -315,7 +316,7 @@ def to_expression_call(tokens):
         return
 
     expr = ParseResults(
-        tokens.type, tokens.start, tokens.end, listwrap(tokens["value"])
+        tokens.type, tokens.start, tokens.end, listwrap(tokens["value"]), tokens.failures
     )
     return expr
 
@@ -352,7 +353,8 @@ def to_select_call(tokens):
         return ["*"]
 
     if value["over"] or value["within"]:
-        output = ParseResults(tokens.type, tokens.start, tokens.end, value.tokens)
+        output = ParseResults(tokens.type, tokens.start, tokens.end, value.tokens, tokens.failures
+                              )
         output["name"] = tokens["name"]
         return output
     else:
@@ -418,8 +420,8 @@ def to_string(tokens):
 # NUMBERS
 realNum = (
     Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?")
-    .set_parser_name("float")
-    .addParseAction(lambda t: float(t[0]))
+        .set_parser_name("float")
+        .addParseAction(lambda t: float(t[0]))
 )
 
 
@@ -435,8 +437,8 @@ intNum = (
 )
 hexNum = (
     Regex(r"0x[0-9a-fA-F]+")
-    .set_parser_name("hex")
-    .addParseAction(lambda t: {"hex": t[0][2:]})
+        .set_parser_name("hex")
+        .addParseAction(lambda t: {"hex": t[0][2:]})
 )
 
 # STRINGS
