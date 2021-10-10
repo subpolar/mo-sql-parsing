@@ -228,6 +228,8 @@ binary_ops = {
     "intersect": "intersect",
 }
 
+is_set_op = ("union", "union_all", "except", "minus", "intersect")
+
 
 def to_trim_call(tokens):
     frum = tokens["from"]

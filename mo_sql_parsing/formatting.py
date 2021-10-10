@@ -16,7 +16,7 @@ from mo_future import first, is_text, long, string_types, text
 from mo_parsing import listwrap
 
 from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
-from mo_sql_parsing.utils import binary_ops
+from mo_sql_parsing.utils import binary_ops, is_set_op
 
 MAX_PRECEDENCE = 100
 VALID = re.compile(r"^[a-zA-Z_]\w*$")
@@ -76,7 +76,7 @@ def Operator(_op):
             json = [k, {"literal": v}]
 
         for v in json if isinstance(json, list) else [json]:
-            sql = self.format(v)
+            sql = self.dispatch(v)
             if isinstance(v, (text, int, float, long)):
                 acc.append(sql)
                 continue
@@ -155,6 +155,9 @@ class Formatter:
         self.should_quote = should_quote
 
     def format(self, json):
+        return self.dispatch(json, 50)
+
+    def dispatch(self, json, prec=100):
         if isinstance(json, list):
             return self.sql_list(json)
         if isinstance(json, dict):
@@ -162,6 +165,8 @@ class Formatter:
                 return ""
             elif "value" in json:
                 return self.value(json)
+            elif "join" in json:
+                return self._join_on(json)
             elif any(clause in json for clause in ("select", "select_distinct", "from")):
                 return self.query(json)
             elif "null" in json:
@@ -176,12 +181,12 @@ class Formatter:
         return text(json)
 
     def sql_list(self, json):
-        return "(" + ", ".join(self.format(element) for element in json) + ")"
+        return "(" + ", ".join(self.dispatch(element, 50) for element in json) + ")"
 
     def value(self, json):
-        parts = [self.format(json["value"])]
+        parts = [self.dispatch(json["value"])]
         if "name" in json:
-            parts.extend(["AS", self.format(json["name"])])
+            parts.extend(["AS", self.dispatch(json["name"])])
         return " ".join(parts)
 
     def op(self, json):
@@ -204,49 +209,49 @@ class Formatter:
                 key.upper() + "()"
             )  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.format()
         else:
-            params = ", ".join(self.format(p) for p in listwrap(value))
+            params = ", ".join(self.dispatch(p) for p in listwrap(value))
             return f"{key.upper()}({params})"
 
     def _binary_not(self, value):
-        return "~{0}".format(self.format(value))
+        return "~{0}".format(self.dispatch(value))
 
     def _exists(self, value):
-        return "{0} IS NOT NULL".format(self.format(value))
+        return "{0} IS NOT NULL".format(self.dispatch(value, precedence['is']))
 
     def _missing(self, value):
-        return "{0} IS NULL".format(self.format(value))
+        return "{0} IS NULL".format(self.dispatch(value, precedence['is']))
 
     def _like(self, pair):
-        return "{0} LIKE {1}".format(self.format(pair[0]), self.format(pair[1]))
+        return "{0} LIKE {1}".format(self.dispatch(pair[0], precedence['like']), self.dispatch(pair[1], precedence['like']))
 
     def _not_like(self, pair):
-        return "{0} NOT LIKE {1}".format(self.format(pair[0]), self.format(pair[1]))
+        return "{0} NOT LIKE {1}".format(self.dispatch(pair[0], precedence['like']), self.dispatch(pair[1], precedence['like']))
 
     def _rlike(self, pair):
-        return "{0} RLIKE {1}".format(self.format(pair[0]), self.format(pair[1]))
+        return "{0} RLIKE {1}".format(self.dispatch(pair[0], precedence['like']), self.dispatch(pair[1], precedence['like']))
 
     def _not_rlike(self, pair):
         return "{0} NOT RLIKE {1}".format(
-            self.format(pair[0]), self.format(pair[1])
+            self.dispatch(pair[0], precedence['like']), self.dispatch(pair[1], precedence['like'])
         )
 
     def _is(self, pair):
-        return "{0} IS {1}".format(self.format(pair[0]), self.format(pair[1]))
+        return "{0} IS {1}".format(self.dispatch(pair[0], precedence['is']), self.dispatch(pair[1], precedence['is']))
 
     def _collate(self, pair):
-        return "{0} COLLATE {1}".format(self.format(pair[0]), pair[1])
+        return "{0} COLLATE {1}".format(self.dispatch(pair[0], precedence['collate']), pair[1])
 
     def _case(self, checks):
         parts = ["CASE"]
         for check in checks if isinstance(checks, list) else [checks]:
             if isinstance(check, dict):
                 if "when" in check and "then" in check:
-                    parts.extend(["WHEN", self.format(check["when"])])
-                    parts.extend(["THEN", self.format(check["then"])])
+                    parts.extend(["WHEN", self.dispatch(check["when"])])
+                    parts.extend(["THEN", self.dispatch(check["then"])])
                 else:
-                    parts.extend(["ELSE", self.format(check)])
+                    parts.extend(["ELSE", self.dispatch(check)])
             else:
-                parts.extend(["ELSE", self.format(check)])
+                parts.extend(["ELSE", self.dispatch(check)])
         parts.append("END")
         return " ".join(parts)
 
@@ -260,12 +265,12 @@ class Formatter:
 
     def _between(self, json):
         return "{0} BETWEEN {1} AND {2}".format(
-            self.format(json[0]), self.format(json[1]), self.format(json[2])
+            self.dispatch(json[0], precedence['between']), self.dispatch(json[1], precedence['between']), self.dispatch(json[2], precedence['between'])
         )
 
     def _not_between(self, json):
         return "{0} NOT BETWEEN {1} AND {2}".format(
-            self.format(json[0]), self.format(json[1]), self.format(json[2])
+            self.dispatch(json[0], precedence['between']), self.dispatch(json[1], precedence['between']), self.dispatch(json[2], precedence['between'])
         )
 
     def _join_on(self, json):
@@ -282,14 +287,14 @@ class Formatter:
 
         acc = []
         acc.append(join_keyword.upper())
-        acc.append(self.format(json[join_keyword]))
+        acc.append(self.dispatch(json[join_keyword]))
 
         if json.get("on"):
             acc.append("ON")
-            acc.append(self.format(json["on"]))
+            acc.append(self.dispatch(json["on"]))
         if json.get("using"):
             acc.append("USING")
-            acc.append(self.format(json["using"]))
+            acc.append(self.dispatch(json["using"]))
         return " ".join(acc)
 
     def query(self, json):
@@ -306,48 +311,60 @@ class Formatter:
             if not isinstance(with_, list):
                 with_ = [with_]
             parts = ", ".join(
-                "{0} AS ({1})".format(part["name"], self.format(part["value"]))
+                "{0} AS ({1})".format(part["name"], self.dispatch(part["value"]))
                 for part in with_
             )
             return "WITH {0}".format(parts)
 
     def select(self, json):
         if "select" in json:
-            param = ", ".join(self.format(s) for s in listwrap(json["select"]))
+            param = ", ".join(self.dispatch(s) for s in listwrap(json["select"]))
             if "top" in json:
-                top = self.format(json["top"])
+                top = self.dispatch(json["top"])
                 return f"SELECT TOP ({top}) {param}"
             else:
                 return f"SELECT {param}"
 
     def select_distinct(self, json):
         if "select_distinct" in json:
-            return "SELECT DISTINCT {0}".format(self.format(json["select_distinct"]))
+            return "SELECT DISTINCT {0}".format(self.dispatch(json["select_distinct"]))
 
     def from_(self, json):
+        is_join = False
         if "from" in json:
             from_ = json["from"]
-            sql = self.format(from_)
+            if isinstance(from_, dict) and is_set_op & from_.keys():
+                return self.op(from_)
 
-            return f"FROM {isolate(from_, sql, 30)}"
+            from_ = listwrap(from_)
+            parts = []
+            for token in from_:
+                if join_keywords & set(token):
+                    is_join = True
+                    parts.append(self._join_on(token))
+                else:
+                    parts.append(self.dispatch(token, precedence["from"]))
+            joiner = " " if is_join else ", "
+            rest = joiner.join(parts)
+            return "FROM {0}".format(rest)
 
     def where(self, json):
         if "where" in json:
-            return "WHERE {0}".format(self.format(json["where"]))
+            return "WHERE {0}".format(self.dispatch(json["where"]))
 
     def groupby(self, json):
         if "groupby" in json:
-            param = ", ".join(self.format(s) for s in listwrap(json["groupby"]))
+            param = ", ".join(self.dispatch(s) for s in listwrap(json["groupby"]))
             return f"GROUP BY {param}"
 
     def having(self, json):
         if "having" in json:
-            return "HAVING {0}".format(self.format(json["having"]))
+            return "HAVING {0}".format(self.dispatch(json["having"]))
 
     def orderby(self, json):
         if "orderby" in json:
             param = ", ".join(
-                (self.format(s["value"]) + " " + s.get("sort", "").upper()).strip()
+                (self.dispatch(s["value"]) + " " + s.get("sort", "").upper()).strip()
                 for s in listwrap(json["orderby"])
             )
             return f"ORDER BY {param}"
@@ -355,8 +372,8 @@ class Formatter:
     def limit(self, json):
         if "limit" in json:
             if json["limit"]:
-                return "LIMIT {0}".format(self.format(json["limit"]))
+                return "LIMIT {0}".format(self.dispatch(json["limit"]))
 
     def offset(self, json):
         if "offset" in json:
-            return "OFFSET {0}".format(self.format(json["offset"]))
+            return "OFFSET {0}".format(self.dispatch(json["offset"]))
