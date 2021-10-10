@@ -69,7 +69,7 @@ def _parse(parser, sql, null, calls):
 def format(json, **kwargs):
     from mo_sql_parsing.formatting import Formatter
 
-    return Formatter(**kwargs).format(json)
+    return Formatter(**kwargs).dispatch(json)
 
 
 _ = json.dumps

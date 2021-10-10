@@ -433,3 +433,10 @@ class TestSimple(TestCase):
         expected_sql = "SELECT * FROM T WHERE (a, b) IN (('a', 'b'), ('c', 'd'))"
         format_result = format(expected_result)
         self.assertEqual(format_result, expected_sql)
+
+    def test_issue_34_intersect(self):
+        query = "SELECT stuid FROM student INTERSECT SELECT stuid FROM student"
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        expected_sql = "SELECT stuid FROM student INTERSECT SELECT stuid FROM student"
+        self.assertEqual(format_result, expected_sql)

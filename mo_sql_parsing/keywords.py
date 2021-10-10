@@ -245,6 +245,13 @@ precedence = {
     "not_similar_to": 8,
     "and": 10,
     "or": 11,
+    "select":  30,
+    "from": 30,
+    "union": 40,
+    "union_all": 40,
+    "except": 40,
+    "minus": 40,
+    "intersect": 40,
 }
 
 
