@@ -9,23 +9,19 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-import unittest
-
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse, format
 
 
 class TestErrors(FuzzyTestCase):
-    @unittest.skip("too specific")
     def test_dash_in_tablename(self):
-        with self.assertRaises(["group by", "order by", "having", "limit", "where"]):
+        with self.assertRaises(["group", "order", "having", "limit", "where"]):
             #              012345678901234567890123456789012345678901234567890123456789
             parse("select * from coverage-summary.source.file.covered limit 20")
 
-    @unittest.skip("too specific")
     def test_join_on_using_together(self):
-        with self.assertRaises("Expecting one of"):
+        with self.assertRaises(["union", "order", "having", "limit", "where"]):
             parse("SELECT * FROM t1 JOIN t2 ON t1.id=t2.id USING (id)")
 
     def test_dash_in_tablename_general(self):
@@ -46,5 +42,6 @@ class TestErrors(FuzzyTestCase):
             format(bad_json)
 
     def test_order_by_must_follow_union(self):
-        with self.assertRaises(["(at char 27"]):
+        with self.assertRaises(["limit", "offset", "(at char 27"]):
+            #      012345678901234567890123456789012345678901234567890123456789
             parse("select a from b order by a union select 2")
