@@ -13,9 +13,10 @@ import ast
 
 from mo_dots import is_data, is_null, Data, from_data
 from mo_future import text, number_types, binary_type
-
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
+
+unary_ops = None
 
 
 class Call(object):
@@ -115,6 +116,8 @@ def to_json_operator(tokens):
     # ARRANGE INTO {op: params} FORMAT
     length = len(tokens.tokens)
     if length == 2:
+        if tokens.tokens[1].type.parser_name == "cast":
+            return Call("cast", list(tokens), {})
         # UNARY OPERATOR
         op = tokens.tokens[0].type.parser_name
         if op == "neg" and is_number(tokens[1]):
@@ -213,12 +216,14 @@ binary_ops = {
     "<>": "neq",
     "not in": "nin",
     "in": "in",
-    "is not": "neq",
+    "is_not": "neq",
     "is": "eq",
     "similar_to": "similar_to",
     "like": "like",
     "rlike": "rlike",
+    "not like": "not_like",
     "not_like": "not_like",
+    "not rlike": "not_rlike",
     "not_rlike": "not_rlike",
     "not_simlilar_to": "not_similar_to",
     "or": "or",

@@ -13,7 +13,7 @@
     "description": "Extract Parse Tree from SQL",
     "extras_require": {
         "dev": [],
-        "tests": ["mo-testing", "mo-threads"]
+        "tests": ["mo-testing", "mo-threads", "mo-files"]
     },
     "include_package_data": true,
     "install_requires": ["mo-dots==5.57.21262", "mo-future==5.17.21182", "mo-parsing==5.62.21283"],
@@ -172,6 +172,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "5.64.21284",
+    "version": "5.65.21284",
     "zip_safe": true
 }

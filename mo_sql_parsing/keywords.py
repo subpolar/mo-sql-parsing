@@ -1,6 +1,17 @@
-from mo_sql_parsing.utils import *
+# encoding: utf-8
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
+#
 
 # SQL CONSTANTS
+from mo_parsing import *
+
+from mo_sql_parsing.utils import SQL_NULL, intNum, to_json_call, ansi_string, ansi_ident
+
 NULL = Keyword("null", caseless=True).addParseAction(lambda: SQL_NULL)
 TRUE = Keyword("true", caseless=True).addParseAction(lambda: True)
 FALSE = Keyword("false", caseless=True).addParseAction(lambda: False)
@@ -60,7 +71,6 @@ PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
 # SIMPLE OPERATORS
-CASTING = Literal("::").set_parser_name("concat")
 CONCAT = Literal("||").set_parser_name("concat")
 MUL = Literal("*").set_parser_name("mul")
 DIV = Literal("/").set_parser_name("div")
@@ -125,8 +135,8 @@ IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
 _SIMILAR = Keyword("similar", caseless=True)
 _TO = Keyword("to", caseless=True)
-SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("is_not")
-NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("is_not")
+SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("similar_to")
+NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS
@@ -137,7 +147,6 @@ RESERVED = MatchFirst([
     BETWEEN,
     BY,
     CASE,
-    CAST,
     COLLATE,
     CONSTRAINT,
     CREATE,
@@ -209,8 +218,6 @@ join_keywords = {
     "left outer join",
 }
 
-unary_ops = (NEG, NOT, BINARY_NOT)
-
 precedence = {
     # https://www.sqlite.org/lang_expr.html
     "literal": -1,
@@ -218,11 +225,11 @@ precedence = {
     "collate": 0,
     "concat": 1,
     "mul": 2,
-    "div": 2,
+    "div": 1.5,
     "mod": 2,
     "neg": 3,
     "add": 3,
-    "sub": 3,
+    "sub": 2.5,
     "binary_not": 4,
     "binary_and": 4,
     "binary_or": 4,
@@ -258,7 +265,6 @@ precedence = {
 
 
 KNOWN_OPS = [
-    CASTING,
     COLLATE,
     CONCAT,
     MUL | DIV | MOD,
@@ -451,3 +457,11 @@ known_types = MatchFirst([
     VARBINARY,
     TINYINT,
 ])
+
+CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
+KNOWN_OPS = [CASTING]+KNOWN_OPS
+unary_ops = {NEG: RIGHT_ASSOC, NOT: RIGHT_ASSOC, BINARY_NOT: RIGHT_ASSOC, CASTING: LEFT_ASSOC}
+
+from mo_sql_parsing import utils
+utils.unary_ops = unary_ops
+del utils

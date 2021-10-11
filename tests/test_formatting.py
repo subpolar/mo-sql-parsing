@@ -447,7 +447,10 @@ class TestSimple(TestCase):
         self.assertEqual(format_result, query)
 
     def test_issue_36_lost_parenthesis(self):
-        query = "SELECT COUNT(*) FROM (SELECT city FROM airports GROUP BY city HAVING COUNT(*) > 3)"
+        query = (
+            "SELECT COUNT(*) FROM (SELECT city FROM airports GROUP BY city HAVING"
+            " COUNT(*) > 3)"
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -458,8 +461,86 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-    def test_issue_37_parenthesis(self):
-        query = "SELECT name FROM stadium WHERE stadium_id NOT IN (SELECT stadium_id FROM concert)"
+    def test_issue_37_parenthesis1(self):
+        query = (
+            "SELECT name FROM stadium WHERE stadium_id NOT IN (SELECT stadium_id FROM"
+            " concert)"
+        )
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_37_parenthesis3(self):
+        query = (
+            "SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE"
+            " country = 'United States')"
+        )
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_37_parenthesis3(self):
+        query = (
+            "SELECT COUNT(*) FROM (SELECT cName FROM tryout INTERSECT SELECT cName FROM"
+            " tryout)"
+        )
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_found_in_sparqling_queries(self):
+        # https://github.com/yandex-research/sparqling-queries/blob/e04d0bfd507c4859be3f35d4e0d8eb57434bb4f6/data/spider
+
+        query = """SELECT name, date FROM battle"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT first_name FROM Professionals UNION SELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT date FROM weather WHERE max_temperature_f > 85"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT zip_code, AVG(mean_temperature_f) FROM weather WHERE date LIKE '8/%' GROUP BY zip_code"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT text FROM tweets WHERE text LIKE '%intern%'"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT river_name FROM river GROUP BY river_name ORDER BY COUNT(DISTINCT traverse) DESC LIMIT 1"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT DISTINCT t1.paperid, COUNT(t3.citingpaperid) FROM paper AS t1 JOIN cite AS t3 ON t1.paperid = t3.citedpaperid JOIN venue AS t2 ON t2.venueid = t1.venueid WHERE t1.year = 2012 AND t2.venuename = 'ACL' GROUP BY t1.paperid HAVING COUNT(t3.citingpaperid) > 7"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT TIME FROM elimination WHERE Eliminated_By = 'Punk' OR Eliminated_By = 'Orton'"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+        query = """SELECT hire_date FROM employees WHERE first_name NOT LIKE '%M%'"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+        # INVALID SQL:  SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3
+        query = """SELECT document_name FROM documents GROUP BY document_type_code INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+        query = """SELECT t1.name FROM CAST AS t2 JOIN actor AS t1 ON t2.aid = t1.aid JOIN movie AS t3 ON t3.mid = t2.msid WHERE t2.role = 'Alan Turing' AND t3.title = 'The Imitation Game'"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_38_not_like(self):
+        query = """SELECT hire_date FROM employees WHERE first_name NOT LIKE '%M%'"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
