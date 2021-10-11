@@ -213,6 +213,7 @@ unary_ops = (NEG, NOT, BINARY_NOT)
 
 precedence = {
     # https://www.sqlite.org/lang_expr.html
+    "literal": -1,
     "cast": 0,
     "collate": 0,
     "concat": 1,
@@ -252,6 +253,7 @@ precedence = {
     "except": 40,
     "minus": 40,
     "intersect": 40,
+    "order": 50,
 }
 
 
