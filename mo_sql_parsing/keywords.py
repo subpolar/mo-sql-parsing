@@ -136,7 +136,7 @@ IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 _SIMILAR = Keyword("similar", caseless=True)
 _TO = Keyword("to", caseless=True)
 SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("similar_to")
-NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("not_similar_to")
+NOT_SIMILAR_TO = Group(NOT + _SIMILAR + _TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS
@@ -253,7 +253,7 @@ precedence = {
     "not_similar_to": 8,
     "and": 10,
     "or": 11,
-    "select":  30,
+    "select": 30,
     "from": 30,
     "union": 40,
     "union_all": 40,
@@ -459,9 +459,15 @@ known_types = MatchFirst([
 ])
 
 CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
-KNOWN_OPS = [CASTING]+KNOWN_OPS
-unary_ops = {NEG: RIGHT_ASSOC, NOT: RIGHT_ASSOC, BINARY_NOT: RIGHT_ASSOC, CASTING: LEFT_ASSOC}
+KNOWN_OPS = [CASTING] + KNOWN_OPS
+unary_ops = {
+    NEG: RIGHT_ASSOC,
+    NOT: RIGHT_ASSOC,
+    BINARY_NOT: RIGHT_ASSOC,
+    CASTING: LEFT_ASSOC,
+}
 
 from mo_sql_parsing import utils
+
 utils.unary_ops = unary_ops
 del utils
