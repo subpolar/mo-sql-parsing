@@ -438,5 +438,22 @@ class TestSimple(TestCase):
         query = "SELECT stuid FROM student INTERSECT SELECT stuid FROM student"
         parse_result = parse(query)
         format_result = format(parse_result)
-        expected_sql = "SELECT stuid FROM student INTERSECT SELECT stuid FROM student"
-        self.assertEqual(format_result, expected_sql)
+        self.assertEqual(format_result, query)
+
+    def test_issue_34_union_all(self):
+        query = "SELECT stuid FROM student UNION ALL SELECT stuid FROM student"
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_36_lost_parenthesis(self):
+        query = "SELECT COUNT(*) FROM (SELECT city FROM airports GROUP BY city HAVING COUNT(*) > 3)"
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_35_distinct(self):
+        query = "SELECT DISTINCT a, b FROM t"
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
