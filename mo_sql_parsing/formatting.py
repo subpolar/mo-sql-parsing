@@ -184,14 +184,14 @@ class Formatter:
 
         return text(json)
 
-    def sql_list(self, json, prec=precedence['from'] - 1):
+    def sql_list(self, json, prec=precedence["from"] - 1):
         sql = ", ".join(self.dispatch(element, prec=MAX_PRECEDENCE) for element in json)
-        if prec >= precedence['from']:
+        if prec >= precedence["from"]:
             return sql
         else:
             return f"({sql})"
 
-    def value(self, json, prec=precedence['from']):
+    def value(self, json, prec=precedence["from"]):
         parts = [self.dispatch(json["value"], prec)]
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
@@ -213,7 +213,7 @@ class Formatter:
         # treat as regular function call
         if isinstance(value, dict) and len(value) == 0:
             return (
-                    key.upper() + "()"
+                key.upper() + "()"
             )  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.format()
         else:
             params = ", ".join(self.dispatch(p) for p in listwrap(value))
@@ -223,13 +223,15 @@ class Formatter:
         return "~{0}".format(self.dispatch(value))
 
     def _exists(self, value, prec):
-        return "{0} IS NOT NULL".format(self.dispatch(value, precedence['is']))
+        return "{0} IS NOT NULL".format(self.dispatch(value, precedence["is"]))
 
     def _missing(self, value, prec):
-        return "{0} IS NULL".format(self.dispatch(value, precedence['is']))
+        return "{0} IS NULL".format(self.dispatch(value, precedence["is"]))
 
     def _collate(self, pair, prec):
-        return "{0} COLLATE {1}".format(self.dispatch(pair[0], precedence['collate']), pair[1])
+        return "{0} COLLATE {1}".format(
+            self.dispatch(pair[0], precedence["collate"]), pair[1]
+        )
 
     def _case(self, checks, prec):
         parts = ["CASE"]
@@ -247,7 +249,9 @@ class Formatter:
 
     def _literal(self, json, prec):
         if isinstance(json, list):
-            return "({0})".format(", ".join(self._literal(v, precedence['literal']) for v in json))
+            return "({0})".format(", ".join(
+                self._literal(v, precedence["literal"]) for v in json
+            ))
         elif isinstance(json, string_types):
             return "'{0}'".format(json.replace("'", "''"))
         else:
@@ -255,14 +259,16 @@ class Formatter:
 
     def _between(self, json, prec):
         return "{0} BETWEEN {1} AND {2}".format(
-            self.dispatch(json[0], precedence['between']), self.dispatch(json[1], precedence['between']),
-            self.dispatch(json[2], precedence['between'])
+            self.dispatch(json[0], precedence["between"]),
+            self.dispatch(json[1], precedence["between"]),
+            self.dispatch(json[2], precedence["between"]),
         )
 
     def _not_between(self, json, prec):
         return "{0} NOT BETWEEN {1} AND {2}".format(
-            self.dispatch(json[0], precedence['between']), self.dispatch(json[1], precedence['between']),
-            self.dispatch(json[2], precedence['between'])
+            self.dispatch(json[0], precedence["between"]),
+            self.dispatch(json[1], precedence["between"]),
+            self.dispatch(json[2], precedence["between"]),
         )
 
     def _distinct(self, json, prec):
@@ -295,20 +301,20 @@ class Formatter:
     def ordered_query(self, json, prec):
         if json.keys() & set(unordered_clauses) - {"from"}:
             # regular query
-            acc = [self.unordered_query(json, precedence['order'])]
+            acc = [self.unordered_query(json, precedence["order"])]
         else:
             # set-op expression
-            acc = [self.dispatch(json['from'], precedence['order'])]
+            acc = [self.dispatch(json["from"], precedence["order"])]
 
         acc.extend(
             part
             for clause in ordered_clauses
             if clause in json
-            for part in [getattr(self, clause)(json, precedence['order'])]
+            for part in [getattr(self, clause)(json, precedence["order"])]
             if part
         )
         sql = " ".join(acc)
-        if prec >= precedence['order']:
+        if prec >= precedence["order"]:
             return sql
         else:
             return f"({sql})"
@@ -318,10 +324,10 @@ class Formatter:
             part
             for clause in unordered_clauses
             if clause in json
-            for part in [getattr(self, clause)(json, precedence['from'])]
+            for part in [getattr(self, clause)(json, precedence["from"])]
             if part
         )
-        if prec >= precedence['from']:
+        if prec >= precedence["from"]:
             return sql
         else:
             return f"({sql})"
@@ -349,7 +355,7 @@ class Formatter:
         is_join = False
         from_ = json["from"]
         if isinstance(from_, dict) and is_set_op & from_.keys():
-            return self.op(from_, precedence['from'])
+            return self.op(from_, precedence["from"])
 
         from_ = listwrap(from_)
         parts = []
@@ -375,7 +381,11 @@ class Formatter:
 
     def orderby(self, json, prec):
         param = ", ".join(
-            (self.dispatch(s["value"], precedence["order"]) + " " + s.get("sort", "").upper()).strip()
+            (
+                self.dispatch(s["value"], precedence["order"])
+                + " "
+                + s.get("sort", "").upper()
+            ).strip()
             for s in listwrap(json["orderby"])
         )
         return f"ORDER BY {param}"

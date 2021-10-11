@@ -253,7 +253,7 @@ precedence = {
     "not_similar_to": 8,
     "and": 10,
     "or": 11,
-    "select":  30,
+    "select": 30,
     "from": 30,
     "union": 40,
     "union_all": 40,
@@ -459,9 +459,15 @@ known_types = MatchFirst([
 ])
 
 CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
-KNOWN_OPS = [CASTING]+KNOWN_OPS
-unary_ops = {NEG: RIGHT_ASSOC, NOT: RIGHT_ASSOC, BINARY_NOT: RIGHT_ASSOC, CASTING: LEFT_ASSOC}
+KNOWN_OPS = [CASTING] + KNOWN_OPS
+unary_ops = {
+    NEG: RIGHT_ASSOC,
+    NOT: RIGHT_ASSOC,
+    BINARY_NOT: RIGHT_ASSOC,
+    CASTING: LEFT_ASSOC,
+}
 
 from mo_sql_parsing import utils
+
 utils.unary_ops = unary_ops
 del utils
