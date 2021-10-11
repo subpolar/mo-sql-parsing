@@ -7,7 +7,7 @@ setup(
     author_email='kyle@lahnakoski.com',
     classifiers=["Development Status :: 3 - Alpha","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","Programming Language :: SQL","Programming Language :: Python :: 3.7","Programming Language :: Python :: 3.9","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"],
     description='Extract Parse Tree from SQL',
-    extras_require={"dev":[],"tests":["mo-testing","mo-threads"]},
+    extras_require={"dev":[],"tests":["mo-testing","mo-threads","mo-files"]},
     include_package_data=True,
     install_requires=["mo-dots==5.57.21262","mo-future==5.17.21182","mo-parsing==5.62.21283"],
     license='MPL 2.0',
@@ -16,6 +16,6 @@ setup(
     name='mo-sql-parsing',
     packages=["mo_sql_parsing"],
     url='https://github.com/klahnakoski/mo-sql-parsing',
-    version='5.64.21284',
+    version='5.65.21284',
     zip_safe=True
 )
