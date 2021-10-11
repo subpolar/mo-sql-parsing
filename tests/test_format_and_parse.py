@@ -28,6 +28,7 @@ Broken JSON:
 {{new_json}}
 """
 
+
 def remove_whitespace(sql):
     # WE ASSUME A WHITESPACE REMOVAL IS GOOD ENOUGH FOR COMPARE
     return re.sub(r"\s+", "", sql, flags=re.UNICODE)
@@ -919,10 +920,9 @@ order by number_sites desc"""
 
     def test_086(self):
         expected_sql = (
-            # 0         1         2         3         4         5         6         7         8         9         0
-            # 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
-            "SELECT a FROM t6 WHERE b IN (SELECT b FROM t6 WHERE a <= 'b' UNION SELECT"
-            " '3' AS x ORDER BY 1 LIMIT 1)"
+            #  0         1         2         3         4         5         6         7         8         9         0
+            #  0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+            """SELECT a FROM t6 WHERE b IN (SELECT b FROM t6 WHERE a <= 'b' UNION SELECT '3' AS x ORDER BY 1 LIMIT 1)"""
         )
         expected_json = {
             "from": "t6",
@@ -1586,6 +1586,11 @@ order by number_sites desc"""
             "groupby": {"value": "x"},
             "orderby": [{"value": "y"}, {"value": "x"}],
         }
+        self.verify_formatting(expected_sql, expected_json)
+
+    def test_170_simple(self):
+        expected_sql = "SELECT 10-(x+y)"
+        expected_json = {"select": {"value": {"sub": [10, {"add": ["x", "y"]}]}}}
         self.verify_formatting(expected_sql, expected_json)
 
     def test_170(self):
