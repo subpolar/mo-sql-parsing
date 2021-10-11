@@ -136,7 +136,7 @@ IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 _SIMILAR = Keyword("similar", caseless=True)
 _TO = Keyword("to", caseless=True)
 SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("similar_to")
-NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("not_similar_to")
+NOT_SIMILAR_TO = Group(NOT + _SIMILAR + _TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS

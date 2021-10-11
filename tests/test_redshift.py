@@ -414,7 +414,7 @@ class TestRedshift(TestCase):
             },
         )
 
-    def test_issue7c_similar_to(self):
+    def test_issue7c_similar_to1(self):
         # Ref: https://docs.aws.amazon.com/redshift/latest/dg/pattern-matching-conditions-similar-to.html#pattern-matching-conditions-similar-to-examples
         sql = """select distinct city from users where city similar to '%E%|%H%' order by city;"""
         result = parse(sql)
@@ -425,6 +425,20 @@ class TestRedshift(TestCase):
                 "orderby": {"value": "city"},
                 "select": {"value": {"distinct": {"value": "city"}}},
                 "where": {"similar_to": ["city", {"literal": "%E%|%H%"}]},
+            },
+        )
+
+    def test_issue7c_similar_to2(self):
+        # Ref: https://docs.aws.amazon.com/redshift/latest/dg/pattern-matching-conditions-similar-to.html#pattern-matching-conditions-similar-to-examples
+        sql = """select distinct city from users where city not similar to '%E%|%H%' order by city;"""
+        result = parse(sql)
+        self.assertEqual(
+            result,
+            {
+                "from": "users",
+                "orderby": {"value": "city"},
+                "select": {"value": {"distinct": {"value": "city"}}},
+                "where": {"not_similar_to": ["city", {"literal": "%E%|%H%"}]},
             },
         )
 
