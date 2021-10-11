@@ -447,7 +447,10 @@ class TestSimple(TestCase):
         self.assertEqual(format_result, query)
 
     def test_issue_36_lost_parenthesis(self):
-        query = "SELECT COUNT(*) FROM (SELECT city FROM airports GROUP BY city HAVING COUNT(*) > 3)"
+        query = (
+            "SELECT COUNT(*) FROM (SELECT city FROM airports GROUP BY city HAVING"
+            " COUNT(*) > 3)"
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -459,19 +462,28 @@ class TestSimple(TestCase):
         self.assertEqual(format_result, query)
 
     def test_issue_37_parenthesis1(self):
-        query = "SELECT name FROM stadium WHERE stadium_id NOT IN (SELECT stadium_id FROM concert)"
+        query = (
+            "SELECT name FROM stadium WHERE stadium_id NOT IN (SELECT stadium_id FROM"
+            " concert)"
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
     def test_issue_37_parenthesis3(self):
-        query = "SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE country = 'United States')"
+        query = (
+            "SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE"
+            " country = 'United States')"
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
     def test_issue_37_parenthesis3(self):
-        query = "SELECT COUNT(*) FROM (SELECT cName FROM tryout INTERSECT SELECT cName FROM tryout)"
+        query = (
+            "SELECT COUNT(*) FROM (SELECT cName FROM tryout INTERSECT SELECT cName FROM"
+            " tryout)"
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -523,6 +535,12 @@ class TestSimple(TestCase):
         self.assertEqual(format_result, query)
 
         query = """SELECT t1.name FROM CAST AS t2 JOIN actor AS t1 ON t2.aid = t1.aid JOIN movie AS t3 ON t3.mid = t2.msid WHERE t2.role = 'Alan Turing' AND t3.title = 'The Imitation Game'"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_38_not_like(self):
+        query = """SELECT hire_date FROM employees WHERE first_name NOT LIKE '%M%'"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
