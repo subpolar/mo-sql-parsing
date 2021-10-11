@@ -458,8 +458,20 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-    def test_issue_37_parenthesis(self):
+    def test_issue_37_parenthesis1(self):
         query = "SELECT name FROM stadium WHERE stadium_id NOT IN (SELECT stadium_id FROM concert)"
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_37_parenthesis3(self):
+        query = "SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE country = 'United States')"
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_37_parenthesis3(self):
+        query = "SELECT COUNT(*) FROM (SELECT cName FROM tryout INTERSECT SELECT cName FROM tryout)"
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
