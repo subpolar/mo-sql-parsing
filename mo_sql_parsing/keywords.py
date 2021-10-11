@@ -1,6 +1,17 @@
-from mo_sql_parsing.utils import *
+# encoding: utf-8
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
+#
 
 # SQL CONSTANTS
+from mo_parsing import *
+
+from mo_sql_parsing.utils import SQL_NULL, intNum, to_json_call, ansi_string, ansi_ident
+
 NULL = Keyword("null", caseless=True).addParseAction(lambda: SQL_NULL)
 TRUE = Keyword("true", caseless=True).addParseAction(lambda: True)
 FALSE = Keyword("false", caseless=True).addParseAction(lambda: False)
@@ -448,7 +459,10 @@ known_types = MatchFirst([
     TINYINT,
 ])
 
-CASTING = (Literal("::") + known_types("params"))
+CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
+KNOWN_OPS = [CASTING]+KNOWN_OPS
+unary_ops = {NEG: RIGHT_ASSOC, NOT: RIGHT_ASSOC, BINARY_NOT: RIGHT_ASSOC, CASTING: LEFT_ASSOC}
 
-unary_ops = (NEG, NOT, BINARY_NOT, CASTING)
-
+from mo_sql_parsing import utils
+utils.unary_ops = unary_ops
+del utils

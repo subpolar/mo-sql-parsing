@@ -185,7 +185,7 @@ def parser(literal_string, ident):
                         (
                             o,
                             1 if o in unary_ops else (3 if isinstance(o, tuple) else 2),
-                            RIGHT_ASSOC if o in unary_ops else LEFT_ASSOC,
+                            unary_ops[o] if o in unary_ops else LEFT_ASSOC,
                             to_json_operator,
                         )
                         for o in KNOWN_OPS

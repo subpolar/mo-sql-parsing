@@ -219,7 +219,7 @@ class TestRedshift(TestCase):
         sql = "select date as date_at from t"
         result = parse(sql)
         self.assertEqual(
-            result, {"from": "t", "select": {"name": "date_at", "value": {"date": {}}}}
+            result, {"from": "t", "select": {"name": "date_at", "value": "date"}}
         )
 
     def test_issue5e_of_fork_column_is_keyword(self):
@@ -250,7 +250,7 @@ class TestRedshift(TestCase):
             {
                 "from": "t",
                 "select": {"name": "validation_errors", "value": {"count": "*"}},
-                "where": {"missing": {"timestamp": {}}},
+                "where": {"missing": "timestamp"},
             },
         )
 
