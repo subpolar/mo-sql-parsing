@@ -60,7 +60,6 @@ PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
 
 # SIMPLE OPERATORS
-CASTING = Literal("::").set_parser_name("concat")
 CONCAT = Literal("||").set_parser_name("concat")
 MUL = Literal("*").set_parser_name("mul")
 DIV = Literal("/").set_parser_name("div")
@@ -125,8 +124,8 @@ IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
 _SIMILAR = Keyword("similar", caseless=True)
 _TO = Keyword("to", caseless=True)
-SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("is_not")
-NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("is_not")
+SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("similar_to")
+NOT_SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS
@@ -137,7 +136,7 @@ RESERVED = MatchFirst([
     BETWEEN,
     BY,
     CASE,
-    CAST,
+    # CAST,
     COLLATE,
     CONSTRAINT,
     CREATE,
@@ -209,8 +208,6 @@ join_keywords = {
     "left outer join",
 }
 
-unary_ops = (NEG, NOT, BINARY_NOT)
-
 precedence = {
     # https://www.sqlite.org/lang_expr.html
     "literal": -1,
@@ -218,11 +215,11 @@ precedence = {
     "collate": 0,
     "concat": 1,
     "mul": 2,
-    "div": 2,
+    "div": 1.5,
     "mod": 2,
     "neg": 3,
     "add": 3,
-    "sub": 3,
+    "sub": 2.5,
     "binary_not": 4,
     "binary_and": 4,
     "binary_or": 4,
@@ -258,7 +255,6 @@ precedence = {
 
 
 KNOWN_OPS = [
-    CASTING,
     COLLATE,
     CONCAT,
     MUL | DIV | MOD,
@@ -451,3 +447,8 @@ known_types = MatchFirst([
     VARBINARY,
     TINYINT,
 ])
+
+CASTING = (Literal("::") + known_types("params"))
+
+unary_ops = (NEG, NOT, BINARY_NOT, CASTING)
+

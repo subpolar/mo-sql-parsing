@@ -65,7 +65,7 @@ def escape(ident, ansi_quotes, should_quote):
 
 def Operator(_op):
     op_prec = precedence[binary_ops[_op]]
-    op = " {0} ".format(_op).upper()
+    op = " {0} ".format(_op).replace("_", " ").upper()
 
     def func(self, json, prec):
         acc = []
@@ -75,9 +75,12 @@ def Operator(_op):
             k, v = first(json.items())
             json = [k, {"literal": v}]
 
-        for v in listwrap(json):
-            acc.append(self.dispatch(v, op_prec))
-        if prec > op_prec:
+        for i, v in enumerate(listwrap(json)):
+            if i == 0:
+                acc.append(self.dispatch(v, op_prec + 1))
+            else:
+                acc.append(self.dispatch(v, op_prec))
+        if prec >= op_prec:
             return op.join(acc)
         else:
             return f"({op.join(acc)})"
@@ -140,9 +143,9 @@ class Formatter:
     _binary_and = Operator("&")
     _binary_or = Operator("|")
     _like = Operator("like")
-    _not_like = Operator("not_like")
+    _not_like = Operator("not like")
     _rlike = Operator("rlike")
-    _not_rlike = Operator("not_rlike")
+    _not_rlike = Operator("not rlike")
     _union = Operator("union")
     _union_all = Operator("union all")
     _intersect = Operator("intersect")

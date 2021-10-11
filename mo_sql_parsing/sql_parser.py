@@ -168,7 +168,7 @@ def parser(literal_string, ident):
             | realNum.set_parser_name("float")
             | intNum.set_parser_name("int")
             | call_function
-            | known_types
+            # | known_types
             | Combine(var_name + Optional(".*"))
         )
 

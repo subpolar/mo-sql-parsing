@@ -10,8 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
@@ -236,7 +234,7 @@ class TestRedshift(TestCase):
             {
                 "from": "t",
                 "select": {"name": "validation_errors", "value": {"count": "*"}},
-                "where": {"missing": {"date": {}}},
+                "where": {"missing": "date"},
             },
         )
 
@@ -419,8 +417,7 @@ class TestRedshift(TestCase):
     def test_issue7c_similar_to(self):
         # Ref: https://docs.aws.amazon.com/redshift/latest/dg/pattern-matching-conditions-similar-to.html#pattern-matching-conditions-similar-to-examples
         sql = (
-            "select distinct city from users where city similar to '%E%|%H%' order by"
-            " city;"
+            """select distinct city from users where city similar to '%E%|%H%' order by city;"""
         )
         result = parse(sql)
         self.assertEqual(
@@ -429,7 +426,7 @@ class TestRedshift(TestCase):
                 "from": "users",
                 "orderby": {"value": "city"},
                 "select": {"value": {"distinct": {"value": "city"}}},
-                "where": {"missing": "city"},
+                "where": {"similar_to": ["city", {"literal": "%E%|%H%"}]},
             },
         )
 
