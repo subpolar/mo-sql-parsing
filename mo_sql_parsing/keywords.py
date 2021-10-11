@@ -147,7 +147,6 @@ RESERVED = MatchFirst([
     BETWEEN,
     BY,
     CASE,
-    # CAST,
     COLLATE,
     CONSTRAINT,
     CREATE,
