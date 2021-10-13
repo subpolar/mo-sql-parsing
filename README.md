@@ -19,7 +19,7 @@ The primary objective of this library is to convert SQL queries to JSON-izable p
 
 ## Project Status
 
-August 2021 -There are [almost 600 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  
+October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  
 
 ## Install
 
@@ -85,7 +85,7 @@ MySQL uses both double quotes and single quotes to declare literal strings.  Thi
 
 ## Generating SQL
 
-You may also generate SQL from the a given JSON document. This is done by the formatter, which is still incomplete (Jan2020).
+You may also generate SQL from the a given JSON document. This is done by the formatter, which is in Alpha state (Oct2021).
 
     >>> from mo_sql_parsing import format
     >>> format({"from":"test", "select":["a.b", "c"]})
