@@ -531,3 +531,9 @@ class TestSimple(TestCase):
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
+
+    def test_issue_40_over_clause(self):
+        query = """SELECT name, dept, RANK() OVER (PARTITION BY dept ORDER BY salary) AS rank FROM employees"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)

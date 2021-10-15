@@ -255,6 +255,7 @@ precedence = {
     "or": 11,
     "select": 30,
     "from": 30,
+    "window": 35,
     "union": 40,
     "union_all": 40,
     "except": 40,

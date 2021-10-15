@@ -193,8 +193,20 @@ class Formatter:
 
     def value(self, json, prec=precedence["from"]):
         parts = [self.dispatch(json["value"], prec)]
+        if "over" in json:
+            over = json["over"]
+            parts.append("OVER")
+            window = []
+            if "partitionby" in over:
+                window.append("PARTITION BY")
+                window.append(self.dispatch(over['partitionby']))
+            if "orderby" in over:
+                window.append(self.orderby(over, precedence['window']))
+            window = " ".join(window)
+            parts.append(f"({window})")
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
+
         return " ".join(parts)
 
     def op(self, json, prec):
