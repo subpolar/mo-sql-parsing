@@ -16,7 +16,7 @@
         "tests": ["mo-testing", "mo-threads", "mo-files"]
     },
     "include_package_data": true,
-    "install_requires": ["mo-dots==5.57.21262", "mo-future==5.17.21182", "mo-parsing==5.62.21283"],
+    "install_requires": ["mo-dots==5.57.21262", "mo-future==5.17.21182", "mo-parsing==6.1.21289"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -41,7 +41,7 @@
             "",
             "## Project Status",
             "",
-            "August 2021 -There are [almost 600 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  ",
+            "October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  ",
             "",
             "## Install",
             "",
@@ -107,7 +107,7 @@
             "",
             "## Generating SQL",
             "",
-            "You may also generate SQL from the a given JSON document. This is done by the formatter, which is still incomplete (Jan2020).",
+            "You may also generate SQL from the a given JSON document. This is done by the formatter, which is in Alpha state (Oct2021).",
             "",
             "    >>> from mo_sql_parsing import format",
             "    >>> format({\"from\":\"test\", \"select\":[\"a.b\", \"c\"]})",
@@ -172,6 +172,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "6.0.21284",
+    "version": "6.1.21289",
     "zip_safe": true
 }
