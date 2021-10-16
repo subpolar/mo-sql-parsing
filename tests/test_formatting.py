@@ -540,10 +540,38 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
+    def test_issue_40_indow_function1(self):
+        query = """select sum(qty) over (order by a rows between 1 preceding and 2 following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function2(self):
+        query = """select sum(qty) over (order by a rows between 3 preceding and 1 preceding)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function3(self):
+        query = """select sum(qty) over (order by a rows between 3 following and 5 following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function4(self):
+        query = """select sum(qty) over (order by a rows between 3 following and unbounded following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function5(self):
+        query = """select sum(qty) over (order by a rows 3 following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
     def test_issue_41_distinct_on(self):
         query = """SELECT DISTINCT ON (col) col, col2 FROM test"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
-
-

@@ -204,6 +204,49 @@ class Formatter:
                 window.append(self.dispatch(over['partitionby']))
             if "orderby" in over:
                 window.append(self.orderby(over, precedence['window']))
+            if "range" in over:
+                def wordy(v):
+                    if v<0:
+                        return [text(abs(v)), "PRECEDING"]
+                    elif v>0:
+                        return [text(v), "FOLLOWING"]
+
+                window.append("ROWS")
+                range = over['range']
+                min = range.get("min")
+                max = range.get("max")
+
+                if min is None:
+                    if max is None:
+                        window.pop()  # not expected, but deal
+                    elif max == 0:
+                        window.append("UNBOUNDED PRECEDING")
+                    else:
+                        window.append("BETWEEN")
+                        window.append("UNBOUNDED PRECEDING")
+                        window.append("AND")
+                        window.extend(wordy(max))
+                elif min == 0:
+                    if max is None:
+                        window.append("UNBOUNDED FOLLOWING")
+                    elif max == 0:
+                        window.append("CURRENT ROW")
+                    else:
+                        window.extend(wordy(max))
+                else:
+                    if max is None:
+                        window.append("BETWEEN")
+                        window.extend(wordy(min))
+                        window.append("AND")
+                        window.append("UNBOUNDED FOLLOWING")
+                    elif max == 0:
+                        window.extend(wordy(min))
+                    else:
+                        window.append("BETWEEN")
+                        window.extend(wordy(min))
+                        window.append("AND")
+                        window.extend(wordy(max))
+
             window = " ".join(window)
             parts.append(f"({window})")
         if "name" in json:
