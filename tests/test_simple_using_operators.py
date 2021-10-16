@@ -1346,10 +1346,7 @@ class TestSimpleUsingOperators(TestCase):
         result = parse(sql)
         expected = {
             "from": "Customers",
-            "select": {"value": {
-                "args": [{"value": "Country"}, {"value": "City"}],
-                "op": "distinct",
-            }},
+            "select_distinct": [{"value": "Country"}, {"value": "City"}]
         }
         self.assertEqual(result, expected)
 

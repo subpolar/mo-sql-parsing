@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import format, parse
 
 
@@ -537,3 +539,11 @@ class TestSimple(TestCase):
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
+
+    def test_issue_41_distinct_on(self):
+        query = """SELECT DISTINCT ON (col) col, col2 FROM test"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+

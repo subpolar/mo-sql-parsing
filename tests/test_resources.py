@@ -1177,7 +1177,7 @@ class TestResources(TestCase):
         result = parse(sql)
         expected = {
             "from": "t1",
-            "select": {"value": {"distinct": {"value": "log"}}},
+            "select_distinct": {"value": "log"},
             "orderby": {"value": "log"},
         }
         self.assertEqual(result, expected)

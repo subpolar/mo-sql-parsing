@@ -108,6 +108,8 @@ def isolate(expr, sql, prec):
 
 unordered_clauses = [
     "with",
+    "distinct_on",
+    "select_distinct",
     "select",
     "from",
     "where",
@@ -284,7 +286,13 @@ class Formatter:
         )
 
     def _distinct(self, json, prec):
-        return "DISTINCT " + ", ".join(self.dispatch(v) for v in listwrap(json))
+        return "DISTINCT " + ", ".join(self.dispatch(v, precedence['select']) for v in listwrap(json))
+
+    def _select_distinct(self, json, prec):
+        return "SELECT DISTINCT " + ", ".join(self.dispatch(v) for v in listwrap(json))
+
+    def _distinct_on(self, json, prec):
+        return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
     def _join_on(self, json, prec):
         detected_join = join_keywords & set(json.keys())
@@ -360,8 +368,18 @@ class Formatter:
         if "top" in json:
             top = self.dispatch(json["top"])
             return f"SELECT TOP ({top}) {param}"
+        if "distinct_on" in json:
+            return param
         else:
             return f"SELECT {param}"
+
+    def distinct_on(self, json, prec):
+        param = ", ".join(self.dispatch(s) for s in listwrap(json["distinct_on"]))
+        return f"SELECT DISTINCT ON ({param})"
+
+    def select_distinct(self, json, prec):
+        param = ", ".join(self.dispatch(s) for s in listwrap(json["select_distinct"]))
+        return f"SELECT DISTINCT {param}"
 
     def from_(self, json, prec):
         is_join = False

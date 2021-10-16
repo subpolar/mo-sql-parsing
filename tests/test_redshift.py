@@ -180,10 +180,10 @@ class TestRedshift(TestCase):
             result,
             {
                 "from": "t",
-                "select": {"value": {"distinct": {
+                "select_distinct": {
                     "name": "date_at",
                     "value": {"cast": ["date_at", {"date": {}}]},
-                }}},
+                },
             },
         )
 
@@ -423,7 +423,7 @@ class TestRedshift(TestCase):
             {
                 "from": "users",
                 "orderby": {"value": "city"},
-                "select": {"value": {"distinct": {"value": "city"}}},
+                "select_distinct": {"value": "city"},
                 "where": {"similar_to": ["city", {"literal": "%E%|%H%"}]},
             },
         )
@@ -437,7 +437,7 @@ class TestRedshift(TestCase):
             {
                 "from": "users",
                 "orderby": {"value": "city"},
-                "select": {"value": {"distinct": {"value": "city"}}},
+                "select_distinct": {"value": "city"},
                 "where": {"not_similar_to": ["city", {"literal": "%E%|%H%"}]},
             },
         )

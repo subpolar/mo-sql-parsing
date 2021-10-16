@@ -67,7 +67,7 @@ class TestPostgres(TestCase):
             "from": "dual",
             "select": {"value": {
                 "trim": {"literal": " This is a test"},
-                "characters": {"literal": " "}
+                "characters": {"literal": " "},
             }},
         }
         self.assertEqual(result, expected)
@@ -108,4 +108,15 @@ class TestPostgres(TestCase):
             ]},
             {"select": {"value": {"literal": "Paul"}}},
         ]}
+        self.assertEqual(result, expected)
+
+    def test_issue_41_distinct_on(self):
+        #          123456789012345678901234567890
+        query = """SELECT DISTINCT ON (col) col, col2 FROM test"""
+        result = parse(query)
+        expected = {
+            "distinct_on": {"value": "col"},
+            "from": "test",
+            "select": [{"value": "col"}, {"value": "col2"}],
+        }
         self.assertEqual(result, expected)
