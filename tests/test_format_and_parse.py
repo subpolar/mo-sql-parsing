@@ -1458,7 +1458,7 @@ order by number_sites desc"""
         expected_sql = "SELECT DISTINCT log FROM t1 ORDER BY log"
         expected_json = {
             "from": "t1",
-            "select": {"value": {"distinct": {"value": "log"}}},
+            "select_distinct": {"value": "log"},
             "orderby": {"value": "log"},
         }
         self.verify_formatting(expected_sql, expected_json)

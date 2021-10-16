@@ -1149,10 +1149,10 @@ class TestSimple(TestCase):
         sql = "SELECT DISTINCT Country, City FROM Customers"
         result = parse(sql)
         expected = {
-            "select": {"value": {"distinct": [
+            "select_distinct": [
                 {"value": "Country"},
                 {"value": "City"},
-            ]}},
+            ],
             "from": "Customers",
         }
         self.assertEqual(result, expected)

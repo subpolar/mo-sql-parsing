@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import format, parse
 
 
@@ -516,7 +518,6 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-        # INVALID SQL:  SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3
         query = """SELECT document_name FROM documents GROUP BY document_type_code INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
         parse_result = parse(query)
         format_result = format(parse_result)
@@ -529,6 +530,48 @@ class TestSimple(TestCase):
 
     def test_issue_38_not_like(self):
         query = """SELECT hire_date FROM employees WHERE first_name NOT LIKE '%M%'"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_over_clause(self):
+        query = """SELECT name, dept, RANK() OVER (PARTITION BY dept ORDER BY salary) AS rank FROM employees"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_indow_function1(self):
+        query = """select sum(qty) over (order by a rows between 1 preceding and 2 following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function2(self):
+        query = """select sum(qty) over (order by a rows between 3 preceding and 1 preceding)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function3(self):
+        query = """select sum(qty) over (order by a rows between 3 following and 5 following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function4(self):
+        query = """select sum(qty) over (order by a rows between 3 following and unbounded following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_40_window_function5(self):
+        query = """select sum(qty) over (order by a rows 3 following)""".upper()
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, query)
+
+    def test_issue_41_distinct_on(self):
+        query = """SELECT DISTINCT ON (col) col, col2 FROM test"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)

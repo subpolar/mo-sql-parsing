@@ -236,15 +236,29 @@ def parser(literal_string, ident):
             + Optional((ON + expr("on")) | (USING + expr("using")))
         ).addParseAction(to_join_call)
 
-        unordered_sql = Group(
+        selection = (
             SELECT
-            + Optional(
-                TOP
-                + expr("value")
-                + Optional(Keyword("percent", caseless=True))("percent")
-                + Optional(WITH + Keyword("ties", caseless=True))("ties")
-            )("top").addParseAction(to_top_clause)
+            + DISTINCT
+            + ON
+            + LB
+            + delimitedList(selectColumn)("distinct_on")
+            + RB
             + delimitedList(selectColumn)("select")
+            | SELECT + DISTINCT + delimitedList(selectColumn)("select_distinct")
+            | (
+                SELECT
+                + Optional(
+                    TOP
+                    + expr("value")
+                    + Optional(Keyword("percent", caseless=True))("percent")
+                    + Optional(WITH + Keyword("ties", caseless=True))("ties")
+                )("top").addParseAction(to_top_clause)
+                + delimitedList(selectColumn)("select")
+            )
+        )
+
+        unordered_sql = Group(
+            selection
             + Optional(
                 (FROM + delimitedList(Group(table_source)) + ZeroOrMore(join))("from")
                 + Optional(WHERE + expr("where"))

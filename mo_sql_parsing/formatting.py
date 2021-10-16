@@ -108,6 +108,8 @@ def isolate(expr, sql, prec):
 
 unordered_clauses = [
     "with",
+    "distinct_on",
+    "select_distinct",
     "select",
     "from",
     "where",
@@ -193,8 +195,63 @@ class Formatter:
 
     def value(self, json, prec=precedence["from"]):
         parts = [self.dispatch(json["value"], prec)]
+        if "over" in json:
+            over = json["over"]
+            parts.append("OVER")
+            window = []
+            if "partitionby" in over:
+                window.append("PARTITION BY")
+                window.append(self.dispatch(over['partitionby']))
+            if "orderby" in over:
+                window.append(self.orderby(over, precedence['window']))
+            if "range" in over:
+                def wordy(v):
+                    if v<0:
+                        return [text(abs(v)), "PRECEDING"]
+                    elif v>0:
+                        return [text(v), "FOLLOWING"]
+
+                window.append("ROWS")
+                range = over['range']
+                min = range.get("min")
+                max = range.get("max")
+
+                if min is None:
+                    if max is None:
+                        window.pop()  # not expected, but deal
+                    elif max == 0:
+                        window.append("UNBOUNDED PRECEDING")
+                    else:
+                        window.append("BETWEEN")
+                        window.append("UNBOUNDED PRECEDING")
+                        window.append("AND")
+                        window.extend(wordy(max))
+                elif min == 0:
+                    if max is None:
+                        window.append("UNBOUNDED FOLLOWING")
+                    elif max == 0:
+                        window.append("CURRENT ROW")
+                    else:
+                        window.extend(wordy(max))
+                else:
+                    if max is None:
+                        window.append("BETWEEN")
+                        window.extend(wordy(min))
+                        window.append("AND")
+                        window.append("UNBOUNDED FOLLOWING")
+                    elif max == 0:
+                        window.extend(wordy(min))
+                    else:
+                        window.append("BETWEEN")
+                        window.extend(wordy(min))
+                        window.append("AND")
+                        window.extend(wordy(max))
+
+            window = " ".join(window)
+            parts.append(f"({window})")
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
+
         return " ".join(parts)
 
     def op(self, json, prec):
@@ -272,7 +329,13 @@ class Formatter:
         )
 
     def _distinct(self, json, prec):
-        return "DISTINCT " + ", ".join(self.dispatch(v) for v in listwrap(json))
+        return "DISTINCT " + ", ".join(self.dispatch(v, precedence['select']) for v in listwrap(json))
+
+    def _select_distinct(self, json, prec):
+        return "SELECT DISTINCT " + ", ".join(self.dispatch(v) for v in listwrap(json))
+
+    def _distinct_on(self, json, prec):
+        return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
     def _join_on(self, json, prec):
         detected_join = join_keywords & set(json.keys())
@@ -348,8 +411,18 @@ class Formatter:
         if "top" in json:
             top = self.dispatch(json["top"])
             return f"SELECT TOP ({top}) {param}"
+        if "distinct_on" in json:
+            return param
         else:
             return f"SELECT {param}"
+
+    def distinct_on(self, json, prec):
+        param = ", ".join(self.dispatch(s) for s in listwrap(json["distinct_on"]))
+        return f"SELECT DISTINCT ON ({param})"
+
+    def select_distinct(self, json, prec):
+        param = ", ".join(self.dispatch(s) for s in listwrap(json["select_distinct"]))
+        return f"SELECT DISTINCT {param}"
 
     def from_(self, json, prec):
         is_join = False
