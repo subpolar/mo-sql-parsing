@@ -32,11 +32,7 @@ class TestSimple(FuzzyTestCase):
                     parse_result = parse(query)
                     format_result = format(parse_result)
                     self.assertEqual(
-                        (
-                            format_result
-                            .lower()
-                            .replace(" ", "")
-                        ),
+                        (format_result.lower().replace(" ", "")),
                         query.lower().replace(" ", ""),
                     )
                 except Exception as cause:

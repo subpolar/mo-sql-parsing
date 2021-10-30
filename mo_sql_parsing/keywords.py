@@ -10,11 +10,11 @@
 # SQL CONSTANTS
 from mo_parsing import *
 
-from mo_sql_parsing.utils import SQL_NULL, intNum, to_json_call, ansi_string, ansi_ident
+from mo_sql_parsing.utils import SQL_NULL, int_num, to_json_call, ansi_string, ansi_ident
 
-NULL = Keyword("null", caseless=True).addParseAction(lambda: SQL_NULL)
-TRUE = Keyword("true", caseless=True).addParseAction(lambda: True)
-FALSE = Keyword("false", caseless=True).addParseAction(lambda: False)
+NULL = Keyword("null", caseless=True) / (lambda: SQL_NULL)
+TRUE = Keyword("true", caseless=True) / (lambda: True)
+FALSE = Keyword("false", caseless=True) / (lambda: False)
 NOCASE = Keyword("nocase", caseless=True)
 ASC = Keyword("asc", caseless=True)
 DESC = Keyword("desc", caseless=True)
@@ -363,46 +363,40 @@ durations = {
     "epoch": "epoch",
 }
 
-_size = Optional(LB + intNum("params") + RB)
-_sizes = Optional(LB + intNum("params") + "," + intNum("params") + RB)
+_size = Optional(LB + int_num("params") + RB)
+_sizes = Optional(LB + int_num("params") + "," + int_num("params") + RB)
 
 # KNOWN TYPES
-ARRAY = Group(Keyword("array", caseless=True)("op")).addParseAction(to_json_call)
-BIGINT = Group(Keyword("bigint", caseless=True)("op")).addParseAction(to_json_call)
-BOOL = Group(Keyword("bool", caseless=True)("op")).addParseAction(to_json_call)
-BOOLEAN = Group(Keyword("boolean", caseless=True)("op")).addParseAction(to_json_call)
-DOUBLE = Group(Keyword("double", caseless=True)("op")).addParseAction(to_json_call)
-FLOAT64 = Group(Keyword("float64", caseless=True)("op")).addParseAction(to_json_call)
-FLOAT = Group(Keyword("float", caseless=True)("op")).addParseAction(to_json_call)
-GEOMETRY = Group(Keyword("geometry", caseless=True)("op")).addParseAction(to_json_call)
-INTEGER = Group(Keyword("integer", caseless=True)("op")).addParseAction(to_json_call)
-INT = Group(Keyword("int", caseless=True)("op")).addParseAction(to_json_call)
-INT32 = Group(Keyword("int32", caseless=True)("op")).addParseAction(to_json_call)
-INT64 = Group(Keyword("int64", caseless=True)("op")).addParseAction(to_json_call)
-REAL = Group(Keyword("real", caseless=True)("op")).addParseAction(to_json_call)
-TEXT = Group(Keyword("text", caseless=True)("op")).addParseAction(to_json_call)
-SMALLINT = Group(Keyword("smallint", caseless=True)("op")).addParseAction(to_json_call)
-STRING = Group(Keyword("string", caseless=True)("op")).addParseAction(to_json_call)
-STRUCT = Group(Keyword("struct", caseless=True)("op")).addParseAction(to_json_call)
+ARRAY = Group(Keyword("array", caseless=True)("op")) / to_json_call
+BIGINT = Group(Keyword("bigint", caseless=True)("op")) / to_json_call
+BOOL = Group(Keyword("bool", caseless=True)("op")) / to_json_call
+BOOLEAN = Group(Keyword("boolean", caseless=True)("op")) / to_json_call
+DOUBLE = Group(Keyword("double", caseless=True)("op")) / to_json_call
+FLOAT64 = Group(Keyword("float64", caseless=True)("op")) / to_json_call
+FLOAT = Group(Keyword("float", caseless=True)("op")) / to_json_call
+GEOMETRY = Group(Keyword("geometry", caseless=True)("op")) / to_json_call
+INTEGER = Group(Keyword("integer", caseless=True)("op")) / to_json_call
+INT = Group(Keyword("int", caseless=True)("op")) / to_json_call
+INT32 = Group(Keyword("int32", caseless=True)("op")) / to_json_call
+INT64 = Group(Keyword("int64", caseless=True)("op")) / to_json_call
+REAL = Group(Keyword("real", caseless=True)("op")) / to_json_call
+TEXT = Group(Keyword("text", caseless=True)("op")) / to_json_call
+SMALLINT = Group(Keyword("smallint", caseless=True)("op")) / to_json_call
+STRING = Group(Keyword("string", caseless=True)("op")) / to_json_call
+STRUCT = Group(Keyword("struct", caseless=True)("op")) / to_json_call
 
-BLOB = (Keyword("blob", caseless=True)("op") + _size).addParseAction(to_json_call)
-BYTES = (Keyword("bytes", caseless=True)("op") + _size).addParseAction(to_json_call)
-CHAR = (Keyword("char", caseless=True)("op") + _size).addParseAction(to_json_call)
-VARCHAR = (Keyword("varchar", caseless=True)("op") + _size).addParseAction(to_json_call)
-VARBINARY = (
-    Keyword("varbinary", caseless=True)("op") + _size
-).addParseAction(to_json_call)
-TINYINT = (Keyword("tinyint", caseless=True)("op") + _size).addParseAction(to_json_call)
+BLOB = (Keyword("blob", caseless=True)("op") + _size) / to_json_call
+BYTES = (Keyword("bytes", caseless=True)("op") + _size) / to_json_call
+CHAR = (Keyword("char", caseless=True)("op") + _size) / to_json_call
+VARCHAR = (Keyword("varchar", caseless=True)("op") + _size) / to_json_call
+VARBINARY = (Keyword("varbinary", caseless=True)("op") + _size) / to_json_call
+TINYINT = (Keyword("tinyint", caseless=True)("op") + _size) / to_json_call
 
-DECIMAL = (
-    Keyword("decimal", caseless=True)("op") + _sizes
-).addParseAction(to_json_call)
+DECIMAL = (Keyword("decimal", caseless=True)("op") + _sizes) / to_json_call
 DOUBLE_PRECISION = (
     Keyword("double", caseless=True) + Keyword("precision", caseless=True)("op")
-).addParseAction(lambda: {"double_precision": {}})
-NUMERIC = (
-    Keyword("numeric", caseless=True)("op") + _sizes
-).addParseAction(to_json_call)
+) / (lambda: {"double_precision": {}})
+NUMERIC = (Keyword("numeric", caseless=True)("op") + _sizes) / to_json_call
 
 
 DATE = Keyword("date", caseless=True)
@@ -417,12 +411,12 @@ time_functions = DATE | DATETIME | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ
 # KNOWNN TIME TYPES
 _format = Optional((ansi_string | ansi_ident)("params"))
 
-DATE_TYPE = (DATE("op") + _format).addParseAction(to_json_call)
-DATETIME_TYPE = (DATETIME("op") + _format).addParseAction(to_json_call)
-TIME_TYPE = (TIME("op") + _format).addParseAction(to_json_call)
-TIMESTAMP_TYPE = (TIMESTAMP("op") + _format).addParseAction(to_json_call)
-TIMESTAMPTZ_TYPE = (TIMESTAMPTZ("op") + _format).addParseAction(to_json_call)
-TIMETZ_TYPE = (TIMETZ("op") + _format).addParseAction(to_json_call)
+DATE_TYPE = (DATE("op") + _format) / to_json_call
+DATETIME_TYPE = (DATETIME("op") + _format) / to_json_call
+TIME_TYPE = (TIME("op") + _format) / to_json_call
+TIMESTAMP_TYPE = (TIMESTAMP("op") + _format) / to_json_call
+TIMESTAMPTZ_TYPE = (TIMESTAMPTZ("op") + _format) / to_json_call
+TIMETZ_TYPE = (TIMETZ("op") + _format) / to_json_call
 
 known_types = MatchFirst([
     ARRAY,

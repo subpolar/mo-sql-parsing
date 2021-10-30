@@ -84,9 +84,7 @@ class TestNull(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue18(self):
-        sql = (
-            """SELECT a, CASE WHEN some_columns = 'Bob' THEN NULL ELSE 'helloworld' END AS some_columns FROM mytable"""
-        )
+        sql = """SELECT a, CASE WHEN some_columns = 'Bob' THEN NULL ELSE 'helloworld' END AS some_columns FROM mytable"""
         result = parse(sql)
         expected = {
             "from": "mytable",

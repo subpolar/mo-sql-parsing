@@ -47,5 +47,10 @@ class TestErrors(FuzzyTestCase):
             parse("select a from b order by a union select 2")
 
     def test_bad_order_by(self):
-        with self.assertRaises('Expecting {offset} | {StringEnd}, found "INTERSECT " (at char 95), (line:1, col:96)'):
-            parse("""SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3""")
+        with self.assertRaises(
+            'Expecting {offset} | {StringEnd}, found "INTERSECT " (at char 95),'
+            " (line:1, col:96)"
+        ):
+            parse(
+                """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
+            )

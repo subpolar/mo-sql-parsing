@@ -13,9 +13,9 @@ import json
 from threading import Lock
 
 from mo_sql_parsing.sql_parser import scrub
-from mo_sql_parsing.utils import ansi_string, simple_op
+from mo_sql_parsing.utils import ansi_string, simple_op, normal_op
 
-parseLocker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
+parse_locker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 combined_parser = None
 mysql_parser = None
 
@@ -30,7 +30,7 @@ def parse(sql, null=SQL_NULL, calls=simple_op):
     """
     global combined_parser
 
-    with parseLocker:
+    with parse_locker:
         if not combined_parser:
             combined_parser = sql_parser.combined_parser()
         result = _parse(combined_parser, sql, null, calls)
@@ -46,7 +46,7 @@ def parse_mysql(sql, null=SQL_NULL, calls=simple_op):
     """
     global mysql_parser
 
-    with parseLocker:
+    with parse_locker:
         if not mysql_parser:
             mysql_parser = sql_parser.mysql_parser()
         return _parse(mysql_parser, sql, null, calls)
@@ -59,7 +59,7 @@ def _parse(parser, sql, null, calls):
     utils.null_locations = []
     utils.scrub_op = calls
     sql = sql.rstrip().rstrip(";")
-    parse_result = parser.parseString(sql, parseAll=True)
+    parse_result = parser.parse_string(sql, parse_all=True)
     output = scrub(parse_result)
     for o, n in utils.null_locations:
         o[n] = null
@@ -74,4 +74,4 @@ def format(json, **kwargs):
 
 _ = json.dumps
 
-__all__ = ["parse", "format", "parse_mysql", "parse_bigquery"]
+__all__ = ["parse", "format", "parse_mysql", "parse_bigquery", "normal_op", "simple_op"]

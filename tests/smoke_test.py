@@ -7,8 +7,7 @@
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from mo_sql_parsing import parse
-from mo_sql_parsing.utils import normal_op
+from mo_sql_parsing import parse, normal_op
 
 sql = "select trim(' ' from b+c)"
 result = parse(sql, calls=normal_op)

@@ -17,10 +17,13 @@ SQL is a familiar language used to access databases. Although, each database ven
 
 The primary objective of this library is to convert SQL queries to JSON-izable parse trees. This originally targeted MySQL, but has grown to include other database vendors. *Please [paste some SQL into a new issue](https://github.com/klahnakoski/mo-sql-parsing/issues) if it does not work for you*
 
+## Non-objectives
+
+The parser handles Bigquery `create table` statements, but there is still a lot missing DML statements; INSERT, UPDATE, DELETE are not supported.  
+
 ## Project Status
 
-October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  
-
+October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  
 ## Install
 
     pip install mo-sql-parsing
@@ -28,14 +31,13 @@ October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-p
 ## Parsing SQL
 
     >>> from mo_sql_parsing import parse
-    >>> import json
-    >>> json.dumps(parse("select count(1) from jobs"))
-    '{"select": {"value": {"count": 1}}, "from": "jobs"}'
+    >>> parse("select count(1) from jobs")
+    {'select': {'value': {'count': 1}}, 'from': 'jobs'}
     
 Each SQL query is parsed to an object: Each clause is assigned to an object property of the same name. 
 
-    >>> json.dumps(parse("select a as hello, b as world from jobs"))
-    '{"select": [{"value": "a", "name": "hello"}, {"value": "b", "name": "world"}], "from": "jobs"}'
+    >>> parse("select a as hello, b as world from jobs")
+    {'select': [{'value': 'a', 'name': 'hello'}, {'value': 'b', 'name': 'world'}], 'from': 'jobs'}
 
 The `SELECT` clause is an array of objects containing `name` and `value` properties. 
 
@@ -59,14 +61,14 @@ The default behaviour of the parser is to output function calls in `simple_op` f
 
 You can have the parser emit function calls in `normal_op` format
 
-    sql = "select trim(' ' from b+c)"
-    result = parse(sql, calls=normal_op)
+    >>> from mo_sql_parsing import parse, normal_op
+    >>> parse("select trim(' ' from b+c)", calls=normal_op)
     
 which produces calls in a normalized format
 
     {"op": op, "args": args, "kwargs": kwargs}
 
-here is the JSON from the example above:
+here is the pretty-printed JSON from the example above:
 
 ```
 {'select': {'value': {
