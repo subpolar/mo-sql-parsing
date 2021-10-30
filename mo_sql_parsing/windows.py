@@ -67,15 +67,15 @@ RANGE = Keyword("range", caseless=True)
 bound = (
     CURRENT_ROW("zero")
     | (UNBOUNDED | intNum)("limit") + (PRECEDING | FOLLOWING)("direction")
-).addParseAction(_to_bound_call)
-between = (BETWEEN + bound("min") + AND + bound("max")).addParseAction(_to_between_call)
+) / _to_bound_call
+between = (BETWEEN + bound("min") + AND + bound("max")) / _to_between_call
 
 row_clause = (ROWS | RANGE).suppress() + (between | bound)
 
 
 def window(expr, sortColumn):
     return (
-        # Optional((Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True))("ignore_nulls").addParseAction(lambda: True))
+        # Optional((Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True))("ignore_nulls") / (lambda: True))
         Optional(
             WITHIN_GROUP
             + LB

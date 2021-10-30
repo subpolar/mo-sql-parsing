@@ -52,27 +52,28 @@ def parser(literal_string, ident):
         case = (
             CASE
             + Group(ZeroOrMore(
-                (WHEN + expr("when") + THEN + expr("then")).addParseAction(to_when_call)
+                (WHEN + expr("when") + THEN + expr("then")) / to_when_call
             ))("case")
             + Optional(ELSE + expr("else"))
             + END
-        ).addParseAction(to_case_call)
+        ) / to_case_call
 
         # SWITCH
         switch = (
             CASE
             + expr("value")
             + Group(ZeroOrMore(
-                (WHEN + expr("when") + THEN + expr("then")).addParseAction(to_when_call)
+                (WHEN + expr("when") + THEN + expr("then")) / to_when_call
             ))("case")
             + Optional(ELSE + expr("else"))
             + END
-        ).addParseAction(to_switch_call)
+        ) / to_switch_call
 
         # CAST
-        cast = Group(
-            CAST("op") + LB + expr("params") + AS + known_types("params") + RB
-        ).addParseAction(to_json_call)
+        cast = (
+            Group(CAST("op") + LB + expr("params") + AS + known_types("params") + RB)
+            / to_json_call
+        )
 
         # TRIM
         trim = (
@@ -82,13 +83,12 @@ def parser(literal_string, ident):
                 + expr("chars")
                 + Optional(FROM + expr("from"))
                 + RB
-            )
-            .addParseAction(to_trim_call)
-            .set_parser_name("trim")
+            ).set_parser_name("trim")
+            / to_trim_call
         )
 
         _standard_time_intervals = MatchFirst([
-            Keyword(d, caseless=True).addParseAction(lambda t: durations[t[0].lower()])
+            Keyword(d, caseless=True) / (lambda t: durations[t[0].lower()])
             for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
@@ -96,18 +96,17 @@ def parser(literal_string, ident):
 
         interval = (
             INTERVAL + ("'" + delimitedList(duration) + "'" | duration)
-        ).addParseAction(to_interval_call)
+        ) / to_interval_call
 
         timestamp = (
             time_functions("op")
             + (
                 literal_string("params")
                 | MatchFirst([
-                    Keyword(t, caseless=True).addParseAction(lambda t: t.lower())
-                    for t in times
+                    Keyword(t, caseless=True) / (lambda t: t.lower()) for t in times
                 ])("params")
             )
-        ).addParseAction(to_json_call)
+        ) / to_json_call
 
         extract = (
             Keyword("extract", caseless=True)("op")
@@ -116,7 +115,7 @@ def parser(literal_string, ident):
             + FROM
             + expr("params")
             + RB
-        ).addParseAction(to_json_call)
+        ) / to_json_call
 
         namedColumn = Group(
             Group(expr)("value") + Optional(Optional(AS) + Group(var_name))("name")
@@ -124,7 +123,7 @@ def parser(literal_string, ident):
 
         distinct = (
             DISTINCT("op") + delimitedList(namedColumn)("params")
-        ).addParseAction(to_json_call)
+        ) / to_json_call
 
         ordered_sql = Forward()
 
@@ -136,15 +135,15 @@ def parser(literal_string, ident):
                 Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True)
             )("ignore_nulls")
             + RB
-        ).addParseAction(to_json_call)
+        ) / to_json_call
 
         with NO_WHITESPACE:
 
             def scale(tokens):
                 return {"mul": [tokens[0], tokens[1]]}
 
-            scale_function = ((realNum | intNum) + call_function).addParseAction(scale)
-            scale_ident = ((realNum | intNum) + ident).addParseAction(scale)
+            scale_function = ((realNum | intNum) + call_function) / scale
+            scale_ident = ((realNum | intNum) + ident) / scale
 
         compound = (
             NULL
@@ -160,7 +159,7 @@ def parser(literal_string, ident):
             | distinct
             | trim
             | (LB + Group(ordered_sql) + RB)
-            | (LB + Group(delimitedList(expr)).addParseAction(to_tuple_call) + RB)
+            | (LB + Group(delimitedList(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
             | hexNum.set_parser_name("hex")
             | scale_function
@@ -193,22 +192,19 @@ def parser(literal_string, ident):
                 ).set_parser_name("expression")
             )("value")
             + Optional(window(expr, sortColumn))
-        ).addParseAction(to_expression_call)
+        ) / to_expression_call
 
         alias = (
-            (Group(var_name) + Optional(LB + delimitedList(ident("col")) + RB))("name")
-            .set_parser_name("alias")
-            .addParseAction(to_alias)
-        )
+            Group(var_name) + Optional(LB + delimitedList(ident("col")) + RB)
+        )("name").set_parser_name("alias") / to_alias
 
         selectColumn = (
             Group(
                 Group(expr).set_parser_name("expression1")("value")
                 + Optional(Optional(AS) + alias)
                 | Literal("*")("value")
-            )
-            .set_parser_name("column")
-            .addParseAction(to_select_call)
+            ).set_parser_name("column")
+            / to_select_call
         )
 
         table_source = (
@@ -234,7 +230,7 @@ def parser(literal_string, ident):
             )("op")
             + Group(table_source)("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
-        ).addParseAction(to_join_call)
+        ) / to_join_call
 
         selection = (
             SELECT
@@ -252,7 +248,8 @@ def parser(literal_string, ident):
                     + expr("value")
                     + Optional(Keyword("percent", caseless=True))("percent")
                     + Optional(WITH + Keyword("ties", caseless=True))("ties")
-                )("top").addParseAction(to_top_clause)
+                )("top")
+                / to_top_clause
                 + delimitedList(selectColumn)("select")
             )
         )
@@ -278,7 +275,7 @@ def parser(literal_string, ident):
             + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
             + Optional(LIMIT + expr("limit"))
             + Optional(OFFSET + expr("offset"))
-        ).set_parser_name("ordered sql").addParseAction(to_union_call)
+        ).set_parser_name("ordered sql") / to_union_call
 
         statement = Forward()
         statement << (
@@ -289,7 +286,7 @@ def parser(literal_string, ident):
                 ))
             )("with")
             + Group(ordered_sql)("query")
-        ).addParseAction(to_statement)
+        ) / to_statement
 
         #####################################################################
         # CREATE TABLE
@@ -301,21 +298,20 @@ def parser(literal_string, ident):
             + Literal("<").suppress()
             + delimitedList(column_definition)("params")
             + Literal(">").suppress()
-        ).addParseAction(to_json_call)
+        ) / to_json_call
 
         BigQuery_ARRAY = (
             Keyword("array", caseless=True)("op")
             + Literal("<").suppress()
             + delimitedList(column_type)("params")
             + Literal(">").suppress()
-        ).addParseAction(to_json_call)
+        ) / to_json_call
 
         column_type << (
             BigQuery_STRUCT
             | BigQuery_ARRAY
-            | Group(
-                ident("op") + Optional(LB + delimitedList(intNum)("params") + RB)
-            ).addParseAction(to_json_call)
+            | Group(ident("op") + Optional(LB + delimitedList(intNum)("params") + RB))
+            / to_json_call
         )
 
         column_def_references = (
@@ -333,8 +329,8 @@ def parser(literal_string, ident):
         ).suppress() + expr("default")
 
         column_options = ZeroOrMore(Group(
-            (NOT + NULL).addParseAction(lambda: "not null")
-            | NULL.addParseAction(lambda t: "nullable")
+            (NOT + NULL) / (lambda: "not null")
+            | NULL / (lambda t: "nullable")
             | Keyword("unique", caseless=True)
             | Keyword("primary key", caseless=True)
             | column_def_references
@@ -343,7 +339,7 @@ def parser(literal_string, ident):
         )).set_parser_name("column_options")
 
         column_definition << Group(
-            var_name("name").addParseAction(lambda t: t[0].lower())
+            var_name("name") / (lambda t: t[0].lower())
             + column_type("type")
             + Optional(column_options)("option")
         ).set_parser_name("column_definition")

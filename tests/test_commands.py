@@ -441,13 +441,15 @@ class TestTableConstraint(TestCase):
         self.assertEqual(result, expected)
 
     def test_reference_composite(self):
-        result = parse("""
+        result = parse(
+            """
             create table student (
                 name varchar not null, 
                 id varchar not null, 
                 foreign key frn_student(name, id) references person (colname, pid)  
             )
-        """)
+        """
+        )
         expected = {"create table": {
             "name": "student",
             "columns": [
@@ -463,14 +465,16 @@ class TestTableConstraint(TestCase):
         self.assertEqual(result, expected)
 
     def test_2_foreign_key(self):
-        result = parse("""
+        result = parse(
+            """
             create table student (
                 name varchar not null, 
                 id varchar not null, 
                 foreign key frn_student(name, id) references person (colname, pid),
                 foreign key Z(name, id) references B(colname, pid)  
             )
-        """)
+        """
+        )
         expected = {"create table": {
             "name": "student",
             "columns": [
@@ -487,8 +491,8 @@ class TestTableConstraint(TestCase):
                     "index_name": "Z",
                     "columns": ["name", "id"],
                     "references": {"table": "B", "columns": ["colname", "pid"]},
-                }}
-            ]
+                }},
+            ],
         }}
         self.assertEqual(result, expected)
 
@@ -508,25 +512,21 @@ class TestTableConstraint(TestCase):
         self.assertEqual(result, expected)
 
     def test_2_constraints(self):
-        result = parse("""create table student (
+        result = parse(
+            """create table student (
             name varchar, 
             constraint chk_01 check (name like '%Doe'), 
             constraint chk_02 check (A = 0) 
             )
-        """)
+        """
+        )
         expected = {"create table": {
             "name": "student",
             "columns": {"name": "name", "type": {"varchar": {}}},
             "constraint": [
-                {
-                    "name": "chk_01",
-                    "check": {"like": ["name", {"literal": "%Doe"}]},
-                },
-                {
-                    "name": "chk_02",
-                    "check": {"eq": ["A", 0]},
-                }
-            ]
+                {"name": "chk_01", "check": {"like": ["name", {"literal": "%Doe"}]},},
+                {"name": "chk_02", "check": {"eq": ["A", 0]},},
+            ],
         }}
         self.assertEqual(result, expected)
 

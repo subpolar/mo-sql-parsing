@@ -522,4 +522,3 @@ class TestRedshift(TestCase):
         result = parse(sql)
         expected = {"from": "b", "select": {"value": {"right": ["a", 6]}}}
         self.assertEqual(result, expected)
-

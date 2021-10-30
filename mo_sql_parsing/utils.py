@@ -432,9 +432,8 @@ def to_string(tokens):
 
 # NUMBERS
 realNum = (
-    Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?")
-    .set_parser_name("float")
-    .addParseAction(lambda t: float(t[0]))
+    Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float")
+    / (lambda t: float(t[0]))
 )
 
 
@@ -445,20 +444,14 @@ def parse_int(tokens):
         return int(tokens[0])
 
 
-intNum = (
-    Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int").addParseAction(parse_int)
-)
-hexNum = (
-    Regex(r"0x[0-9a-fA-F]+")
-    .set_parser_name("hex")
-    .addParseAction(lambda t: {"hex": t[0][2:]})
-)
+intNum = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
+hexNum = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
 
 # STRINGS
-ansi_string = Regex(r"\'(\'\'|[^'])*\'").addParseAction(to_string)
-mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"').addParseAction(to_string)
+ansi_string = Regex(r"\'(\'\'|[^'])*\'") / to_string
+mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / to_string
 
 # BASIC IDENTIFIERS
-ansi_ident = Regex(r'\"(\"\"|[^"])*\"').addParseAction(unquote)
-mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`").addParseAction(unquote)
-sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]").addParseAction(unquote)
+ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / unquote
+mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / unquote
+sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / unquote

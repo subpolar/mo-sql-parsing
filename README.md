@@ -17,10 +17,13 @@ SQL is a familiar language used to access databases. Although, each database ven
 
 The primary objective of this library is to convert SQL queries to JSON-izable parse trees. This originally targeted MySQL, but has grown to include other database vendors. *Please [paste some SQL into a new issue](https://github.com/klahnakoski/mo-sql-parsing/issues) if it does not work for you*
 
+## Non-objectives
+
+The parser handles Bigquery `create table` statements, but there is still a lot missing DML statements; INSERT, UPDATE, DELETE are not supported.  
+
 ## Project Status
 
-October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  The parser also hanldes Bigquery `create table` statements, but there is still a lot missing to support BigQuery and Redshift queries.  
-
+October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-parsing/tree/dev/tests). This parser is good enough for basic usage, including inner queries, `with` clauses, and window functions.  
 ## Install
 
     pip install mo-sql-parsing
