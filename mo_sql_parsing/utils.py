@@ -431,7 +431,7 @@ def to_string(tokens):
 
 
 # NUMBERS
-realNum = (
+real_num = (
     Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float")
     / (lambda t: float(t[0]))
 )
@@ -444,8 +444,8 @@ def parse_int(tokens):
         return int(tokens[0])
 
 
-intNum = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
-hexNum = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
+int_num = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
+hex_num = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
 
 # STRINGS
 ansi_string = Regex(r"\'(\'\'|[^'])*\'") / to_string

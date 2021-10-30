@@ -24,7 +24,7 @@ VALID = re.compile(r"^[a-zA-Z_]\w*$")
 
 def is_keyword(identifier):
     try:
-        RESERVED.parseString(identifier)
+        RESERVED.parse_string(identifier)
         return True
     except Exception:
         return False

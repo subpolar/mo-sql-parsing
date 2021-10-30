@@ -10,7 +10,7 @@
 # SQL CONSTANTS
 from mo_parsing import *
 
-from mo_sql_parsing.utils import SQL_NULL, intNum, to_json_call, ansi_string, ansi_ident
+from mo_sql_parsing.utils import SQL_NULL, int_num, to_json_call, ansi_string, ansi_ident
 
 NULL = Keyword("null", caseless=True) / (lambda: SQL_NULL)
 TRUE = Keyword("true", caseless=True) / (lambda: True)
@@ -363,8 +363,8 @@ durations = {
     "epoch": "epoch",
 }
 
-_size = Optional(LB + intNum("params") + RB)
-_sizes = Optional(LB + intNum("params") + "," + intNum("params") + RB)
+_size = Optional(LB + int_num("params") + RB)
+_sizes = Optional(LB + int_num("params") + "," + int_num("params") + RB)
 
 # KNOWN TYPES
 ARRAY = Group(Keyword("array", caseless=True)("op")) / to_json_call

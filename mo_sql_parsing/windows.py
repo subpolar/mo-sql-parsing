@@ -9,7 +9,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from mo_parsing.helpers import delimitedList
+from mo_parsing.helpers import delimited_list
 
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.utils import *
@@ -65,30 +65,30 @@ ROWS = Keyword("rows", caseless=True)
 RANGE = Keyword("range", caseless=True)
 
 bound = (
-    CURRENT_ROW("zero")
-    | (UNBOUNDED | intNum)("limit") + (PRECEDING | FOLLOWING)("direction")
+                CURRENT_ROW("zero")
+                | (UNBOUNDED | int_num)("limit") + (PRECEDING | FOLLOWING)("direction")
 ) / _to_bound_call
 between = (BETWEEN + bound("min") + AND + bound("max")) / _to_between_call
 
 row_clause = (ROWS | RANGE).suppress() + (between | bound)
 
 
-def window(expr, sortColumn):
+def window(expr, sort_column):
     return (
         # Optional((Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True))("ignore_nulls") / (lambda: True))
         Optional(
             WITHIN_GROUP
             + LB
-            + Optional(ORDER_BY + delimitedList(Group(sortColumn))("orderby"))
+            + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + RB
         )("within")
         + Optional(
             OVER
             + LB
-            + Optional(PARTITION_BY + delimitedList(Group(expr))("partitionby"))
+            + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
             + Optional(
                 ORDER_BY
-                + delimitedList(Group(sortColumn))("orderby")
+                + delimited_list(Group(sort_column))("orderby")
                 + Optional(row_clause)("range")
             )
             + RB
