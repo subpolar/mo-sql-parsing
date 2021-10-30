@@ -13,7 +13,7 @@ import json
 from threading import Lock
 
 from mo_sql_parsing.sql_parser import scrub
-from mo_sql_parsing.utils import ansi_string, simple_op
+from mo_sql_parsing.utils import ansi_string, simple_op, normal_op
 
 parse_locker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
 combined_parser = None
@@ -74,4 +74,4 @@ def format(json, **kwargs):
 
 _ = json.dumps
 
-__all__ = ["parse", "format", "parse_mysql", "parse_bigquery"]
+__all__ = ["parse", "format", "parse_mysql", "parse_bigquery", "normal_op", "simple_op"]

@@ -31,14 +31,13 @@ October 2021 -There are [over 700 tests](https://github.com/klahnakoski/mo-sql-p
 ## Parsing SQL
 
     >>> from mo_sql_parsing import parse
-    >>> import json
-    >>> json.dumps(parse("select count(1) from jobs"))
-    '{"select": {"value": {"count": 1}}, "from": "jobs"}'
+    >>> parse("select count(1) from jobs")
+    {'select': {'value': {'count': 1}}, 'from': 'jobs'}
     
 Each SQL query is parsed to an object: Each clause is assigned to an object property of the same name. 
 
-    >>> json.dumps(parse("select a as hello, b as world from jobs"))
-    '{"select": [{"value": "a", "name": "hello"}, {"value": "b", "name": "world"}], "from": "jobs"}'
+    >>> parse("select a as hello, b as world from jobs")
+    {'select': [{'value': 'a', 'name': 'hello'}, {'value': 'b', 'name': 'world'}], 'from': 'jobs'}
 
 The `SELECT` clause is an array of objects containing `name` and `value` properties. 
 
@@ -62,14 +61,14 @@ The default behaviour of the parser is to output function calls in `simple_op` f
 
 You can have the parser emit function calls in `normal_op` format
 
-    sql = "select trim(' ' from b+c)"
-    result = parse(sql, calls=normal_op)
+    >>> from mo_sql_parsing import parse, normal_op
+    >>> parse("select trim(' ' from b+c)", calls=normal_op)
     
 which produces calls in a normalized format
 
     {"op": op, "args": args, "kwargs": kwargs}
 
-here is the JSON from the example above:
+here is the pretty-printed JSON from the example above:
 
 ```
 {'select': {'value': {
