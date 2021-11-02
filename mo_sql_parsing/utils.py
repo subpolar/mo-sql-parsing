@@ -34,6 +34,12 @@ SQL_NULL = Call("null", [], {})
 null_locations = []
 
 
+def keyword(keywords):
+    return And([
+        Keyword(k, caseless=True) for k in keywords.split(" ")
+    ]).set_parser_name(keywords)
+
+
 def simple_op(op, args, kwargs):
     if not args:
         kwargs[op] = {}
@@ -445,7 +451,9 @@ def parse_int(tokens):
 
 
 int_num = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
-hex_num = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
+hex_num = (
+    Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
+)
 
 # STRINGS
 ansi_string = Regex(r"\'(\'\'|[^'])*\'") / to_string
