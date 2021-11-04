@@ -5,8 +5,8 @@ Let's make a SQL parser so we can provide a familiar interface to non-sql datast
 
 |Branch      |Status   |
 |------------|---------|
-|master      | [![Build Status](https://travis-ci.com/github/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing) |
-|dev         | [![Build Status](https://travis-ci.com/github/klahnakoski/mo-sql-parsing.svg?branch=dev)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing)    |
+|master      | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing) |
+|dev         | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=dev)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing)    |
 
 
 ## Problem Statement
