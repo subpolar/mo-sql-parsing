@@ -288,8 +288,6 @@ def parser(literal_string, ident):
         #####################################################################
         # CREATE TABLE
         #####################################################################
-        create_stmt = Forward()
-
         BigQuery_STRUCT = (
             keyword("struct")("op")
             + Literal("<").suppress()
@@ -394,7 +392,7 @@ def parser(literal_string, ident):
             column_definition("columns") | table_constraint_definition("constraint")
         )
 
-        create_stmt << (
+        create_stmt = (
             CREATE_TABLE
             + (
                 var_name("name")
