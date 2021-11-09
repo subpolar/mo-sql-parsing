@@ -57,16 +57,16 @@ def _to_between_call(tokens):
         }
 
 
-UNBOUNDED = Keyword("unbounded", caseless=True)
-PRECEDING = Keyword("preceding", caseless=True)
-FOLLOWING = Keyword("following", caseless=True)
-CURRENT_ROW = Keyword("current", caseless=True) + Keyword("row", caseless=True)
-ROWS = Keyword("rows", caseless=True)
-RANGE = Keyword("range", caseless=True)
+UNBOUNDED = keyword("unbounded")
+PRECEDING = keyword("preceding")
+FOLLOWING = keyword("following")
+CURRENT_ROW = keyword("current row")
+ROWS = keyword("rows")
+RANGE = keyword("range")
 
 bound = (
-                CURRENT_ROW("zero")
-                | (UNBOUNDED | int_num)("limit") + (PRECEDING | FOLLOWING)("direction")
+    CURRENT_ROW("zero")
+    | (UNBOUNDED | int_num)("limit") + (PRECEDING | FOLLOWING)("direction")
 ) / _to_bound_call
 between = (BETWEEN + bound("min") + AND + bound("max")) / _to_between_call
 
@@ -75,7 +75,7 @@ row_clause = (ROWS | RANGE).suppress() + (between | bound)
 
 def window(expr, sort_column):
     return (
-        # Optional((Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True))("ignore_nulls") / (lambda: True))
+        # Optional((keyword("ignore nulls"))("ignore_nulls") / (lambda: True))
         Optional(
             WITHIN_GROUP
             + LB

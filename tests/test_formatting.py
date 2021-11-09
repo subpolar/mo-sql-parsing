@@ -575,3 +575,10 @@ class TestSimple(TestCase):
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
+
+    def test_issue_41_cast_as(self):
+        query = """select cast(10.008 AS DECIMAL(10,2))"""
+        parse_result = parse(query)
+        format_result = format(parse_result)
+        self.assertEqual(format_result, """SELECT CAST(10.008 AS DECIMAL(10, 2))""")
+

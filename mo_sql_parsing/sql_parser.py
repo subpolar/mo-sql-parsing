@@ -78,7 +78,7 @@ def parser(literal_string, ident):
         # TRIM
         trim = (
             Group(
-                Keyword("trim", caseless=True).suppress()
+                keyword("trim").suppress()
                 + LB
                 + expr("chars")
                 + Optional(FROM + expr("from"))
@@ -88,8 +88,7 @@ def parser(literal_string, ident):
         )
 
         _standard_time_intervals = MatchFirst([
-            Keyword(d, caseless=True) / (lambda t: durations[t[0].lower()])
-            for d in durations.keys()
+            keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
         duration = (real_num | int_num)("params") + _standard_time_intervals
@@ -103,13 +102,13 @@ def parser(literal_string, ident):
             + (
                 literal_string("params")
                 | MatchFirst([
-                    Keyword(t, caseless=True) / (lambda t: t.lower()) for t in times
+                    keyword(t) / (lambda t: t.lower()) for t in times
                 ])("params")
             )
         ) / to_json_call
 
         extract = (
-            Keyword("extract", caseless=True)("op")
+            keyword("extract")("op")
             + LB
             + (_standard_time_intervals | expr("params"))
             + FROM
@@ -131,9 +130,7 @@ def parser(literal_string, ident):
             ident("op")
             + LB
             + Optional(Group(ordered_sql) | delimited_list(Group(expr)))("params")
-            + Optional(
-                Keyword("ignore", caseless=True) + Keyword("nulls", caseless=True)
-            )("ignore_nulls")
+            + Optional(keyword("ignore nulls"))("ignore_nulls")
             + RB
         ) / to_json_call
 
@@ -146,29 +143,29 @@ def parser(literal_string, ident):
             scale_ident = ((real_num | int_num) + ident) / scale
 
         compound = (
-                NULL
-                | TRUE
-                | FALSE
-                | NOCASE
-                | interval
-                | timestamp
-                | extract
-                | case
-                | switch
-                | cast
-                | distinct
-                | trim
-                | (LB + Group(ordered_sql) + RB)
-                | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
-                | literal_string.set_parser_name("string")
-                | hex_num.set_parser_name("hex")
-                | scale_function
-                | scale_ident
-                | real_num.set_parser_name("float")
-                | int_num.set_parser_name("int")
-                | call_function
-                # | known_types
-                | Combine(var_name + Optional(".*"))
+            NULL
+            | TRUE
+            | FALSE
+            | NOCASE
+            | interval
+            | timestamp
+            | extract
+            | case
+            | switch
+            | cast
+            | distinct
+            | trim
+            | (LB + Group(ordered_sql) + RB)
+            | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
+            | literal_string.set_parser_name("string")
+            | hex_num.set_parser_name("hex")
+            | scale_function
+            | scale_ident
+            | real_num.set_parser_name("float")
+            | int_num.set_parser_name("int")
+            | call_function
+            # | known_types
+            | Combine(var_name + Optional(".*"))
         )
 
         sort_column = expr("value").set_parser_name("sort1") + Optional(
@@ -246,8 +243,8 @@ def parser(literal_string, ident):
                 + Optional(
                     TOP
                     + expr("value")
-                    + Optional(Keyword("percent", caseless=True))("percent")
-                    + Optional(WITH + Keyword("ties", caseless=True))("ties")
+                    + Optional(keyword("percent"))("percent")
+                    + Optional(WITH + keyword("ties"))("ties")
                 )("top")
                 / to_top_clause
                 + delimited_list(select_column)("select")
@@ -291,21 +288,33 @@ def parser(literal_string, ident):
         #####################################################################
         # CREATE TABLE
         #####################################################################
-        create_stmt = Forward()
-
         BigQuery_STRUCT = (
-            Keyword("struct", caseless=True)("op")
+            keyword("struct")("op")
             + Literal("<").suppress()
             + delimited_list(column_definition)("params")
             + Literal(">").suppress()
         ) / to_json_call
 
         BigQuery_ARRAY = (
-            Keyword("array", caseless=True)("op")
+            keyword("array")("op")
             + Literal("<").suppress()
             + delimited_list(column_type)("params")
             + Literal(">").suppress()
         ) / to_json_call
+
+        column_def_identity = (
+            keyword("generated").suppress()
+            + (
+                (keyword("always") | keyword("by default")) / (lambda: "by_default")
+            )("generated")
+            + keyword("as identity").suppress()
+            + Optional(keyword("start with").suppress() + int_num("start_with"))
+            + Optional(keyword("increment by").suppress() + int_num("increment_by"))
+        )
+
+        column_def_delete = keyword("on delete").suppress() + (
+            keyword("cascade") | keyword("set null") | keyword("set default")
+        )("on_delete")
 
         column_type << (
             BigQuery_STRUCT
@@ -322,17 +331,15 @@ def parser(literal_string, ident):
             + RB
         )("references")
 
-        column_def_check = Keyword("check", caseless=True).suppress() + LB + expr + RB
-
-        column_def_default = Keyword(
-            "default", caseless=True
-        ).suppress() + expr("default")
+        column_def_check = keyword("check").suppress() + LB + expr + RB
+        column_def_default = keyword("default").suppress() + expr("default")
 
         column_options = ZeroOrMore(Group(
             (NOT + NULL) / (lambda: "not null")
             | NULL / (lambda t: "nullable")
-            | Keyword("unique", caseless=True)
-            | Keyword("primary key", caseless=True)
+            | keyword("unique")
+            | PRIMARY_KEY / (lambda: "primary key")
+            | column_def_identity("identity")
             | column_def_references
             | column_def_check("check")
             | column_def_default
@@ -349,8 +356,11 @@ def parser(literal_string, ident):
 
         index_column_names = LB + delimited_list(var_name("columns")) + RB
 
-        column_def_foreign_key = FOREIGN_KEY + Optional(
-            var_name("index_name") + index_column_names + column_def_references
+        table_def_foreign_key = FOREIGN_KEY + Optional(
+            Optional(var_name("index_name"))
+            + index_column_names
+            + column_def_references
+            + Optional(column_def_delete)
         )
 
         index_options = ZeroOrMore(var_name)("table_constraint_options")
@@ -375,14 +385,14 @@ def parser(literal_string, ident):
                 + index_options
             )("index")
             | column_def_check("check")
-            | column_def_foreign_key("foreign_key")
+            | table_def_foreign_key("foreign_key")
         )
 
         table_element = (
             column_definition("columns") | table_constraint_definition("constraint")
         )
 
-        create_stmt << (
+        create_stmt = (
             CREATE_TABLE
             + (
                 var_name("name")

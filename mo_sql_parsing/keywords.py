@@ -10,62 +10,69 @@
 # SQL CONSTANTS
 from mo_parsing import *
 
-from mo_sql_parsing.utils import SQL_NULL, int_num, to_json_call, ansi_string, ansi_ident
+from mo_sql_parsing.utils import (
+    SQL_NULL,
+    int_num,
+    to_json_call,
+    ansi_string,
+    ansi_ident,
+    keyword,
+)
 
-NULL = Keyword("null", caseless=True) / (lambda: SQL_NULL)
-TRUE = Keyword("true", caseless=True) / (lambda: True)
-FALSE = Keyword("false", caseless=True) / (lambda: False)
-NOCASE = Keyword("nocase", caseless=True)
-ASC = Keyword("asc", caseless=True)
-DESC = Keyword("desc", caseless=True)
+NULL = keyword("null") / (lambda: SQL_NULL)
+TRUE = keyword("true") / (lambda: True)
+FALSE = keyword("false") / (lambda: False)
+NOCASE = keyword("nocase")
+ASC = keyword("asc")
+DESC = keyword("desc")
 
 # SIMPLE KEYWORDS
-AS = Keyword("as", caseless=True).suppress()
-ALL = Keyword("all", caseless=True)
-BY = Keyword("by", caseless=True).suppress()
-CAST = Keyword("cast", caseless=True)
-CONSTRAINT = Keyword("constraint", caseless=True).suppress()
-CREATE = Keyword("create", caseless=True).suppress()
-CROSS = Keyword("cross", caseless=True)
-DISTINCT = Keyword("distinct", caseless=True)
-EXCEPT = Keyword("except", caseless=True)
-FROM = Keyword("from", caseless=True).suppress()
-FULL = Keyword("full", caseless=True)
-GROUP = Keyword("group", caseless=True).suppress()
-HAVING = Keyword("having", caseless=True).suppress()
-INNER = Keyword("inner", caseless=True)
-INTERVAL = Keyword("interval", caseless=True)
-JOIN = Keyword("join", caseless=True)
-LEFT = Keyword("left", caseless=True)
-LIKE = Keyword("like", caseless=True)
-LIMIT = Keyword("limit", caseless=True).suppress()
-MINUS = Keyword("minus", caseless=True)
-OFFSET = Keyword("offset", caseless=True).suppress()
-ON = Keyword("on", caseless=True).suppress()
-ORDER = Keyword("order", caseless=True).suppress()
-OUTER = Keyword("outer", caseless=True)
-OVER = Keyword("over", caseless=True).suppress()
-PARTITION = Keyword("partition", caseless=True).suppress()
-# PERCENT = Keyword("percent", caseless=True).suppress()
-RIGHT = Keyword("right", caseless=True)
-RLIKE = Keyword("rlike", caseless=True)
-SELECT = Keyword("select", caseless=True).suppress()
-TABLE = Keyword("table", caseless=True).suppress()
-THEN = Keyword("then", caseless=True).suppress()
-TOP = Keyword("top", caseless=True).suppress()
-UNION = Keyword("union", caseless=True)
-INTERSECT = Keyword("intersect", caseless=True)
-USING = Keyword("using", caseless=True).suppress()
-WHEN = Keyword("when", caseless=True).suppress()
-WHERE = Keyword("where", caseless=True).suppress()
-WITH = Keyword("with", caseless=True).suppress()
-WITHIN = Keyword("within", caseless=True).suppress()
-PRIMARY = Keyword("primary", caseless=True).suppress()
-FOREIGN = Keyword("foreign", caseless=True).suppress()
-KEY = Keyword("key", caseless=True).suppress()
-UNIQUE = Keyword("unique", caseless=True).suppress()
-INDEX = Keyword("index", caseless=True).suppress()
-REFERENCES = Keyword("references", caseless=True).suppress()
+AS = keyword("as").suppress()
+ALL = keyword("all")
+BY = keyword("by").suppress()
+CAST = keyword("cast")
+CONSTRAINT = keyword("constraint").suppress()
+CREATE = keyword("create").suppress()
+CROSS = keyword("cross")
+DISTINCT = keyword("distinct")
+EXCEPT = keyword("except")
+FROM = keyword("from").suppress()
+FULL = keyword("full")
+GROUP = keyword("group").suppress()
+HAVING = keyword("having").suppress()
+INNER = keyword("inner")
+INTERVAL = keyword("interval")
+JOIN = keyword("join")
+LEFT = keyword("left")
+LIKE = keyword("like")
+LIMIT = keyword("limit").suppress()
+MINUS = keyword("minus")
+OFFSET = keyword("offset").suppress()
+ON = keyword("on").suppress()
+ORDER = keyword("order").suppress()
+OUTER = keyword("outer")
+OVER = keyword("over").suppress()
+PARTITION = keyword("partition").suppress()
+# PERCENT = keyword("percent").suppress()
+RIGHT = keyword("right")
+RLIKE = keyword("rlike")
+SELECT = keyword("select").suppress()
+TABLE = keyword("table").suppress()
+THEN = keyword("then").suppress()
+TOP = keyword("top").suppress()
+UNION = keyword("union")
+INTERSECT = keyword("intersect")
+USING = keyword("using").suppress()
+WHEN = keyword("when").suppress()
+WHERE = keyword("where").suppress()
+WITH = keyword("with").suppress()
+WITHIN = keyword("within").suppress()
+PRIMARY = keyword("primary").suppress()
+FOREIGN = keyword("foreign").suppress()
+KEY = keyword("key").suppress()
+UNIQUE = keyword("unique").suppress()
+INDEX = keyword("index").suppress()
+REFERENCES = keyword("references").suppress()
 
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
@@ -93,16 +100,16 @@ DEQ = (
 )  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 
-AND = Keyword("and", caseless=True)
-BETWEEN = Keyword("between", caseless=True)
-CASE = Keyword("case", caseless=True).suppress()
-COLLATE = Keyword("collate", caseless=True)
-END = Keyword("end", caseless=True)
-ELSE = Keyword("else", caseless=True).suppress()
-IN = Keyword("in", caseless=True)
-IS = Keyword("is", caseless=True)
-NOT = Keyword("not", caseless=True)
-OR = Keyword("or", caseless=True)
+AND = keyword("and")
+BETWEEN = keyword("between")
+CASE = keyword("case").suppress()
+COLLATE = keyword("collate")
+END = keyword("end")
+ELSE = keyword("else").suppress()
+IN = keyword("in")
+IS = keyword("is")
+NOT = keyword("not")
+OR = keyword("or")
 
 # COMPOUND KEYWORDS
 CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
@@ -122,19 +129,15 @@ UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 
 # COMPOUND OPERATORS
-AT_TIME_ZONE = Group(
-    Keyword("at", caseless=True)
-    + Keyword("time", caseless=True)
-    + Keyword("zone", caseless=True)
-)
+AT_TIME_ZONE = Group(keyword("at") + keyword("time") + keyword("zone"))
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
 NOT_IN = Group(NOT + IN).set_parser_name("nin")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
-_SIMILAR = Keyword("similar", caseless=True)
-_TO = Keyword("to", caseless=True)
+_SIMILAR = keyword("similar")
+_TO = keyword("to")
 SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("similar_to")
 NOT_SIMILAR_TO = Group(NOT + _SIMILAR + _TO).set_parser_name("not_similar_to")
 
@@ -367,19 +370,19 @@ _size = Optional(LB + int_num("params") + RB)
 _sizes = Optional(LB + int_num("params") + "," + int_num("params") + RB)
 
 # KNOWN TYPES
-ARRAY = Group(Keyword("array", caseless=True)("op")) / to_json_call
-BIGINT = Group(Keyword("bigint", caseless=True)("op")) / to_json_call
-BOOL = Group(Keyword("bool", caseless=True)("op")) / to_json_call
-BOOLEAN = Group(Keyword("boolean", caseless=True)("op")) / to_json_call
-DOUBLE = Group(Keyword("double", caseless=True)("op")) / to_json_call
-FLOAT64 = Group(Keyword("float64", caseless=True)("op")) / to_json_call
-FLOAT = Group(Keyword("float", caseless=True)("op")) / to_json_call
-GEOMETRY = Group(Keyword("geometry", caseless=True)("op")) / to_json_call
-INTEGER = Group(Keyword("integer", caseless=True)("op")) / to_json_call
-INT = Group(Keyword("int", caseless=True)("op")) / to_json_call
-INT32 = Group(Keyword("int32", caseless=True)("op")) / to_json_call
-INT64 = Group(Keyword("int64", caseless=True)("op")) / to_json_call
-REAL = Group(Keyword("real", caseless=True)("op")) / to_json_call
+ARRAY = Group(keyword("array")("op")) / to_json_call
+BIGINT = Group(keyword("bigint")("op")) / to_json_call
+BOOL = Group(keyword("bool")("op")) / to_json_call
+BOOLEAN = Group(keyword("boolean")("op")) / to_json_call
+DOUBLE = Group(keyword("double")("op")) / to_json_call
+FLOAT64 = Group(keyword("float64")("op")) / to_json_call
+FLOAT = Group(keyword("float")("op")) / to_json_call
+GEOMETRY = Group(keyword("geometry")("op")) / to_json_call
+INTEGER = Group(keyword("integer")("op")) / to_json_call
+INT = Group(keyword("int")("op")) / to_json_call
+INT32 = Group(keyword("int32")("op")) / to_json_call
+INT64 = Group(keyword("int64")("op")) / to_json_call
+REAL = Group(keyword("real")("op")) / to_json_call
 TEXT = Group(Keyword("text", caseless=True)("op")) / to_json_call
 SMALLINT = Group(Keyword("smallint", caseless=True)("op")) / to_json_call
 STRING = Group(Keyword("string", caseless=True)("op")) / to_json_call
