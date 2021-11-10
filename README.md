@@ -1,6 +1,6 @@
 # More SQL Parsing!
 
-Let's make a SQL parser so we can provide a familiar interface to non-sql datastores!
+Parse SQL into JSON parse trees so we can translate it for non-sql datastores!
 
 
 |Branch      |Status   |

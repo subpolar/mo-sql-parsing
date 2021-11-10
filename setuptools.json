@@ -10,7 +10,7 @@
         "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
     ],
-    "description": "Extract Parse Tree from SQL",
+    "description": "More SQL Parsing! Parse SQL into JSON parse tree",
     "extras_require": {
         "dev": [],
         "tests": ["mo-testing", "mo-threads", "mo-files"]
