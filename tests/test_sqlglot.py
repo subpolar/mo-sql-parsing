@@ -8,14 +8,14 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import skip
+from unittest import skip, TestCase
 
-from mo_testing.fuzzytestcase import FuzzyTestCase
+from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import parse
 
 
-class TestSqlGlot(FuzzyTestCase):
+class TestSqlGlot(TestCase):
     @skip("does not pass yet")
     def test_issue_46_sqlglot_0(self):
         sql = """SET x = 1"""
@@ -194,13 +194,19 @@ class TestSqlGlot(FuzzyTestCase):
     def test_issue_46_sqlglot_25(self):
         sql = """SELECT 1 EXCEPT DISTINCT SELECT 2"""
         result = parse(sql)
-        expected = {}
+        expected = {"except_distinct": [
+            {"select": {"value": 1}},
+            {"select": {"value": 2}},
+        ]}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_26(self):
         sql = """SELECT 1 INTERSECT DISTINCT SELECT 2"""
         result = parse(sql)
-        expected = {}
+        expected = {"intersect_distinct": [
+            {"select": {"value": 1}},
+            {"select": {"value": 2}},
+        ]}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
@@ -238,14 +244,25 @@ class TestSqlGlot(FuzzyTestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_32(self):
         sql = """SELECT * FROM (WITH y AS (SELECT 1 AS z) SELECT z FROM y) AS x"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": {
+                "name": "x",
+                "value": {
+                    "from": "y",
+                    "select": {"value": "z"},
+                    "with": {
+                        "name": "y",
+                        "value": {"select": {"name": "z", "value": 1}},
+                    },
+                },
+            },
+            "select": "*",
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_33(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"""
         result = parse(sql)

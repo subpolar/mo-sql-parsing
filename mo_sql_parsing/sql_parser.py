@@ -124,12 +124,12 @@ def parser(literal_string, ident):
             DISTINCT("op") + delimited_list(named_column)("params")
         ) / to_json_call
 
-        ordered_sql = Forward()
+        with_context = Forward()
 
         call_function = (
             ident("op")
             + LB
-            + Optional(Group(ordered_sql) | delimited_list(Group(expr)))("params")
+            + Optional(Group(with_context) | delimited_list(Group(expr)))("params")
             + Optional(keyword("ignore nulls"))("ignore_nulls")
             + RB
         ) / to_json_call
@@ -155,7 +155,7 @@ def parser(literal_string, ident):
             | cast
             | distinct
             | trim
-            | (LB + Group(ordered_sql) + RB)
+            | (LB + Group(with_context) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
             | hex_num.set_parser_name("hex")
@@ -206,7 +206,7 @@ def parser(literal_string, ident):
 
         table_source = (
             (
-                (LB + ordered_sql + RB) | call_function
+                (LB + with_context + RB) | call_function
             )("value").set_parser_name("table source")
             + Optional(Optional(AS) + alias)
             | (var_name("value").set_parser_name("table name") + Optional(AS) + alias)
@@ -261,7 +261,7 @@ def parser(literal_string, ident):
             )
         ).set_parser_name("unordered sql")
 
-        ordered_sql << (
+        ordered_sql = (
             (
                 unordered_sql
                 + ZeroOrMore(
@@ -274,12 +274,11 @@ def parser(literal_string, ident):
             + Optional(OFFSET + expr("offset"))
         ).set_parser_name("ordered sql") / to_union_call
 
-        statement = Forward()
-        statement << (
+        with_context << (
             Optional(
                 WITH
                 + delimited_list(Group(
-                    var_name("name") + AS + LB + (statement | expr)("value") + RB
+                    var_name("name") + AS + LB + (with_context | expr)("value") + RB
                 ))
             )("with")
             + Group(ordered_sql)("query")
@@ -396,8 +395,8 @@ def parser(literal_string, ident):
             var_name("name")
             + Optional(LB + delimited_list(table_element) + RB)
             + Optional(
-                AS.suppress() + infix_notation(statement, [])
+                AS.suppress() + infix_notation(with_context, [])
             )("select_statement")
         )("create table")
 
-        return (statement | create_stmt).finalize()
+        return (with_context | create_stmt).finalize()
