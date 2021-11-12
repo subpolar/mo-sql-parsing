@@ -265,7 +265,7 @@ def parser(literal_string, ident):
             (
                 unordered_sql
                 + ZeroOrMore(
-                    Group(UNION_ALL | UNION | INTERSECT | EXCEPT | MINUS)
+                    Group((UNION | INTERSECT | EXCEPT | MINUS) + Optional(ALL | DISTINCT))("op")
                     + unordered_sql
                 )
             )("union")

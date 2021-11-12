@@ -191,14 +191,12 @@ class TestSqlGlot(FuzzyTestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_25(self):
         sql = """SELECT 1 EXCEPT DISTINCT SELECT 2"""
         result = parse(sql)
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_26(self):
         sql = """SELECT 1 INTERSECT DISTINCT SELECT 2"""
         result = parse(sql)
