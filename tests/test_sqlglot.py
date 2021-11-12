@@ -266,7 +266,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_33(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"""
         result = parse(sql)
-        expected = {}
+        expected ={'select': {'over': {'partitionby': 'a', 'range': {'max': 0}}, 'value': {'sum': 'x'}}}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")

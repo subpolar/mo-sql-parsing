@@ -89,8 +89,8 @@ def window(expr, sort_column):
             + Optional(
                 ORDER_BY
                 + delimited_list(Group(sort_column))("orderby")
-                + Optional(row_clause)("range")
             )
+            + Optional(row_clause)("range")
             + RB
         )("over")
     )
