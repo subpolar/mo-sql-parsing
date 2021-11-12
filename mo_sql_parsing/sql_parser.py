@@ -392,15 +392,12 @@ def parser(literal_string, ident):
             column_definition("columns") | table_constraint_definition("constraint")
         )
 
-        create_stmt = (
-            CREATE_TABLE
-            + (
-                var_name("name")
-                + Optional(LB + delimited_list(table_element) + RB)
-                + Optional(
-                    AS.suppress() + infix_notation(statement, [])
-                )("select_statement")
-            )("create table")
-        )
+        create_stmt = CREATE_TABLE + (
+            var_name("name")
+            + Optional(LB + delimited_list(table_element) + RB)
+            + Optional(
+                AS.suppress() + infix_notation(statement, [])
+            )("select_statement")
+        )("create table")
 
         return (statement | create_stmt).finalize()

@@ -580,3 +580,32 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, """SELECT CAST(10.008 AS DECIMAL(10, 2))""")
 
+    def test_issues_45_cast(self):
+        sql = """select node,datetime from eutrancellfdd where ((900 - ( cast(pmCellDowntimeAuto as FLOAT) + cast(pmCellDowntimeMan as FLOAT) ) ) / 900) < 0.9 order by datetime limit 100"""
+        result = parse(sql)
+        parsed_query = {
+            "from": "eutrancellfdd",
+            "limit": 100,
+            "orderby": {"value": "datetime"},
+            "select": [{"value": "node"}, {"value": "datetime"}],
+            "where": {"lt": [
+                {"div": [
+                    {"sub": [
+                        900,
+                        {"add": [
+                            {"cast": ["pmCellDowntimeAuto", {"float": {}}]},
+                            {"cast": ["pmCellDowntimeMan", {"float": {}}]},
+                        ]},
+                    ]},
+                    900,
+                ]},
+                0.9,
+            ]},
+        }
+        self.assertEqual(result, parsed_query)
+
+        re_format_query = format(parsed_query)
+        self.assertEqual(
+            re_format_query,
+            """SELECT node, datetime FROM eutrancellfdd WHERE 900 - (CAST(pmCellDowntimeAuto AS FLOAT()) + CAST(pmCellDowntimeMan AS FLOAT())) / 900 < 0.9 ORDER BY datetime LIMIT 100""",
+        )

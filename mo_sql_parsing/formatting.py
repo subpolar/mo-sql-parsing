@@ -306,7 +306,13 @@ class Formatter:
         return " ".join(parts)
 
     def _cast(self, json, prec):
-        return "".join(["CAST(", self.dispatch(json[0]), " AS ", self.dispatch(json[1]), ")"])
+        return "".join([
+            "CAST(",
+            self.dispatch(json[0]),
+            " AS ",
+            self.dispatch(json[1]),
+            ")",
+        ])
 
     def _literal(self, json, prec):
         if isinstance(json, list):
