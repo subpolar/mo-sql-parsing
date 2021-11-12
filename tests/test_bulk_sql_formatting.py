@@ -13,14 +13,27 @@ from unittest import skip
 
 from mo_files import File
 from mo_logs import Log
+from mo_logs.strings import expand_template
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse, format
 
 
+test_template = """
+    @skip("does not pass yet")
+    def test_issue_46_sqlglot_{{num}}(self):
+        sql = \"\"\"{{sql}}\"\"\"
+        result = parse(sql)
+        expected = {}
+        self.assertEqual(result, expected)
+"""
+
+
 class TestSimple(FuzzyTestCase):
     @skip("too long")
     def test_files(self):
+        count = 0
+        acc=[]
         for file in File("tests/sql").leaves:
             for i, line in enumerate(file.read_lines()):
                 if line.startswith("#"):
@@ -31,15 +44,9 @@ class TestSimple(FuzzyTestCase):
                 try:
                     parse_result = parse(query)
                     format_result = format(parse_result)
-                    self.assertEqual(
-                        (format_result.lower().replace(" ", "")),
-                        query.lower().replace(" ", ""),
-                    )
-                except Exception as cause:
-                    Log.error(
-                        """file {{file}}, line {{line}}: unable to parse-and-format {{sql|quote}}""",
-                        file=file.name,
-                        line=i + 1,
-                        sql=query,
-                        cause=cause,
-                    )
+                    Log.note("OK: {{sql}}", sql= format_result)
+                except Exception:
+                    acc.append(expand_template(test_template, {"sql":query, "num":count}))
+                    count+=1
+
+        print("".join(acc))

@@ -604,7 +604,7 @@ class TestSimple(TestCase):
         }
         self.assertEqual(result, parsed_query)
 
-        re_format_query = format(parsed_query)
+        re_format_query = format(result)
         self.assertEqual(
             re_format_query,
             """SELECT node, datetime FROM eutrancellfdd WHERE 900 - (CAST(pmCellDowntimeAuto AS FLOAT()) + CAST(pmCellDowntimeMan AS FLOAT())) / 900 < 0.9 ORDER BY datetime LIMIT 100""",
