@@ -78,12 +78,15 @@ def window(expr, sort_column):
         CURRENT_ROW("zero")
         | (UNBOUNDED | expr)("limit") + (PRECEDING | FOLLOWING)("direction")
     ) / _to_bound_call
-    between_row = (BETWEEN + bound_row("min") + AND + bound_row("max"))/_to_between_call
-    between_expr = (BETWEEN + bound_expr("min") + AND + bound_expr("max"))/_to_between_call
+    between_row = (
+        BETWEEN + bound_row("min") + AND + bound_row("max")
+    ) / _to_between_call
+    between_expr = (
+        BETWEEN + bound_expr("min") + AND + bound_expr("max")
+    ) / _to_between_call
 
-    row_clause = (
-            (ROWS.suppress() + (between_row | bound_row))
-            | (RANGE.suppress() + (between_expr | bound_expr))
+    row_clause = (ROWS.suppress() + (between_row | bound_row)) | (
+        RANGE.suppress() + (between_expr | bound_expr)
     )
 
     return (

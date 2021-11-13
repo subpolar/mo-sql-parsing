@@ -436,7 +436,13 @@ known_types = MatchFirst([
     CHAR,
     DATE_TYPE,
     DATETIME_TYPE,
-    DECIMAL + Optional(LB + int_num("digits") + Optional(Char(",").suppress() + int_num("precision")) + ")"),
+    DECIMAL
+    + Optional(
+        LB
+        + int_num("digits")
+        + Optional(Char(",").suppress() + int_num("precision"))
+        + ")"
+    ),
     DOUBLE_PRECISION,
     DOUBLE,
     FLOAT64,

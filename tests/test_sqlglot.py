@@ -6,11 +6,14 @@
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
+# THE SQL FOR THESE TESTS WERE SNAGGED FROM
+# https://github.com/tobymao/sqlglot/blob/15fbef02d56d87036d7cace0b7333dd2b341445e/tests/fixtures/identity.sql
+# UNDER THE MIT LICENSE DURING NOV 2021
+
 from __future__ import absolute_import, division, unicode_literals
 
 from unittest import skip, TestCase
 
-from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import parse
 

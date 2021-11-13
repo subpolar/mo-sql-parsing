@@ -122,9 +122,20 @@ def parser(literal_string, ident):
             Group(expr)("value") + Optional(Optional(AS) + Group(var_name))("name")
         )
 
-        stack = (keyword("stack")("op") + LB + int_num("width") + "," + delimited_list(expr)("args") + RB) / to_stack
-        array = (keyword("array")("op") + LB + delimited_list(Group(expr))("args") + RB) / to_array
-        map = (keyword("map") + Char('[') + expr("keys") + "," + expr("values") + Char("]")) / to_map
+        stack = (
+            keyword("stack")("op")
+            + LB
+            + int_num("width")
+            + ","
+            + delimited_list(expr)("args")
+            + RB
+        ) / to_stack
+        array = (
+            keyword("array")("op") + LB + delimited_list(Group(expr))("args") + RB
+        ) / to_array
+        map = (
+            keyword("map") + Char("[") + expr("keys") + "," + expr("values") + Char("]")
+        ) / to_map
 
         distinct = (
             DISTINCT("op") + delimited_list(named_column)("params")
@@ -161,7 +172,9 @@ def parser(literal_string, ident):
             | cast
             | distinct
             | trim
-            | stack | array | map
+            | stack
+            | array
+            | map
             | (LB + Group(with_context) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
@@ -458,7 +471,7 @@ def parser(literal_string, ident):
             + Optional((keyword("or replace") / (lambda: True))("replace"))
             + Optional((keyword("temporary") / (lambda: True))("temporary"))
             + TABLE
-            + Optional((keyword("if not exists")/(lambda: False))("replace"))
+            + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + var_name("name")
             + Optional(LB + delimited_list(table_element) + RB)
             + ZeroOrMore(
@@ -510,26 +523,35 @@ def parser(literal_string, ident):
 
         drop_table = (
             keyword("drop table")
-            + Optional((keyword("if exists")/(lambda: True))("if exists"))
+            + Optional((keyword("if exists") / (lambda: True))("if exists"))
             + var_name("table")
         )("drop")
 
         drop_view = (
-                keyword("drop view")
-                + Optional((keyword("if exists") / (lambda: True))("if exists"))
-                + var_name("view")
+            keyword("drop view")
+            + Optional((keyword("if exists") / (lambda: True))("if exists"))
+            + var_name("view")
         )("drop")
 
         insert = (
             keyword("insert")
             + (
-                (keyword("overwrite")/(lambda: True))("overwrite")
+                (keyword("overwrite") / (lambda: True))("overwrite")
                 | keyword("into").suppress()
             )
             + keyword("table").suppress()
             + var_name("into")
-            + Optional((keyword("if exists")/(lambda: True))("if exists"))
+            + Optional((keyword("if exists") / (lambda: True))("if exists"))
             + (values("query") | with_context("query"))
         )("insert")
 
-        return (with_context | delete | drop_table | drop_view | insert | create_table | create_view | create_cache).finalize()
+        return (
+            with_context
+            | delete
+            | drop_table
+            | drop_view
+            | insert
+            | create_table
+            | create_view
+            | create_cache
+        ).finalize()

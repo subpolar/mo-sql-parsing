@@ -392,13 +392,13 @@ def to_values(tokens):
 
 
 def to_stack(tokens):
-    width = tokens['width']
-    args = list(tokens['args'])
+    width = tokens["width"]
+    args = list(tokens["args"])
     return Call("stack", args, {"width": width})
 
 
 def to_array(tokens):
-    args = list(tokens['args'])
+    args = list(tokens["args"])
     return Call("array", args, {})
 
 
