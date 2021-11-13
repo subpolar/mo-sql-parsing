@@ -140,11 +140,9 @@ class TestPostgres(TestCase):
         expected = {"create table": {
             "columns": [
                 {
+                    "identity": {"generated": "by_default", "start_with": 10},
                     "name": "warehouse_id",
-                    "option": [
-                        {"identity": {"generated": "by_default", "start_with": 10}},
-                        "primary key",
-                    ],
+                    "primary key": True,
                     "type": {"number": {}},
                 },
                 {"name": "warehouse_name", "type": {"varchar": 255}},

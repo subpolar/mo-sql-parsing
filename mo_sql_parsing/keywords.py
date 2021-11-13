@@ -73,6 +73,7 @@ KEY = keyword("key").suppress()
 UNIQUE = keyword("unique").suppress()
 INDEX = keyword("index").suppress()
 REFERENCES = keyword("references").suppress()
+RECURSIVE = keyword("recursive").suppress()
 VALUES = keyword("values").suppress()
 
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")

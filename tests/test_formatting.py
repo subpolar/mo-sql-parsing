@@ -566,8 +566,7 @@ class TestSimple(TestCase):
 
     def test_issue_40_window_function5(self):
         query = """select sum(qty) over (order by a rows 3 following)""".upper()
-        with Debugger():
-            parse_result = parse(query)
+        parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 

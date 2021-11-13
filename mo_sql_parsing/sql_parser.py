@@ -91,7 +91,9 @@ def parser(literal_string, ident):
             keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
-        duration = (real_num | int_num | literal_string)("params") + _standard_time_intervals
+        duration = (
+            real_num | int_num | literal_string
+        )("params") + _standard_time_intervals
 
         interval = (
             INTERVAL + ("'" + delimited_list(duration) + "'" | duration)
@@ -184,9 +186,13 @@ def parser(literal_string, ident):
                             to_json_operator,
                         )
                         for o in KNOWN_OPS
-                    ]+[
-                        (Char("[").suppress() + expr + Char("]").suppress(), 1, LEFT_ASSOC, to_offset)
-                    ],
+                    ]
+                    + [(
+                        Char("[").suppress() + expr + Char("]").suppress(),
+                        1,
+                        LEFT_ASSOC,
+                        to_offset,
+                    )],
                 ).set_parser_name("expression")
             )("value")
             + Optional(window(expr, sort_column))
@@ -272,7 +278,9 @@ def parser(literal_string, ident):
             (
                 unordered_sql
                 + ZeroOrMore(
-                    Group((UNION | INTERSECT | EXCEPT | MINUS) + Optional(ALL | DISTINCT))("op")
+                    Group(
+                        (UNION | INTERSECT | EXCEPT | MINUS) + Optional(ALL | DISTINCT)
+                    )("op")
                     + unordered_sql
                 )
             )("union")
@@ -283,11 +291,22 @@ def parser(literal_string, ident):
 
         with_context << (
             Optional(
-                WITH
-                + delimited_list(Group(
-                    var_name("name") + AS + LB + (with_context | expr)("value") + RB
-                ))
-            )("with")
+                (
+                    WITH
+                    + RECURSIVE
+                    + alias("name")
+                    + AS
+                    + LB
+                    + (with_context | expr)("value")
+                    + RB
+                )("with recursive")
+                | (
+                    WITH
+                    + delimited_list(Group(
+                        var_name("name") + AS + LB + (with_context | expr)("value") + RB
+                    ))
+                )("with")
+            )
             + Group(ordered_sql)("query")
         ) / to_statement
 
@@ -308,9 +327,7 @@ def parser(literal_string, ident):
             + Literal(">").suppress()
         ) / to_json_call
 
-        column_def_comment = (
-            keyword("comment").suppress() + literal_string("comment")
-        )
+        column_def_comment = keyword("comment").suppress() + literal_string("comment")
 
         column_def_identity = (
             keyword("generated").suppress()
@@ -341,25 +358,31 @@ def parser(literal_string, ident):
             + RB
         )("references")
 
+        collate = (
+            keyword("collate").suppress() + Optional(Char("=").suppress()) + var_name
+        )("collate")
+
         column_def_check = keyword("check").suppress() + LB + expr + RB
         column_def_default = keyword("default").suppress() + expr("default")
 
-        column_options = ZeroOrMore(Group(
-            (NOT + NULL) / (lambda: "not null")
-            | NULL / (lambda t: "nullable")
-            | keyword("unique")
+        column_options = ZeroOrMore(
+            ((NOT + NULL) / (lambda: False))("nullable")
+            | (NULL / (lambda t: True))("nullable")
+            | (keyword("unique") / (lambda: True))("unique")
+            | (keyword("auto_increment") / (lambda: True))("auto_increment")
             | column_def_comment
-            | PRIMARY_KEY / (lambda: "primary key")
+            | collate
+            | (PRIMARY_KEY / (lambda: True))("primary key")
             | column_def_identity("identity")
             | column_def_references
             | column_def_check("check")
             | column_def_default
-        )).set_parser_name("column_options")
+        ).set_parser_name("column_options")
 
         column_definition << Group(
             var_name("name") / (lambda t: t[0].lower())
             + column_type("type")
-            + Optional(column_options)("option")
+            + column_options
         ).set_parser_name("column_definition")
 
         # MySQL's index_type := Using + ( "BTREE" | "HASH" )
@@ -403,12 +426,75 @@ def parser(literal_string, ident):
             column_definition("columns") | table_constraint_definition("constraint")
         )
 
-        create_stmt = CREATE_TABLE + (
-            var_name("name")
+        table_def_engine = (
+            keyword("engine").suppress() + Char("=").suppress() + var_name("engine")
+        )
+        table_def_collate = (
+            keyword("collate").suppress() + Char("=").suppress() + var_name("collate")
+        )
+        table_def_auto_increment = (
+            keyword("auto_increment").suppress()
+            + Char("=").suppress()
+            + int_num("auto_increment")
+        )
+        table_def_comment = (
+            keyword("comment").suppress()
+            + Char("=").suppress()
+            + literal_string("comment")
+        )
+        table_def_char_set = (
+            keyword("default character set").suppress()
+            + Char("=").suppress()
+            + var_name("default character set")
+        )
+
+        create_table = (
+            keyword("create")
+            + Optional((keyword("or replace") / (lambda: True))("replace"))
+            + Optional((keyword("temporary") / (lambda: True))("temporary"))
+            + TABLE
+            + Optional((keyword("if not exists")/(lambda: False))("replace"))
+            + var_name("name")
             + Optional(LB + delimited_list(table_element) + RB)
-            + Optional(
-                AS.suppress() + infix_notation(with_context, [])
-            )("select_statement")
+            + ZeroOrMore(
+                table_def_engine
+                | table_def_collate
+                | table_def_auto_increment
+                | table_def_comment
+                | table_def_char_set
+            )
+            + Optional(AS.suppress() + infix_notation(with_context, [])("query"))
         )("create table")
 
-        return (with_context | create_stmt).finalize()
+        create_view = (
+            keyword("create")
+            + Optional((keyword("or replace") / (lambda: True))("replace"))
+            + Optional((keyword("temporary") / (lambda: True))("temporary"))
+            + keyword("view").suppress()
+            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + var_name("name")
+            + AS
+            + with_context("query")
+        )("create view")
+
+        cache_options = Optional((
+            keyword("options").suppress()
+            + LB
+            + Dict(delimited_list(Group(
+                literal_string / (lambda tokens: tokens[0]["literal"])
+                + Optional(Char("=").suppress())
+                + var_name
+            )))
+            + RB
+        )("options"))
+
+        create_cache = (
+            keyword("cache").suppress()
+            + Optional((keyword("lazy") / (lambda: True))("lazy"))
+            + TABLE
+            + var_name("name")
+            + cache_options
+            + Optional(AS + with_context("query"))
+        )("cache")
+
+        return (with_context | create_table | create_view | create_cache).finalize()

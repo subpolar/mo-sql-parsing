@@ -437,6 +437,7 @@ def to_union_call(tokens):
 def to_statement(tokens):
     output = tokens["query"][0]
     output["with"] = tokens["with"]
+    output["with recursive"] = tokens["with recursive"]
     return output
 
 

@@ -114,20 +114,16 @@ class TestCreateSimple(TestCase):
     def test_one_columns_with_size(self):
         result = parse("create table student (name varchar not null)")
         expected = {"create table": {
+            "columns": {"name": "name", "nullable": False, "type": {"varchar": {}}},
             "name": "student",
-            "columns": {"name": "name", "type": {"varchar": {}}, "option": "not null"},
         }}
         self.assertEqual(result, expected)
 
     def test_one_columns_with_size2(self):
         result = parse("create table student (name decimal(2,3) not null)")
         expected = {"create table": {
+            "columns": {"name": "name", "nullable": False, "type": {"decimal": [2, 3]}},
             "name": "student",
-            "columns": {
-                "name": "name",
-                "type": {"decimal": [2, 3]},
-                "option": "not null",
-            },
         }}
         self.assertEqual(result, expected)
 
@@ -140,8 +136,8 @@ class TestWithOption(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "name", "type": {"varchar": {}}, "nullable": False},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -154,8 +150,8 @@ class TestWithOption(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "nullable"},
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "name", "type": {"varchar": {}}, "nullable": True},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -165,11 +161,11 @@ class TestWithOption(TestCase):
             "create table student (name varchar unique, sunny int primary key)"
         )
         expected = {"create table": {
-            "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "unique"},
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "name", "type": {"varchar": {}}, "unique": True},
+                {"name": "sunny", "primary key": True, "type": {"int": {}}},
             ],
+            "name": "student",
         }}
         self.assertEqual(result, expected)
 
@@ -180,8 +176,8 @@ class TestWithOption(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "primary key"},
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "name", "type": {"varchar": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -197,9 +193,9 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"references": {"table": "person", "columns": "colname"}},
+                    "references": {"table": "person", "columns": "colname"},
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -215,12 +211,12 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"references": {
+                    "references": {
                         "table": "person",
                         "columns": ["colname", "colname2"],
-                    }},
+                    },
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -236,9 +232,9 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"check": {"lt": [{"length": "name"}, 10]}},
+                    "check": {"lt": [{"length": "name"}, 10]},
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -250,12 +246,8 @@ class TestWithOption(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {
-                    "name": "name",
-                    "type": {"varchar": {}},
-                    "option": {"default": {"null": {}}},
-                },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "name", "type": {"varchar": {}}, "default": {"null": {}},},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -270,9 +262,9 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"default": {"literal": "null"}},
+                    "default": {"literal": "null"},
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -287,9 +279,9 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"default": {"literal": "text"}},
+                    "default": {"literal": "text"},
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -305,9 +297,9 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"default": {"mul": ["ex", 2]}},
+                    "default": {"mul": ["ex", 2]},
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -323,9 +315,9 @@ class TestWithOption(TestCase):
                 {
                     "name": "name",
                     "type": {"varchar": {}},
-                    "option": {"default": {"mul": ["ex", 2]}},
+                    "default": {"mul": ["ex", 2]},
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "type": {"int": {}}, "primary key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -336,19 +328,17 @@ class TestWithOption(TestCase):
             " sunny int primary key)"
         )
         expected = {"create table": {
-            "name": "student",
             "columns": [
                 {
+                    "default": {"mul": ["ex", 2]},
                     "name": "name",
+                    "nullable": False,
+                    "primary key": True,
                     "type": {"varchar": {}},
-                    "option": [
-                        "not null",
-                        "primary key",
-                        {"default": {"mul": ["ex", 2]}},
-                    ],
                 },
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "sunny", "primary key": True, "type": {"int": {}}},
             ],
+            "name": "student",
         }}
         self.assertEqual(result, expected)
 
@@ -360,7 +350,7 @@ class TestTableConstraint(TestCase):
         )
         expected = {"create table": {
             "name": "student",
-            "columns": {"name": "name", "type": {"varchar": {}}, "option": "not null"},
+            "columns": {"name": "name", "type": {"varchar": {}}, "nullable": False},
             "constraint": {"primary_key": {"columns": "name"}},
         }}
         self.assertEqual(result, expected)
@@ -373,8 +363,8 @@ class TestTableConstraint(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
-                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "name", "type": {"varchar": {}}, "nullable": False},
+                {"name": "id", "type": {"varchar": {}}, "nullable": False},
             ],
             "constraint": {"primary_key": {"columns": ["name", "id"]}},
         }}
@@ -387,7 +377,7 @@ class TestTableConstraint(TestCase):
         )
         expected = {"create table": {
             "name": "student",
-            "columns": {"name": "name", "type": {"varchar": {}}, "option": "nullable"},
+            "columns": {"name": "name", "type": {"varchar": {}}, "nullable": True},
             "constraint": {"name": "c_00", "primary_key": {"columns": "name"}},
         }}
         self.assertEqual(result, expected)
@@ -414,8 +404,8 @@ class TestTableConstraint(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
-                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "name", "type": {"varchar": {}}, "nullable": False},
+                {"name": "id", "type": {"varchar": {}}, "nullable": False},
             ],
             "constraint": {"unique": {
                 "index_name": "unique_student",
@@ -453,8 +443,8 @@ class TestTableConstraint(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
-                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "name", "type": {"varchar": {}}, "nullable": False},
+                {"name": "id", "type": {"varchar": {}}, "nullable": False},
             ],
             "constraint": {"foreign_key": {
                 "index_name": "frn_student",
@@ -478,8 +468,8 @@ class TestTableConstraint(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": "not null"},
-                {"name": "id", "type": {"varchar": {}}, "option": "not null"},
+                {"name": "name", "type": {"varchar": {}}, "nullable": False},
+                {"name": "id", "type": {"varchar": {}}, "nullable": False},
             ],
             "constraint": [
                 {"foreign_key": {
@@ -536,7 +526,7 @@ class TestCreateSelect(TestCase):
         result = parse("create table student as select * from XYZZY, ABC")
         expected = {"create table": {
             "name": "student",
-            "select_statement": {"select": "*", "from": ["XYZZY", "ABC"]},
+            "query": {"select": "*", "from": ["XYZZY", "ABC"]},
         }}
         self.assertEqual(result, expected)
 
@@ -544,7 +534,7 @@ class TestCreateSelect(TestCase):
         result = parse("create table student as ( select * from XYZZY )")
         expected = {"create table": {
             "name": "student",
-            "select_statement": {"select": "*", "from": "XYZZY"},
+            "query": {"select": "*", "from": "XYZZY"},
         }}
         self.assertEqual(result, expected)
 
@@ -554,7 +544,7 @@ class TestCreateSelect(TestCase):
         )
         expected = {"create table": {
             "name": "student",
-            "select_statement": {
+            "query": {
                 "select": "*",
                 "from": "t",
                 "with": {"name": "t", "value": {"select": "*", "from": "XYZZY"}},

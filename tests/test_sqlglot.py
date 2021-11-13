@@ -243,7 +243,23 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_31(self):
         sql = """WITH RECURSIVE T(n, m) AS (VALUES (1, 2) UNION ALL SELECT n + 1, n + 2 FROM t) SELECT SUM(n) FROM t"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "t",
+            "select": {"value": {"sum": "n"}},
+            "with recursive": {
+                "name": {"T": ["n", "m"]},
+                "value": {"union_all": [
+                    {"select": [{"value": 1}, {"value": 2}]},
+                    {
+                        "from": "t",
+                        "select": [
+                            {"value": {"add": ["n", 1]}},
+                            {"value": {"add": ["n", 2]}},
+                        ],
+                    },
+                ]},
+            },
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_32(self):
@@ -319,6 +335,7 @@ class TestSqlGlot(TestCase):
         }}
         self.assertEqual(result, expected)
 
+    @skip("not legitimate https://www.sqlite.org/windowfunctions.html")
     def test_issue_46_sqlglot_37(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND PRECEDING)"""
         result = parse(sql)
@@ -350,6 +367,7 @@ class TestSqlGlot(TestCase):
         }}
         self.assertEqual(result, expected)
 
+    @skip("not legitimate https://www.sqlite.org/windowfunctions.html")
     def test_issue_46_sqlglot_41(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 AND 3)"""
         result = parse(sql)
@@ -429,95 +447,139 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_52(self):
         sql = """CREATE TABLE a.b AS SELECT 1"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {"name": "a.b", "query": {"select": {"value": 1}}}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_53(self):
         sql = """CREATE TABLE a.b AS SELECT a FROM a.c"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "name": "a.b",
+            "query": {"from": "a.c", "select": {"value": "a"}},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_54(self):
         sql = """CREATE TABLE IF NOT EXISTS x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "name": "x",
+            "query": {"from": "d", "select": {"value": "a"}},
+            "replace": False,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_55(self):
         sql = """CREATE TEMPORARY TABLE x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "name": "x",
+            "query": {"from": "d", "select": {"value": "a"}},
+            "temporary": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_56(self):
         sql = """CREATE TEMPORARY TABLE IF NOT EXISTS x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "name": "x",
+            "query": {"from": "d", "select": {"value": "a"}},
+            "replace": False,
+            "temporary": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_57(self):
         sql = """CREATE VIEW x AS SELECT a FROM b"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {"from": "b", "select": {"value": "a"}},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_58(self):
         sql = """CREATE VIEW IF NOT EXISTS x AS SELECT a FROM b"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {"from": "b", "select": {"value": "a"}},
+            "replace": False,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_59(self):
         sql = """CREATE OR REPLACE VIEW x AS SELECT *"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {"select": "*"},
+            "replace": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_60(self):
         sql = """CREATE OR REPLACE TEMPORARY VIEW x AS SELECT *"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {"select": "*"},
+            "replace": True,
+            "temporary": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_61(self):
         sql = """CREATE TEMPORARY VIEW x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {"from": "d", "select": {"value": "a"}},
+            "temporary": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_62(self):
         sql = """CREATE TEMPORARY VIEW IF NOT EXISTS x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {"from": "d", "select": {"value": "a"}},
+            "replace": False,
+            "temporary": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_63(self):
         sql = """CREATE TEMPORARY VIEW x AS WITH y AS (SELECT 1) SELECT * FROM y"""
         result = parse(sql)
-        expected = {}
+        expected = {"create view": {
+            "name": "x",
+            "query": {
+                "from": "y",
+                "select": "*",
+                "with": {"name": "y", "value": {"select": {"value": 1}}},
+            },
+            "temporary": True,
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_64(self):
         sql = """CREATE TABLE z (a INT, b VARCHAR, c VARCHAR(100), d DECIMAL(5, 3))"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "columns": [
+                {"name": "a", "type": {"int": {}}},
+                {"name": "b", "type": {"varchar": {}}},
+                {"name": "c", "type": {"varchar": 100}},
+                {"name": "d", "type": {"decimal": [5, 3]}},
+            ],
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_65(self):
@@ -526,111 +588,170 @@ class TestSqlGlot(TestCase):
         expected = {"create table": {
             "columns": [
                 {"name": "a", "type": {"int": {}}},
-                {
-                    "name": "b",
-                    "option": {"comment": {"literal": "z"}},
-                    "type": {"varchar": {}},
-                },
-                {
-                    "name": "c",
-                    "option": {"comment": {"literal": "z"}},
-                    "type": {"varchar": 100},
-                },
+                {"comment": {"literal": "z"}, "name": "b", "type": {"varchar": {}}},
+                {"comment": {"literal": "z"}, "name": "c", "type": {"varchar": 100}},
                 {"name": "d", "type": {"decimal": [5, 3]}},
             ],
             "name": "z",
         }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_66(self):
         sql = """CREATE TABLE z (a INT(11) DEFAULT NULL COMMENT '客户id')"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "columns": {
+                "comment": {"literal": "客户id"},
+                "default": {"null": {}},
+                "name": "a",
+                "type": {"int": 11},
+            },
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_67(self):
         sql = """CREATE TABLE z (a INT(11) NOT NULL DEFAULT 1)"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "columns": {
+                "default": 1,
+                "name": "a",
+                "nullable": False,
+                "type": {"int": 11},
+            },
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_68(self):
         sql = """CREATE TABLE z (a INT(11) NOT NULL COLLATE utf8_bin AUTO_INCREMENT)"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "columns": {
+                "auto_increment": True,
+                "collate": "utf8_bin",
+                "name": "a",
+                "nullable": False,
+                "type": {"int": 11},
+            },
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_69(self):
         sql = """CREATE TABLE z (a INT, PRIMARY KEY(a))"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "columns": {"name": "a", "type": {"int": {}}},
+            "constraint": {"primary_key": {"columns": "a"}},
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_70(self):
         sql = """CREATE TABLE z (a INT) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARACTER SET=utf8 COLLATE=utf8_bin COMMENT='x'"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "auto_increment": 1,
+            "collate": "utf8_bin",
+            "columns": {"name": "a", "type": {"int": {}}},
+            "comment": {"literal": "x"},
+            "default character set": "utf8",
+            "engine": "InnoDB",
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_71(self):
         sql = """CREATE TABLE z (a INT DEFAULT NULL, PRIMARY KEY(a)) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARACTER SET=utf8 COLLATE=utf8_bin COMMENT='x'"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "auto_increment": 1,
+            "collate": "utf8_bin",
+            "columns": {"default": {"null": {}}, "name": "a", "type": {"int": {}}},
+            "comment": {"literal": "x"},
+            "constraint": {"primary_key": {"columns": "a"}},
+            "default character set": "utf8",
+            "engine": "InnoDB",
+            "name": "z",
+        }}
+
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_72(self):
         sql = """CACHE TABLE x"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {"name": "x"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_73(self):
         sql = """CACHE LAZY TABLE x"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {"lazy": True, "name": "x"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_74(self):
         sql = """CACHE LAZY TABLE x OPTIONS('storageLevel' = value)"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {
+            "lazy": True,
+            "name": "x",
+            "options": {"storageLevel": "value"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_75(self):
         sql = """CACHE LAZY TABLE x OPTIONS('storageLevel' = value) AS SELECT 1"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {
+            "lazy": True,
+            "name": "x",
+            "options": {"storageLevel": "value"},
+            "query": {"select": {"value": 1}},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_76(self):
         sql = """CACHE LAZY TABLE x OPTIONS('storageLevel' = value) AS WITH a AS (SELECT 1) SELECT a.* FROM a"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {
+            "lazy": True,
+            "name": "x",
+            "options": {"storageLevel": "value"},
+            "query": {
+                "from": "a",
+                "select": {"value": "a.*"},
+                "with": {"name": "a", "value": {"select": {"value": 1}}},
+            },
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_77(self):
         sql = """CACHE LAZY TABLE x AS WITH a AS (SELECT 1) SELECT a.* FROM a"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {
+            "lazy": True,
+            "name": "x",
+            "query": {
+                "from": "a",
+                "select": {"value": "a.*"},
+                "with": {"name": "a", "value": {"select": {"value": 1}}},
+            },
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_78(self):
         sql = """CACHE TABLE x AS WITH a AS (SELECT 1) SELECT a.* FROM a"""
         result = parse(sql)
-        expected = {}
+        expected = {"cache": {
+            "name": "x",
+            "query": {
+                "from": "a",
+                "select": {"value": "a.*"},
+                "with": {"name": "a", "value": {"select": {"value": 1}}},
+            },
+        }}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
