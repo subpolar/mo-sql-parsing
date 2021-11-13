@@ -107,18 +107,22 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_13(self):
         sql = """SELECT CASE TEST(1) + x[0] WHEN 1 THEN 1 ELSE 2 END"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {"value": {"case": [
+            {"then": 1, "when": {"eq": [{"add": [{"test": 1}, {"get": ["x", 0]}]}, 1]}},
+            2,
+        ]}}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_14(self):
         sql = """SELECT CASE x[0] WHEN 1 THEN 1 ELSE 2 END"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {"value": {"case": [
+            {"then": 1, "when": {"eq": [{"get": ["x", 0]}, 1]}},
+            2,
+        ]}}}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
@@ -395,14 +399,20 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "from": "x",
-            "select": {"value": {"get": [{"get": [{"array": {"array": {}}}, 0]}, 0]}},
+            "select": {"value": {"get": [{"get": [{"array": {"array": 0}}, 0]}, 0]}},
         }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_45(self):
         sql = """SELECT MAP[ARRAY('x'), ARRAY(0)]['x'] FROM x"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "x",
+            "select": {"value": {"get": [
+                {"create_map": [{"array": {"literal": "x"}}, {"array": 0}]},
+                {"literal": "x"},
+            ]}},
+        }
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
@@ -761,67 +771,58 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_80(self):
         sql = """DELETE FROM x WHERE y > 1"""
         result = parse(sql)
-        expected = {}
+        expected = {"delete": {"from": "x", "where": {"gt": ["y", 1]}}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_81(self):
         sql = """DROP TABLE a"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"table": "a"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_82(self):
         sql = """DROP TABLE a.b"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"table": "a.b"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_83(self):
         sql = """DROP TABLE IF EXISTS a"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"if exists": True, "table": "a"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_84(self):
         sql = """DROP TABLE IF EXISTS a.b"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"if exists": True, "table": "a.b"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_85(self):
         sql = """DROP VIEW a"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"view": "a"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_86(self):
         sql = """DROP VIEW a.b"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"view": "a.b"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_87(self):
         sql = """DROP VIEW IF EXISTS a"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"if exists": True, "view": "a"}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_88(self):
         sql = """DROP VIEW IF EXISTS a.b"""
         result = parse(sql)
-        expected = {}
+        expected = {"drop": {"if exists": True, "view": "a.b"}}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
@@ -838,46 +839,72 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_91(self):
         sql = """INSERT INTO TABLE x SELECT * FROM y"""
         result = parse(sql)
-        expected = {}
+        expected = {"insert": {"into": "x", "query": {"from": "y", "select": "*"}}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_92(self):
         sql = """INSERT INTO TABLE x.z IF EXISTS SELECT * FROM y"""
         result = parse(sql)
-        expected = {}
+        expected = {"insert": {
+            "if exists": True,
+            "into": "x.z",
+            "query": {"from": "y", "select": "*"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_93(self):
         sql = """INSERT INTO TABLE x VALUES (1, 'a', 2.0)"""
         result = parse(sql)
-        expected = {}
+        expected = {"insert": {
+            "into": "x",
+            "query": {"select": [
+                {"value": 1},
+                {"value": {"literal": "a"}},
+                {"value": 2.0},
+            ]},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_94(self):
         sql = """INSERT INTO TABLE x VALUES (1, 'a', 2.0), (1, 'a', 3.0), (X(), y[1], z.x)"""
         result = parse(sql)
-        expected = {}
+        expected = {"insert": {
+            "into": "x",
+            "query": {"union_all": [
+                {"select": [{"value": 1}, {"value": {"literal": "a"}}, {"value": 2.0}]},
+                {"select": [{"value": 1}, {"value": {"literal": "a"}}, {"value": 3.0}]},
+                {"select": [
+                    {"value": {"x": {}}},
+                    {"value": {"get": ["y", 1]}},
+                    {"value": "z.x"},
+                ]},
+            ]},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_95(self):
         sql = """INSERT OVERWRITE TABLE x IF EXISTS SELECT * FROM y"""
         result = parse(sql)
-        expected = {}
+        expected = {"insert": {
+            "if exists": True,
+            "into": "x",
+            "overwrite": True,
+            "query": {"from": "y", "select": "*"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_96(self):
         sql = """INSERT OVERWRITE TABLE a.b IF EXISTS SELECT * FROM y"""
         result = parse(sql)
-        expected = {}
+        expected = {"insert": {
+            "if exists": True,
+            "into": "a.b",
+            "overwrite": True,
+            "query": {"from": "y", "select": "*"},
+        }}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")

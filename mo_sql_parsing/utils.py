@@ -41,7 +41,7 @@ def keyword(keywords):
 
 
 def simple_op(op, args, kwargs):
-    if not args:
+    if args is None:
         kwargs[op] = {}
     else:
         kwargs[op] = args
@@ -389,6 +389,23 @@ def to_values(tokens):
         return {"union_all": list(tokens)}
     else:
         return rows
+
+
+def to_stack(tokens):
+    width = tokens['width']
+    args = list(tokens['args'])
+    return Call("stack", args, {"width": width})
+
+
+def to_array(tokens):
+    args = list(tokens['args'])
+    return Call("array", args, {})
+
+
+def to_map(tokens):
+    keys = tokens["keys"]
+    values = tokens["values"]
+    return Call("create_map", [keys, values], {})
 
 
 def to_select_call(tokens):
