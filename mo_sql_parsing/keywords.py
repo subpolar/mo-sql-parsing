@@ -73,6 +73,7 @@ KEY = keyword("key").suppress()
 UNIQUE = keyword("unique").suppress()
 INDEX = keyword("index").suppress()
 REFERENCES = keyword("references").suppress()
+VALUES = keyword("values").suppress()
 
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
@@ -120,10 +121,13 @@ GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
 INNER_JOIN = (INNER + JOIN).set_parser_name("inner join")
 LEFT_JOIN = (LEFT + JOIN).set_parser_name("left join")
 LEFT_OUTER_JOIN = (LEFT + OUTER + JOIN).set_parser_name("left outer join")
+LEFT_INNER_JOIN = (LEFT + INNER + JOIN).set_parser_name("left inner join")
 ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
+OUTER_JOIN = (OUTER + JOIN).set_parser_name("outer join")
 PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
 RIGHT_JOIN = (RIGHT + JOIN).set_parser_name("right join")
 RIGHT_OUTER_JOIN = (RIGHT + OUTER + JOIN).set_parser_name("right outer join")
+RIGHT_INNER_JOIN = (RIGHT + INNER + JOIN).set_parser_name("right inner join")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
@@ -431,7 +435,7 @@ known_types = MatchFirst([
     CHAR,
     DATE_TYPE,
     DATETIME_TYPE,
-    DECIMAL,
+    DECIMAL + Optional(LB + int_num("digits") + Optional(Char(",").suppress() + int_num("precision")) + ")"),
     DOUBLE_PRECISION,
     DOUBLE,
     FLOAT64,
@@ -458,6 +462,8 @@ known_types = MatchFirst([
 
 CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
 KNOWN_OPS = [CASTING] + KNOWN_OPS
+offset = Forward()
+
 unary_ops = {
     NEG: RIGHT_ASSOC,
     NOT: RIGHT_ASSOC,

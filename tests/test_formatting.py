@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import format, parse
 
 
@@ -564,7 +566,8 @@ class TestSimple(TestCase):
 
     def test_issue_40_window_function5(self):
         query = """select sum(qty) over (order by a rows 3 following)""".upper()
-        parse_result = parse(query)
+        with Debugger():
+            parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 

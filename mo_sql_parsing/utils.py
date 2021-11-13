@@ -183,6 +183,11 @@ def to_json_operator(tokens):
     return binary_op
 
 
+def to_offset(tokens):
+    expr, offset = tokens.tokens
+    return Call("get", [expr, offset], {})
+
+
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
     tokens = list(tokens)
@@ -336,6 +341,11 @@ def to_expression_call(tokens):
         listwrap(tokens["value"]),
         tokens.failures,
     )
+
+    offset = tokens["offset"]
+    if offset:
+        return {"get": [expr, offset]}
+
     return expr
 
 
@@ -363,6 +373,22 @@ def to_top_clause(tokens):
         return {"percent": value}
     else:
         return [value]
+
+
+def to_row(tokens):
+    columns = list(tokens)
+    if len(columns) > 1:
+        return {"select": [{"value": v[0]} for v in columns]}
+    else:
+        return {"select": {"value": columns[0]}}
+
+
+def to_values(tokens):
+    rows = list(tokens)
+    if len(rows) > 1:
+        return {"union_all": list(tokens)}
+    else:
+        return rows
 
 
 def to_select_call(tokens):

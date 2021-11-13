@@ -28,11 +28,15 @@ def _to_bound_call(tokens):
     if direction == "preceding":
         if limit == "unbounded":
             return {"max": 0}
+        elif is_data(limit):
+            return {"min": {"neg": limit}, "max": 0}
         else:
             return {"min": -limit, "max": 0}
     else:  # following
         if limit == "unbounded":
             return {"min": 0}
+        elif is_data(limit):
+            return {"min": {"neg": limit}, "max": 0}
         else:
             return {"min": 0, "max": limit}
 
@@ -64,16 +68,24 @@ CURRENT_ROW = keyword("current row")
 ROWS = keyword("rows")
 RANGE = keyword("range")
 
-bound = (
-    CURRENT_ROW("zero")
-    | (UNBOUNDED | int_num)("limit") + (PRECEDING | FOLLOWING)("direction")
-) / _to_bound_call
-between = (BETWEEN + bound("min") + AND + bound("max")) / _to_between_call
-
-row_clause = (ROWS | RANGE).suppress() + (between | bound)
-
 
 def window(expr, sort_column):
+    bound_row = (
+        CURRENT_ROW("zero")
+        | (UNBOUNDED | int_num)("limit") + (PRECEDING | FOLLOWING)("direction")
+    ) / _to_bound_call
+    bound_expr = (
+        CURRENT_ROW("zero")
+        | (UNBOUNDED | expr)("limit") + (PRECEDING | FOLLOWING)("direction")
+    ) / _to_bound_call
+    between_row = (BETWEEN + bound_row("min") + AND + bound_row("max"))/_to_between_call
+    between_expr = (BETWEEN + bound_expr("min") + AND + bound_expr("max"))/_to_between_call
+
+    row_clause = (
+            (ROWS.suppress() + (between_row | bound_row))
+            | (RANGE.suppress() + (between_expr | bound_expr))
+    )
+
     return (
         # Optional((keyword("ignore nulls"))("ignore_nulls") / (lambda: True))
         Optional(
@@ -86,10 +98,7 @@ def window(expr, sort_column):
             OVER
             + LB
             + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
-            + Optional(
-                ORDER_BY
-                + delimited_list(Group(sort_column))("orderby")
-            )
+            + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + Optional(row_clause)("range")
             + RB
         )("over")

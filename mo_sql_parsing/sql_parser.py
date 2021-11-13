@@ -91,7 +91,7 @@ def parser(literal_string, ident):
             keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
-        duration = (real_num | int_num)("params") + _standard_time_intervals
+        duration = (real_num | int_num | literal_string)("params") + _standard_time_intervals
 
         interval = (
             INTERVAL + ("'" + delimited_list(duration) + "'" | duration)
@@ -164,7 +164,6 @@ def parser(literal_string, ident):
             | real_num.set_parser_name("float")
             | int_num.set_parser_name("int")
             | call_function
-            # | known_types
             | Combine(var_name + Optional(".*"))
         )
 
@@ -185,6 +184,8 @@ def parser(literal_string, ident):
                             to_json_operator,
                         )
                         for o in KNOWN_OPS
+                    ]+[
+                        (Char("[").suppress() + expr + Char("]").suppress(), 1, LEFT_ASSOC, to_offset)
                     ],
                 ).set_parser_name("expression")
             )("value")
@@ -218,12 +219,15 @@ def parser(literal_string, ident):
                 CROSS_JOIN
                 | FULL_JOIN
                 | FULL_OUTER_JOIN
+                | OUTER_JOIN
                 | INNER_JOIN
                 | JOIN
                 | LEFT_JOIN
                 | LEFT_OUTER_JOIN
+                | LEFT_INNER_JOIN
                 | RIGHT_JOIN
                 | RIGHT_OUTER_JOIN
+                | RIGHT_INNER_JOIN
             )("op")
             + Group(table_source)("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
@@ -251,7 +255,10 @@ def parser(literal_string, ident):
             )
         )
 
-        unordered_sql = Group(
+        row = (LB + delimited_list(Group(expr)) + RB) / to_row
+        values = VALUES + delimited_list(row) / to_values
+
+        unordered_sql = values | Group(
             selection
             + Optional(
                 (FROM + delimited_list(Group(table_source)) + ZeroOrMore(join))("from")
@@ -287,19 +294,23 @@ def parser(literal_string, ident):
         #####################################################################
         # CREATE TABLE
         #####################################################################
-        BigQuery_STRUCT = (
+        struct_type = (
             keyword("struct")("op")
             + Literal("<").suppress()
             + delimited_list(column_definition)("params")
             + Literal(">").suppress()
         ) / to_json_call
 
-        BigQuery_ARRAY = (
+        array_type = (
             keyword("array")("op")
             + Literal("<").suppress()
             + delimited_list(column_type)("params")
             + Literal(">").suppress()
         ) / to_json_call
+
+        column_def_comment = (
+            keyword("comment").suppress() + literal_string("comment")
+        )
 
         column_def_identity = (
             keyword("generated").suppress()
@@ -316,8 +327,8 @@ def parser(literal_string, ident):
         )("on_delete")
 
         column_type << (
-            BigQuery_STRUCT
-            | BigQuery_ARRAY
+            struct_type
+            | array_type
             | Group(ident("op") + Optional(LB + delimited_list(int_num)("params") + RB))
             / to_json_call
         )
@@ -337,6 +348,7 @@ def parser(literal_string, ident):
             (NOT + NULL) / (lambda: "not null")
             | NULL / (lambda t: "nullable")
             | keyword("unique")
+            | column_def_comment
             | PRIMARY_KEY / (lambda: "primary key")
             | column_def_identity("identity")
             | column_def_references

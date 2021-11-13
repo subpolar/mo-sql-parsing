@@ -177,18 +177,22 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_23(self):
         sql = """SELECT 1 FROM a LEFT INNER JOIN b ON a.foo = b.bar"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": ["a", {"on": {"eq": ["a.foo", "b.bar"]}, "left inner join": "b"}],
+            "select": {"value": 1},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_24(self):
         sql = """SELECT 1 FROM a OUTER JOIN b ON a.foo = b.bar"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": ["a", {"on": {"eq": ["a.foo", "b.bar"]}, "outer join": "b"}],
+            "select": {"value": 1},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_25(self):
@@ -223,11 +227,10 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_29(self):
         sql = """VALUES (1) UNION SELECT * FROM x"""
         result = parse(sql)
-        expected = {}
+        expected = {"union": [{"select": {"value": 1}}, {"from": "x", "select": "*"}]}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
@@ -237,7 +240,6 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_31(self):
         sql = """WITH RECURSIVE T(n, m) AS (VALUES (1, 2) UNION ALL SELECT n + 1, n + 2 FROM t) SELECT SUM(n) FROM t"""
         result = parse(sql)
@@ -266,31 +268,57 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_33(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"""
         result = parse(sql)
-        expected ={'select': {'over': {'partitionby': 'a', 'range': {'max': 0}}, 'value': {'sum': 'x'}}}
+        expected = {"select": {
+            "over": {"partitionby": "a", "range": {"max": 0}},
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_34(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ORDER BY b RANGE BETWEEN INTERVAL '1' DAY PRECEDING AND CURRENT ROW)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "over": {
+                "orderby": {"value": "b"},
+                "partitionby": "a",
+                "range": {
+                    "max": 0,
+                    "min": {"neg": {"interval": [{"literal": "1"}, "day"]}},
+                },
+            },
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_35(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ORDER BY b RANGE BETWEEN INTERVAL '1' DAY PRECEDING AND INTERVAL '2' DAYS FOLLOWING)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "over": {
+                "orderby": {"value": "b"},
+                "partitionby": "a",
+                "range": {
+                    "max": {"neg": {"interval": [{"literal": "2"}, "day"]}},
+                    "min": {"neg": {"interval": [{"literal": "1"}, "day"]}},
+                },
+            },
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_36(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ORDER BY b RANGE BETWEEN INTERVAL '1' DAY PRECEDING AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "over": {
+                "orderby": {"value": "b"},
+                "partitionby": "a",
+                "range": {"min": {"neg": {"interval": [{"literal": "1"}, "day"]}}},
+            },
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_37(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND PRECEDING)"""
         result = parse(sql)
@@ -304,49 +332,55 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_39(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "over": {"partitionby": "a", "range": {"min": 0}},
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_40(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "over": {"partitionby": "a", "range": {"max": 0}},
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_41(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 AND 3)"""
         result = parse(sql)
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
+    @skip("not legitimate https://www.sqlite.org/windowfunctions.html")
     def test_issue_46_sqlglot_42(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 FOLLOWING AND 3)"""
         result = parse(sql)
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_43(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "over": {"partitionby": "a", "range": {"min": 1}},
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_44(self):
         sql = """SELECT ARRAY(ARRAY(0))[0][0] FROM x"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "x",
+            "select": {"value": {"get": [{"get": [{"array": {"array": {}}}, 0]}, 0]}},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_45(self):
         sql = """SELECT MAP[ARRAY('x'), ARRAY(0)]['x'] FROM x"""
         result = parse(sql)
@@ -486,11 +520,26 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_65(self):
         sql = """CREATE TABLE z (a INT, b VARCHAR COMMENT 'z', c VARCHAR(100) COMMENT 'z', d DECIMAL(5, 3))"""
         result = parse(sql)
-        expected = {}
+        expected = {"create table": {
+            "columns": [
+                {"name": "a", "type": {"int": {}}},
+                {
+                    "name": "b",
+                    "option": {"comment": {"literal": "z"}},
+                    "type": {"varchar": {}},
+                },
+                {
+                    "name": "c",
+                    "option": {"comment": {"literal": "z"}},
+                    "type": {"varchar": 100},
+                },
+                {"name": "d", "type": {"decimal": [5, 3]}},
+            ],
+            "name": "z",
+        }}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
