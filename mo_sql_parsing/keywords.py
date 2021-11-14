@@ -253,6 +253,8 @@ precedence = {
     "gt": 6,
     "eq": 7,
     "neq": 7,
+    "missing": 7,
+    "exists": 7,
     "at_time_zone": 8,
     "between": 8,
     "not_between": 8,

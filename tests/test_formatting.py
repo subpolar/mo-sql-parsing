@@ -609,7 +609,7 @@ class TestSimple(TestCase):
         re_format_query = format(result)
         self.assertEqual(
             re_format_query,
-            """SELECT node, datetime FROM e WHERE 900 - (CAST(p AS FLOAT()) + CAST(p AS FLOAT())) / 900 < 0.9 ORDER BY datetime LIMIT 100""",
+            """SELECT node, datetime FROM e WHERE (900 - (CAST(p AS FLOAT) + CAST(p AS FLOAT))) / 900 < 0.9 ORDER BY datetime LIMIT 100""",
         )
 
     def test_issue_47_precedence(self):

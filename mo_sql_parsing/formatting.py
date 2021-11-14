@@ -266,7 +266,7 @@ class Formatter:
         attr = f"_{key}"
         if hasattr(self, attr) and not key.startswith("_"):
             method = getattr(self, attr)
-            op_prec = precedence[key]
+            op_prec = precedence.get(key, MAX_PRECEDENCE)
             if prec >= op_prec:
                 return method(value, op_prec)
             else:
