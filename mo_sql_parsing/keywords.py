@@ -267,6 +267,7 @@ precedence = {
     "not_similar_to": 8,
     "and": 10,
     "or": 11,
+    "lambda": 12,
     "select": 30,
     "from": 30,
     "window": 35,

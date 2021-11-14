@@ -242,10 +242,7 @@ def parser(literal_string, ident):
         ) / to_join_call
 
         selection = (
-            SELECT
-            + DISTINCT
-            + ON
-            + LB
+            (SELECT + DISTINCT + ON + LB)
             + delimited_list(select_column)("distinct_on")
             + RB
             + delimited_list(select_column)("select")
@@ -332,29 +329,16 @@ def parser(literal_string, ident):
             + Optional(OFFSET + expr("offset"))
         ).set_parser_name("ordered sql") / to_union_call
 
+        with_expr = delimited_list(Group(
+            (
+                (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                / to_alias
+            )("name")
+            + (AS + LB + (query | expr)("value") + RB)
+        ))
+
         query << (
-            Optional(
-                assign(
-                    "with recursive",
-                    (
-                        (
-                            var_name("name")
-                            + Optional(LB + delimited_list(ident("col")) + RB)
-                        )
-                        / to_alias
-                    )("name")
-                    + AS
-                    + LB
-                    + (query | expr)("value")
-                    + RB,
-                )
-                | assign(
-                    "with",
-                    delimited_list(Group(
-                        var_name("name") + AS + LB + (query | expr)("value") + RB
-                    )),
-                )
-            )
+            Optional(assign("with recursive", with_expr) | assign("with", with_expr))
             + Group(ordered_sql)("query")
         ) / to_query
 
@@ -550,12 +534,7 @@ def parser(literal_string, ident):
 
         return (
             query
-            | insert
-            | update
-            | delete
-            | create_table
-            | create_view
-            | create_cache
-            | drop_table
-            | drop_view
+            | (insert | update | delete)
+            | (create_table | create_view | create_cache)
+            | (drop_table | drop_view)
         ).finalize()
