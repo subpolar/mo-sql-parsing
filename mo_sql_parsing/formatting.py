@@ -442,7 +442,8 @@ class Formatter:
         is_join = False
         from_ = json["from"]
         if isinstance(from_, dict) and is_set_op & from_.keys():
-            return self.op(from_, precedence["from"])
+            source = self.op(from_, precedence["from"])
+            return f"FROM {source}"
 
         from_ = listwrap(from_)
         parts = []
@@ -454,10 +455,11 @@ class Formatter:
                 parts.append(self.dispatch(v, precedence["from"] - 1))
         joiner = " " if is_join else ", "
         rest = joiner.join(parts)
-        return "FROM {0}".format(rest)
+        return f"FROM {rest}"
 
     def where(self, json, prec):
-        return "WHERE {0}".format(self.dispatch(json["where"]))
+        expr = self.dispatch(json["where"])
+        return f"WHERE {expr}"
 
     def groupby(self, json, prec):
         param = ", ".join(self.dispatch(s) for s in listwrap(json["groupby"]))

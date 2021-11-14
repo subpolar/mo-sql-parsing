@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 try:
@@ -41,7 +43,8 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_select_one_column(self):
-        result = parse("Select A from dual")
+        with Debugger():
+            result = parse("Select A from dual")
         expected = {"select": {"value": "A"}, "from": "dual"}
         self.assertEqual(result, expected)
 
@@ -970,11 +973,11 @@ class TestSimple(TestCase):
         result = parse(sql)
         expected = {
             "select": "*",
-            "from": {"value": {"some_table.some_function": [
+            "from":  {"some_table.some_function": [
                 {"literal": "parameter"},
                 1,
                 "some_col",
-            ]}},
+            ]},
         }
         self.assertEqual(result, expected)
 

@@ -466,7 +466,7 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-    def test_issue_37_parenthesis3(self):
+    def test_issue_37_parenthesis2(self):
         query = """SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE country = 'United States')"""
         parse_result = parse(query)
         format_result = format(parse_result)

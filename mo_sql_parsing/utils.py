@@ -262,17 +262,14 @@ def to_json_call(tokens):
     op = tokens["op"].lower()
     op = binary_ops.get(op, op)
 
-    params = listwrap(tokens["params"])
-    if tokens["ignore_nulls"]:
-        ignore_nulls = True
-    else:
-        ignore_nulls = None
+    args = listwrap(tokens["params"])
+    kwargs = {k: v for k,v in tokens.items() if k not in ("op", "params")}
 
     return ParseResults(
         tokens.type,
         tokens.start,
         tokens.end,
-        [Call(op, params, {"ignore_nulls": ignore_nulls})],
+        [Call(op, args, kwargs)],
         tokens.failures,
     )
 
@@ -451,11 +448,18 @@ def to_union_call(tokens):
     return output
 
 
-def to_statement(tokens):
+def to_query(tokens):
     output = tokens["query"][0]
     output["with"] = tokens["with"]
     output["with recursive"] = tokens["with recursive"]
     return output
+
+
+def to_table(tokens):
+    if len(list(tokens.keys())) > 1:
+        return tokens
+    else:
+        return tokens['value']
 
 
 def unquote(tokens):

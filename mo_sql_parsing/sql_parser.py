@@ -141,13 +141,13 @@ def parser(literal_string, ident):
             DISTINCT("op") + delimited_list(named_column)("params")
         ) / to_json_call
 
-        with_context = Forward()
+        query = Forward().set_parser_name("query")
 
         call_function = (
             ident("op")
             + LB
-            + Optional(Group(with_context) | delimited_list(Group(expr)))("params")
-            + Optional(keyword("ignore nulls"))("ignore_nulls")
+            + Optional(Group(query) | delimited_list(Group(expr)))("params")
+            + Optional((keyword("ignore nulls") / (lambda: True))("ignore_nulls"))
             + RB
         ) / to_json_call
 
@@ -175,7 +175,7 @@ def parser(literal_string, ident):
             | stack
             | array
             | map
-            | (LB + Group(with_context) + RB)
+            | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
             | hex_num.set_parser_name("hex")
@@ -231,7 +231,7 @@ def parser(literal_string, ident):
 
         table_source = (
             (
-                (LB + with_context + RB) | call_function
+                (LB + query + RB) | call_function
             )("value").set_parser_name("table source")
             + Optional(Optional(AS) + alias)
             | (var_name("value").set_parser_name("table name") + Optional(AS) + alias)
@@ -292,6 +292,25 @@ def parser(literal_string, ident):
             )
         ).set_parser_name("unordered sql")
 
+        tablesample = (
+            keyword("tablesample").suppress()
+            + LB
+            + (
+                (
+                    keyword("bucket")("op")
+                    + int_num("params")
+                    + keyword("out of")
+                    + int_num("params")
+                    + Optional(ON + expr("on"))
+                )
+                / to_json_call
+                | real_num("percent") + keyword("percent")
+                | int_num("rows") + keyword("rows")
+                | real_num("bytes") + Char("bBkKmMgG")
+            )
+            + RB
+        )("tablesample")
+
         ordered_sql = (
             (
                 unordered_sql
@@ -307,29 +326,32 @@ def parser(literal_string, ident):
             + Optional(OFFSET + expr("offset"))
         ).set_parser_name("ordered sql") / to_union_call
 
-        with_context << (
-            Optional(
-                (
-                    WITH
-                    + RECURSIVE
-                    + alias("name")
-                    + AS
-                    + LB
-                    + (with_context | expr)("value")
-                    + RB
-                )("with recursive")
-                | (
-                    WITH
-                    + delimited_list(Group(
-                        var_name("name") + AS + LB + (with_context | expr)("value") + RB
-                    ))
-                )("with")
+        query << (
+            (
+                Optional(
+                    (
+                        WITH
+                        + RECURSIVE
+                        + alias("name")
+                        + AS
+                        + LB
+                        + (query | expr)("value")
+                        + RB
+                    )("with recursive")
+                    | (
+                        WITH
+                        + delimited_list(Group(
+                            var_name("name") + AS + LB + (query | expr)("value") + RB
+                        ))
+                    )("with")
+                )
+                + Group(ordered_sql)("query")
             )
-            + Group(ordered_sql)("query")
-        ) / to_statement
+            / to_query
+        )
 
         #####################################################################
-        # CREATE TABLE
+        # DML STATEMENTS
         #####################################################################
         struct_type = (
             keyword("struct")("op")
@@ -481,7 +503,7 @@ def parser(literal_string, ident):
                 | table_def_comment
                 | table_def_char_set
             )
-            + Optional(AS.suppress() + infix_notation(with_context, [])("query"))
+            + Optional(AS.suppress() + infix_notation(query, [])("query"))
         )("create table")
 
         create_view = (
@@ -492,7 +514,7 @@ def parser(literal_string, ident):
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + var_name("name")
             + AS
-            + with_context("query")
+            + query("query")
         )("create view")
 
         cache_options = Optional((
@@ -512,14 +534,8 @@ def parser(literal_string, ident):
             + TABLE
             + var_name("name")
             + cache_options
-            + Optional(AS + with_context("query"))
+            + Optional(AS + query("query"))
         )("cache")
-
-        delete = (
-            keyword("delete from").suppress()
-            + var_name("from")
-            + Optional(WHERE + expr("where"))
-        )("delete")
 
         drop_table = (
             keyword("drop table")
@@ -534,24 +550,42 @@ def parser(literal_string, ident):
         )("drop")
 
         insert = (
-            keyword("insert")
+            keyword("insert")("op")
             + (
                 (keyword("overwrite") / (lambda: True))("overwrite")
                 | keyword("into").suppress()
             )
             + keyword("table").suppress()
-            + var_name("into")
+            + var_name("params")
             + Optional((keyword("if exists") / (lambda: True))("if exists"))
-            + (values("query") | with_context("query"))
-        )("insert")
+            + (values("query") | query("query"))
+        ) / to_json_call
+
+        update = (
+            keyword("update")("op")
+            + var_name("params")
+            + keyword("set").suppress()
+            + delimited_list(Group(
+                var_name("name") + Char("=").suppress() + expr("value")
+            ))("set")
+            + Optional(WHERE + expr("where"))
+        ) / to_json_call
+
+        delete = (
+            keyword("delete")("op")
+            + keyword("from").suppress()
+            + var_name("params")
+            + Optional(WHERE + expr("where"))
+        ) / to_json_call
 
         return (
-            with_context
-            | delete
-            | drop_table
-            | drop_view
+            query
             | insert
+            | update
+            | delete
             | create_table
             | create_view
             | create_cache
+            | drop_table
+            | drop_view
         ).finalize()

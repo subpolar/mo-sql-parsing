@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import skip, TestCase
 
+from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import parse
 
@@ -128,60 +129,67 @@ class TestSqlGlot(TestCase):
         ]}}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_15(self):
         sql = """SELECT a FROM test TABLESAMPLE(BUCKET 1 OUT OF 5)"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': {'tablesample': {'bucket': [1, 5]}, 'value': 'test'},
+ 'select': {'value': 'a'}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_16(self):
         sql = """SELECT a FROM test TABLESAMPLE(BUCKET 1 OUT OF 5 ON x)"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': {'tablesample': {'bucket': [1, 5], 'on': 'x'}, 'value': 'test'},
+ 'select': {'value': 'a'}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_17(self):
         sql = """SELECT a FROM test TABLESAMPLE(BUCKET 1 OUT OF 5 ON RAND())"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': {'tablesample': {'bucket': [1, 5], 'on': {'rand': {}}},
+          'value': 'test'},
+ 'select': {'value': 'a'}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_18(self):
         sql = """SELECT a FROM test TABLESAMPLE(0.1 PERCENT)"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': {'tablesample': {'percent': 0.1}, 'value': 'test'},
+ 'select': {'value': 'a'}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_19(self):
         sql = """SELECT a FROM test TABLESAMPLE(100 ROWS)"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': {'tablesample': {'rows': 100}, 'value': 'test'},
+ 'select': {'value': 'a'}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_20(self):
         sql = """SELECT CAST(a AS DECIMAL(1)) FROM test"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "test",
+            "select": {"value": {"cast": ["a", {"decimal": 1}]}},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_21(self):
         sql = """SELECT CAST(a AS MAP(INT, INT)) FROM test"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "test",
+            "select": {"value": {"cast": ["a", {"map": [{"int": {}}, {"int": {}}]}]}},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_22(self):
         sql = """SELECT CAST(a AS ARRAY(INT)) FROM test"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "test",
+            "select": {"value": {"cast": ["a", {"array": {"int": {}}}]}},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_23(self):
@@ -220,17 +228,25 @@ class TestSqlGlot(TestCase):
         ]}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_27(self):
         sql = """SELECT * FROM ((SELECT 1) AS a UNION ALL (SELECT 2) AS b)"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "select": "*",
+            "from": {
+                "union_all": [
+                    {"from": {"value": {"select": 1}, "name": "a"}},
+                    {"from": {"value": {"select": 2}, "name": "b"}},
+                ]
+            }
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
+    @skip("not legitimate https://sqlite.org/syntax/select-stmt.html")
     def test_issue_46_sqlglot_28(self):
         sql = """SELECT 1 FROM ((SELECT 1) AS a JOIN (SELECT 1) AS b)"""
-        result = parse(sql)
+        with Debugger():
+            result = parse(sql)
         expected = {}
         self.assertEqual(result, expected)
 
@@ -240,11 +256,24 @@ class TestSqlGlot(TestCase):
         expected = {"union": [{"select": {"value": 1}}, {"from": "x", "select": "*"}]}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_30(self):
         sql = """WITH RECURSIVE T(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "t",
+            "select": {"value": {"sum": "n"}},
+            "with recursive": {
+                "name": {"T": "n"},
+                "value": {"union_all": [
+                    {"select": {"value": 1}},
+                    {
+                        "from": "t",
+                        "select": {"value": {"add": ["n", 1]}},
+                        "where": {"lt": ["n", 100]},
+                    },
+                ]},
+            },
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_31(self):
@@ -349,11 +378,10 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_38(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {}
+        expected = {'select': {'over': {'partitionby': 'a', 'range': {}}, 'value': {'sum': 'x'}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_39(self):
@@ -777,7 +805,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_80(self):
         sql = """DELETE FROM x WHERE y > 1"""
         result = parse(sql)
-        expected = {"delete": {"from": "x", "where": {"gt": ["y", 1]}}}
+        expected = {"delete": "x", "where": {"gt": ["y", 1]}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_81(self):
@@ -845,37 +873,37 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_91(self):
         sql = """INSERT INTO TABLE x SELECT * FROM y"""
         result = parse(sql)
-        expected = {"insert": {"into": "x", "query": {"from": "y", "select": "*"}}}
+        expected = {"insert": "x", "query": {"from": "y", "select": "*"}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_92(self):
         sql = """INSERT INTO TABLE x.z IF EXISTS SELECT * FROM y"""
         result = parse(sql)
-        expected = {"insert": {
+        expected = {
+            "insert": "x.z",
             "if exists": True,
-            "into": "x.z",
             "query": {"from": "y", "select": "*"},
-        }}
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_93(self):
         sql = """INSERT INTO TABLE x VALUES (1, 'a', 2.0)"""
         result = parse(sql)
-        expected = {"insert": {
-            "into": "x",
+        expected = {
+            "insert": "x",
             "query": {"select": [
                 {"value": 1},
                 {"value": {"literal": "a"}},
                 {"value": 2.0},
             ]},
-        }}
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_94(self):
         sql = """INSERT INTO TABLE x VALUES (1, 'a', 2.0), (1, 'a', 3.0), (X(), y[1], z.x)"""
         result = parse(sql)
-        expected = {"insert": {
-            "into": "x",
+        expected = {
+            "insert": "x",
             "query": {"union_all": [
                 {"select": [{"value": 1}, {"value": {"literal": "a"}}, {"value": 2.0}]},
                 {"select": [{"value": 1}, {"value": {"literal": "a"}}, {"value": 3.0}]},
@@ -885,57 +913,64 @@ class TestSqlGlot(TestCase):
                     {"value": "z.x"},
                 ]},
             ]},
-        }}
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_95(self):
         sql = """INSERT OVERWRITE TABLE x IF EXISTS SELECT * FROM y"""
         result = parse(sql)
-        expected = {"insert": {
+        expected = {
+            "insert": "x",
             "if exists": True,
-            "into": "x",
             "overwrite": True,
             "query": {"from": "y", "select": "*"},
-        }}
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_96(self):
         sql = """INSERT OVERWRITE TABLE a.b IF EXISTS SELECT * FROM y"""
         result = parse(sql)
-        expected = {"insert": {
+        expected = {
+            "insert": "a.b",
             "if exists": True,
-            "into": "a.b",
             "overwrite": True,
             "query": {"from": "y", "select": "*"},
-        }}
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_97(self):
         sql = """UPDATE tbl_name SET foo = 123"""
         result = parse(sql)
-        expected = {}
+        expected = {"set": {"name": "foo", "value": 123}, "update": "tbl_name"}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_98(self):
         sql = """UPDATE tbl_name SET foo = 123, bar = 345"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "set": [{"name": "foo", "value": 123}, {"name": "bar", "value": 345}],
+            "update": "tbl_name",
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_99(self):
         sql = """UPDATE db.tbl_name SET foo = 123 WHERE tbl_name.bar = 234"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "set": {"name": "foo", "value": 123},
+            "update": "db.tbl_name",
+            "where": {"eq": ["tbl_name.bar", 234]},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_100(self):
         sql = (
             """UPDATE db.tbl_name SET foo = 123, foo_1 = 234 WHERE tbl_name.bar = 234"""
         )
         result = parse(sql)
-        expected = {}
+        expected = {
+            "set": [{"name": "foo", "value": 123}, {"name": "foo_1", "value": 234}],
+            "update": "db.tbl_name",
+            "where": {"eq": ["tbl_name.bar", 234]},
+        }
         self.assertEqual(result, expected)

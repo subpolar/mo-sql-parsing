@@ -1135,10 +1135,10 @@ class TestSimpleUsingOperators(TestCase):
         sql = "select * from some_table.some_function('parameter', 1, some_col)"
         result = parse(sql)
         expected = {
-            "from": {"value": {
+            "from": {
                 "args": [{"literal": "parameter"}, 1, "some_col"],
                 "op": "some_table.some_function",
-            }},
+            },
             "select": "*",
         }
         self.assertEqual(result, expected)

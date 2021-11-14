@@ -9,6 +9,7 @@
 
 # SQL CONSTANTS
 from mo_parsing import *
+from mo_parsing.infix import delimited_list
 
 from mo_sql_parsing.utils import (
     SQL_NULL,
@@ -372,10 +373,11 @@ durations = {
 }
 
 _size = Optional(LB + int_num("params") + RB)
-_sizes = Optional(LB + int_num("params") + "," + int_num("params") + RB)
+_sizes = Optional(LB + delimited_list(int_num("params")) + RB)
 
 # KNOWN TYPES
-ARRAY = Group(keyword("array")("op")) / to_json_call
+known_types = Forward()
+
 BIGINT = Group(keyword("bigint")("op")) / to_json_call
 BOOL = Group(keyword("bool")("op")) / to_json_call
 BOOLEAN = Group(keyword("boolean")("op")) / to_json_call
@@ -388,31 +390,31 @@ INT = Group(keyword("int")("op")) / to_json_call
 INT32 = Group(keyword("int32")("op")) / to_json_call
 INT64 = Group(keyword("int64")("op")) / to_json_call
 REAL = Group(keyword("real")("op")) / to_json_call
-TEXT = Group(Keyword("text", caseless=True)("op")) / to_json_call
-SMALLINT = Group(Keyword("smallint", caseless=True)("op")) / to_json_call
-STRING = Group(Keyword("string", caseless=True)("op")) / to_json_call
-STRUCT = Group(Keyword("struct", caseless=True)("op")) / to_json_call
+TEXT = Group(keyword("text")("op")) / to_json_call
+SMALLINT = Group(keyword("smallint")("op")) / to_json_call
+STRING = Group(keyword("string")("op")) / to_json_call
+STRUCT = Group(keyword("struct")("op")) / to_json_call
 
-BLOB = (Keyword("blob", caseless=True)("op") + _size) / to_json_call
-BYTES = (Keyword("bytes", caseless=True)("op") + _size) / to_json_call
-CHAR = (Keyword("char", caseless=True)("op") + _size) / to_json_call
-VARCHAR = (Keyword("varchar", caseless=True)("op") + _size) / to_json_call
-VARBINARY = (Keyword("varbinary", caseless=True)("op") + _size) / to_json_call
-TINYINT = (Keyword("tinyint", caseless=True)("op") + _size) / to_json_call
+BLOB = (keyword("blob")("op") + _size) / to_json_call
+BYTES = (keyword("bytes")("op") + _size) / to_json_call
+CHAR = (keyword("char")("op") + _size) / to_json_call
+VARCHAR = (keyword("varchar")("op") + _size) / to_json_call
+VARBINARY = (keyword("varbinary")("op") + _size) / to_json_call
+TINYINT = (keyword("tinyint")("op") + _size) / to_json_call
 
-DECIMAL = (Keyword("decimal", caseless=True)("op") + _sizes) / to_json_call
-DOUBLE_PRECISION = (
-    Keyword("double", caseless=True) + Keyword("precision", caseless=True)("op")
-) / (lambda: {"double_precision": {}})
-NUMERIC = (Keyword("numeric", caseless=True)("op") + _sizes) / to_json_call
+DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
+DOUBLE_PRECISION = Group((keyword("double precision")/(lambda: "double_precision"))("op")) / to_json_call
+NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
 
+MAP_TYPE = (keyword("map")("op") + LB + delimited_list(known_types("params")) + RB) / to_json_call
+ARRAY_TYPE = (keyword("array")("op") + LB + known_types("params") + RB) / to_json_call
 
-DATE = Keyword("date", caseless=True)
-DATETIME = Keyword("datetime", caseless=True)
-TIME = Keyword("time", caseless=True)
-TIMESTAMP = Keyword("timestamp", caseless=True)
-TIMESTAMPTZ = Keyword("timestamptz", caseless=True)
-TIMETZ = Keyword("timetz", caseless=True)
+DATE = keyword("date")
+DATETIME = keyword("datetime")
+TIME = keyword("time")
+TIMESTAMP = keyword("timestamp")
+TIMESTAMPTZ = keyword("timestamptz")
+TIMETZ = keyword("timetz")
 
 time_functions = DATE | DATETIME | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ
 
@@ -426,8 +428,8 @@ TIMESTAMP_TYPE = (TIMESTAMP("op") + _format) / to_json_call
 TIMESTAMPTZ_TYPE = (TIMESTAMPTZ("op") + _format) / to_json_call
 TIMETZ_TYPE = (TIMETZ("op") + _format) / to_json_call
 
-known_types = MatchFirst([
-    ARRAY,
+known_types << MatchFirst([
+    ARRAY_TYPE,
     BIGINT,
     BOOL,
     BOOLEAN,
@@ -436,18 +438,13 @@ known_types = MatchFirst([
     CHAR,
     DATE_TYPE,
     DATETIME_TYPE,
-    DECIMAL
-    + Optional(
-        LB
-        + int_num("digits")
-        + Optional(Char(",").suppress() + int_num("precision"))
-        + ")"
-    ),
+    DECIMAL,
     DOUBLE_PRECISION,
     DOUBLE,
     FLOAT64,
     FLOAT,
     GEOMETRY,
+    MAP_TYPE,
     INTEGER,
     INT,
     INT32,
