@@ -159,3 +159,24 @@ class TestPostgres(TestCase):
             "name": "warehouses",
         }}
         self.assertEqual(result, expected)
+
+    def test_create_table_always(self):
+        sql = """
+        CREATE TABLE warehouses
+          (
+            warehouse_id NUMBER 
+                         GENERATED ALWAYS AS IDENTITY START WITH 10 
+                         PRIMARY KEY
+          );
+          """
+        result = parse(sql)
+        expected = {"create table": {
+            "name": "warehouses",
+            "columns": {
+                "identity": {"generated": "always", "start_with": 10},
+                "name": "warehouse_id",
+                "primary key": True,
+                "type": {"number": {}},
+            },
+        }}
+        self.assertEqual(result, expected)

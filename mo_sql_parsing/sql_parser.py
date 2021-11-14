@@ -375,7 +375,7 @@ def parser(literal_string, ident):
         column_def_identity = (
             keyword("generated").suppress()
             + (
-                (keyword("always") | keyword("by default")) / (lambda: "by_default")
+                keyword("always") | keyword("by default") / (lambda: "by_default")
             )("generated")
             + keyword("as identity").suppress()
             + Optional(keyword("start with").suppress() + int_num("start_with"))

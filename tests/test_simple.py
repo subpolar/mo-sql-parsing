@@ -973,7 +973,7 @@ class TestSimple(TestCase):
         result = parse(sql)
         expected = {
             "select": "*",
-            "from":  {"some_table.some_function": [
+            "from": {"some_table.some_function": [
                 {"literal": "parameter"},
                 1,
                 "some_col",
@@ -1450,5 +1450,14 @@ class TestSimple(TestCase):
         expected = {"intersect": [
             {"from": "Course_Authors_and_Tutors", "select": {"value": "login_name"}},
             {"from": "Students", "select": {"value": "login_name"}},
+        ]}
+        self.assertEqual(result, expected)
+
+    def test_values_w_union(self):
+        sql = "values (1, 2, 3) union all select * from A"
+        result = parse(sql)
+        expected = {"union_all": [
+            {"select": [{"value": 1}, {"value": 2}, {"value": 3}]},
+            {"select": "*", "from": "A"},
         ]}
         self.assertEqual(result, expected)
