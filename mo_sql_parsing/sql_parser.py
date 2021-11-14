@@ -17,7 +17,7 @@ from mo_sql_parsing.windows import window
 
 def combined_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | sqlserver_ident | Word(IDENT_CHAR),
+        ansi_ident | mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
@@ -28,7 +28,7 @@ def combined_parser():
 def mysql_parser():
     mysql_string = ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | Word(IDENT_CHAR),
+        mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("mysql identifier")
@@ -130,10 +130,12 @@ def parser(literal_string, ident):
             + delimited_list(expr)("args")
             + RB
         ) / to_stack
+
         array = (
             keyword("array")("op") + LB + delimited_list(Group(expr))("args") + RB
         ) / to_array
-        map = (
+
+        create_map = (
             keyword("map") + Char("[") + expr("keys") + "," + expr("values") + Char("]")
         ) / to_map
 
@@ -149,7 +151,7 @@ def parser(literal_string, ident):
             + Optional(Group(query) | delimited_list(Group(expr)))("params")
             + Optional((keyword("ignore nulls") / (lambda: True))("ignore_nulls"))
             + RB
-        ) / to_json_call
+        ).set_parser_name("call function") / to_json_call
 
         with NO_WHITESPACE:
 
@@ -174,7 +176,7 @@ def parser(literal_string, ident):
             | trim
             | stack
             | array
-            | map
+            | create_map
             | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
@@ -275,8 +277,9 @@ def parser(literal_string, ident):
         row = (LB + delimited_list(Group(expr)) + RB) / to_row
         values = VALUES + delimited_list(row) / to_values
 
-        unordered_sql = values | Group(
-            selection
+        unordered_sql = Group(
+            values
+            | selection
             + Optional(
                 (
                     FROM + delimited_list(Group(table_source)) + ZeroOrMore(join)
@@ -287,6 +290,7 @@ def parser(literal_string, ident):
                 )
                 + Optional(HAVING + expr("having"))
             )
+            # | table_source
         ).set_parser_name("unordered sql")
 
         tablesample = (
