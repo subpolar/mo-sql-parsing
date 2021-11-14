@@ -61,7 +61,6 @@ def parser(literal_string, ident):
             + END
         ) / to_case_call
 
-        # SWITCH
         switch = (
             CASE
             + expr("value")
@@ -72,13 +71,11 @@ def parser(literal_string, ident):
             + END
         ) / to_switch_call
 
-        # CAST
         cast = (
             Group(CAST("op") + LB + expr("params") + AS + known_types("params") + RB)
             / to_json_call
         )
 
-        # TRIM
         trim = (
             Group(
                 keyword("trim").suppress()
@@ -134,7 +131,7 @@ def parser(literal_string, ident):
             + RB
         ) / to_stack
 
-        array = (
+        create_array = (
             keyword("array")("op") + LB + delimited_list(Group(expr))("args") + RB
         ) / to_array
 
@@ -178,7 +175,7 @@ def parser(literal_string, ident):
             | distinct
             | trim
             | stack
-            | array
+            | create_array
             | create_map
             | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
@@ -289,8 +286,14 @@ def parser(literal_string, ident):
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expr("having"))
             )
-            # | table_source
         ).set_parser_name("unordered sql")
+
+        with NO_WHITESPACE:
+            def mult(tokens):
+                amount = tokens["bytes"]
+                scale = tokens["scale"].lower()
+                return {"bytes": amount * {'b': 1, 'k': 1_000, 'm': 1_000_000, 'g': 1_000_000_000}[scale]}
+            ts_bytes = ((real_num | int_num)("bytes") + Char("bBkKmMgG")("scale"))/mult
 
         tablesample = (
             keyword("tablesample").suppress()
@@ -304,9 +307,9 @@ def parser(literal_string, ident):
                     + Optional(ON + expr("on"))
                 )
                 / to_json_call
-                | real_num("percent") + keyword("percent")
+                | (real_num | int_num)("percent") + keyword("percent")
                 | int_num("rows") + keyword("rows")
-                | real_num("bytes") + Char("bBkKmMgG")
+                | ts_bytes
             )
             + RB
         )("tablesample")
@@ -333,28 +336,20 @@ def parser(literal_string, ident):
         ).set_parser_name("ordered sql") / to_union_call
 
         query << (
-            (
-                Optional(
-                    (
-                        WITH
-                        + RECURSIVE
-                        + alias("name")
-                        + AS
-                        + LB
-                        + (query | expr)("value")
-                        + RB
-                    )("with recursive")
-                    | (
-                        WITH
-                        + delimited_list(Group(
-                            var_name("name") + AS + LB + (query | expr)("value") + RB
-                        ))
-                    )("with")
+            Optional(
+                assign(
+                    "with recursive",
+                    alias("name") + AS + LB + (query | expr)("value") + RB,
                 )
-                + Group(ordered_sql)("query")
+                | assign(
+                    "with",
+                    delimited_list(Group(
+                        var_name("name") + AS + LB + (query | expr)("value") + RB
+                    )),
+                )
             )
-            / to_query
-        )
+            + Group(ordered_sql)("query")
+        ) / to_query
 
         #####################################################################
         # DML STATEMENTS
@@ -376,10 +371,10 @@ def parser(literal_string, ident):
         column_def_comment = assign("comment", literal_string)
 
         column_def_identity = (
-            keyword("generated").suppress()
-            + (
-                keyword("always") | keyword("by default") / (lambda: "by_default")
-            )("generated")
+            assign(
+                "generated",
+                (keyword("always") | keyword("by default") / (lambda: "by_default")),
+            )
             + keyword("as identity").suppress()
             + Optional(assign("start with", int_num))
             + Optional(assign("increment by", int_num))
@@ -397,17 +392,14 @@ def parser(literal_string, ident):
             / to_json_call
         )
 
-        column_def_references = (
-            REFERENCES
-            + var_name("table")
-            + LB
-            + delimited_list(var_name)("columns")
-            + RB
-        )("references")
+        column_def_references = assign(
+            "references",
+            var_name("table") + LB + delimited_list(var_name)("columns") + RB,
+        )
 
         collate = assign("collate", Optional(EQ) + var_name)
 
-        column_def_check = keyword("check").suppress() + LB + expr + RB
+        column_def_check = assign("check", LB + expr + RB)
         column_def_default = assign("default", expr)
 
         column_options = ZeroOrMore(
@@ -420,7 +412,7 @@ def parser(literal_string, ident):
             | flag("primary key")
             | column_def_identity("identity")
             | column_def_references
-            | column_def_check("check")
+            | column_def_check
             | column_def_default
         ).set_parser_name("column_options")
 
@@ -445,9 +437,7 @@ def parser(literal_string, ident):
         index_options = ZeroOrMore(var_name)("table_constraint_options")
 
         table_constraint_definition = Optional(CONSTRAINT + var_name("name")) + (
-            (
-                PRIMARY_KEY + index_type + index_column_names + index_options
-            )("primary_key")
+            assign("primary key", index_type + index_column_names + index_options)
             | (
                 UNIQUE
                 + Optional(INDEX | KEY)
@@ -463,7 +453,7 @@ def parser(literal_string, ident):
                 + index_column_names
                 + index_options
             )("index")
-            | column_def_check("check")
+            | column_def_check
             | table_def_foreign_key("foreign_key")
         )
 
@@ -534,24 +524,21 @@ def parser(literal_string, ident):
             + keyword("table").suppress()
             + var_name("params")
             + Optional(flag("if exists"))
-            + (values("query") | query("query"))
+            + (values | query)("query")
         ) / to_json_call
 
         update = (
             keyword("update")("op")
             + var_name("params")
-            + keyword("set").suppress()
-            + delimited_list(Group(
-                var_name("name") + EQ + expr("value")
-            ))("set")
-            + Optional(WHERE + expr("where"))
+            + assign("set", Dict(delimited_list(Group(var_name + EQ + expr))))
+            + Optional(assign("where", expr))
         ) / to_json_call
 
         delete = (
             keyword("delete")("op")
             + keyword("from").suppress()
             + var_name("params")
-            + Optional(WHERE + expr("where"))
+            + Optional(assign("where", expr))
         ) / to_json_call
 
         return (

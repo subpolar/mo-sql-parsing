@@ -177,6 +177,16 @@ class TestSqlGlot(TestCase):
         }
         self.assertEqual(result, expected)
 
+    def test_issue_46_sqlglot_19b(self):
+        sql = """SELECT a FROM test TABLESAMPLE(100G)"""
+        with Debugger():
+            result = parse(sql)
+        expected = {
+            "from": {"tablesample": {"bytes": 100_000_000_000}, "value": "test"},
+            "select": {"value": "a"},
+        }
+        self.assertEqual(result, expected)
+
     def test_issue_46_sqlglot_20(self):
         sql = """SELECT CAST(a AS DECIMAL(1)) FROM test"""
         result = parse(sql)
@@ -271,7 +281,7 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": "t",
             "select": {"value": {"sum": "n"}},
-            "with recursive": {
+            "with_recursive": {
                 "name": {"T": "n"},
                 "value": {"union_all": [
                     {"select": {"value": 1}},
@@ -291,7 +301,7 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": "t",
             "select": {"value": {"sum": "n"}},
-            "with recursive": {
+            "with_recursive": {
                 "name": {"T": ["n", "m"]},
                 "value": {"union_all": [
                     {"select": [{"value": 1}, {"value": 2}]},
@@ -953,14 +963,14 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_97(self):
         sql = """UPDATE tbl_name SET foo = 123"""
         result = parse(sql)
-        expected = {"set": {"name": "foo", "value": 123}, "update": "tbl_name"}
+        expected = {"set": {"foo": 123}, "update": "tbl_name"}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_98(self):
         sql = """UPDATE tbl_name SET foo = 123, bar = 345"""
         result = parse(sql)
         expected = {
-            "set": [{"name": "foo", "value": 123}, {"name": "bar", "value": 345}],
+            "set": {"bar": 345, "foo": 123},
             "update": "tbl_name",
         }
         self.assertEqual(result, expected)
@@ -969,7 +979,7 @@ class TestSqlGlot(TestCase):
         sql = """UPDATE db.tbl_name SET foo = 123 WHERE tbl_name.bar = 234"""
         result = parse(sql)
         expected = {
-            "set": {"name": "foo", "value": 123},
+            "set": {"foo": 123},
             "update": "db.tbl_name",
             "where": {"eq": ["tbl_name.bar", 234]},
         }
@@ -981,7 +991,7 @@ class TestSqlGlot(TestCase):
         )
         result = parse(sql)
         expected = {
-            "set": [{"name": "foo", "value": 123}, {"name": "foo_1", "value": 234}],
+            "set": {"foo": 123, "foo_1": 234},
             "update": "db.tbl_name",
             "where": {"eq": ["tbl_name.bar", 234]},
         }
