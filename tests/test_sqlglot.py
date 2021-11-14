@@ -76,39 +76,55 @@ class TestSqlGlot(TestCase):
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_8(self):
         sql = """SELECT TRANSFORM(a, (b) -> b) AS x"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "name": "x",
+            "value": {"transform": ["a", {"lambda": "b", "params": "b"}]},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_9(self):
         sql = """SELECT AGGREGATE(a, (a, b) -> a + b) AS x"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "name": "x",
+            "value": {"aggregate": [
+                "a",
+                {"lambda": {"add": ["a", "b"]}, "params": ["a", "b"]},
+            ]},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_10(self):
         sql = """SELECT X((a, b) -> a + b, (z) -> z) AS x"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "name": "x",
+            "value": {"x": [
+                {"lambda": {"add": ["a", "b"]}, "params": ["a", "b"]},
+                {"lambda": "z", "params": "z"},
+            ]},
+        }}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_11(self):
         sql = """SELECT X((a) -> "a" + ("z" - 1))"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {"value": {"x": {
+            "lambda": {"add": ["a", {"sub": ["z", 1]}]},
+            "params": "a",
+        }}}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_12(self):
         sql = """SELECT EXISTS(ARRAY(2, 3), (x) -> x % 2 = 0)"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {"value": {"exists": [
+            {"array": [2, 3]},
+            {"lambda": {"eq": [{"mod": ["x", 2]}, 0]}, "params": "x"},
+        ]}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_13(self):
@@ -481,19 +497,31 @@ class TestSqlGlot(TestCase):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score"""
         # with Debugger():
         result = parse(sql)
-        expected = {'from': ['tests',
-          {'lateral view': {'name': {'t': 'score'},
-                            'value': {'explode': 'scores'}}}],
- 'select': [{'value': 'student'}, {'value': 'score'}]}
+        expected = {
+            "from": [
+                "tests",
+                {"lateral view": {
+                    "name": {"t": "score"},
+                    "value": {"explode": "scores"},
+                }},
+            ],
+            "select": [{"value": "student"}, {"value": "score"}],
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_47(self):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score, name"""
         result = parse(sql)
-        expected = {'from': ['tests',
-          {'lateral view': {'name': {'t': ['score', 'name']},
-                            'value': {'explode': 'scores'}}}],
- 'select': [{'value': 'student'}, {'value': 'score'}]}
+        expected = {
+            "from": [
+                "tests",
+                {"lateral view": {
+                    "name": {"t": ["score", "name"]},
+                    "value": {"explode": "scores"},
+                }},
+            ],
+            "select": [{"value": "student"}, {"value": "score"}],
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_48(self):

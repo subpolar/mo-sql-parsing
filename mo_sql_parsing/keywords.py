@@ -102,6 +102,7 @@ DEQ = (
     Literal("<=>").set_parser_name("eq!")
 )  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
+LAMBDA = Literal("->").set_parser_name("lambda")
 
 AND = keyword("and")
 BETWEEN = keyword("between")
@@ -307,6 +308,7 @@ KNOWN_OPS = [
     NOT,
     AND,
     OR,
+    LAMBDA,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]
