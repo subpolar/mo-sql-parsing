@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse as sql_parse
 from mo_sql_parsing.utils import normal_op
 from tests.util import assertRaises
@@ -1277,7 +1279,8 @@ class TestSimpleUsingOperators(TestCase):
 
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
-        result = parse(sql)
+        with Debugger():
+            result = parse(sql)
         expected = {"select": {"value": {
             "args": ["A", {"null": {}}, {"literal": "b"}],
             "op": "decode",

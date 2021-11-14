@@ -17,7 +17,10 @@ from mo_sql_parsing.windows import window
 
 def combined_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        ansi_ident
+        | mysql_backtick_ident
+        | sqlserver_ident
+        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
@@ -149,7 +152,7 @@ def parser(literal_string, ident):
             ident("op")
             + LB
             + Optional(Group(query) | delimited_list(Group(expr)))("params")
-            + Optional((keyword("ignore nulls") / (lambda: True))("ignore_nulls"))
+            + Optional(flag("ignore nulls"))
             + RB
         ).set_parser_name("call function") / to_json_call
 
@@ -281,13 +284,9 @@ def parser(literal_string, ident):
             values
             | selection
             + Optional(
-                (
-                    FROM + delimited_list(Group(table_source)) + ZeroOrMore(join)
-                )("from")
+                (FROM + delimited_list(Group(table_source)) + ZeroOrMore(join))("from")
                 + Optional(WHERE + expr("where"))
-                + Optional(
-                    GROUP_BY + delimited_list(Group(named_column))("groupby")
-                )
+                + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expr("having"))
             )
             # | table_source
@@ -382,7 +381,7 @@ def parser(literal_string, ident):
                 keyword("always") | keyword("by default") / (lambda: "by_default")
             )("generated")
             + keyword("as identity").suppress()
-            + Optional(keyword("start with").suppress() + int_num("start_with"))
+            + Optional(assign("start with", int_num))
             + Optional(keyword("increment by").suppress() + int_num("increment_by"))
         )
 
@@ -415,11 +414,11 @@ def parser(literal_string, ident):
         column_options = ZeroOrMore(
             ((NOT + NULL) / (lambda: False))("nullable")
             | (NULL / (lambda t: True))("nullable")
-            | (keyword("unique") / (lambda: True))("unique")
-            | (keyword("auto_increment") / (lambda: True))("auto_increment")
+            | flag("unique")
+            | flag("auto_increment")
             | column_def_comment
             | collate
-            | (PRIMARY_KEY / (lambda: True))("primary key")
+            | flag("primary key")
             | column_def_identity("identity")
             | column_def_references
             | column_def_check("check")
@@ -497,8 +496,8 @@ def parser(literal_string, ident):
 
         create_table = (
             keyword("create")
-            + Optional((keyword("or replace") / (lambda: True))("replace"))
-            + Optional((keyword("temporary") / (lambda: True))("temporary"))
+            + Optional(keyword("or") + flag("replace"))
+            + Optional(flag("temporary"))
             + TABLE
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + var_name("name")
@@ -515,8 +514,8 @@ def parser(literal_string, ident):
 
         create_view = (
             keyword("create")
-            + Optional((keyword("or replace") / (lambda: True))("replace"))
-            + Optional((keyword("temporary") / (lambda: True))("temporary"))
+            + Optional(keyword("or") + flag("replace"))
+            + Optional(flag("temporary"))
             + keyword("view").suppress()
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + var_name("name")
@@ -537,7 +536,7 @@ def parser(literal_string, ident):
 
         create_cache = (
             keyword("cache").suppress()
-            + Optional((keyword("lazy") / (lambda: True))("lazy"))
+            + Optional(flag("lazy"))
             + TABLE
             + var_name("name")
             + cache_options
@@ -545,26 +544,19 @@ def parser(literal_string, ident):
         )("cache")
 
         drop_table = (
-            keyword("drop table")
-            + Optional((keyword("if exists") / (lambda: True))("if exists"))
-            + var_name("table")
+            keyword("drop table") + Optional(flag("if exists")) + var_name("table")
         )("drop")
 
         drop_view = (
-            keyword("drop view")
-            + Optional((keyword("if exists") / (lambda: True))("if exists"))
-            + var_name("view")
+            keyword("drop view") + Optional(flag("if exists")) + var_name("view")
         )("drop")
 
         insert = (
             keyword("insert")("op")
-            + (
-                (keyword("overwrite") / (lambda: True))("overwrite")
-                | keyword("into").suppress()
-            )
+            + (flag("overwrite") | keyword("into").suppress())
             + keyword("table").suppress()
             + var_name("params")
-            + Optional((keyword("if exists") / (lambda: True))("if exists"))
+            + Optional(flag("if exists"))
             + (values("query") | query("query"))
         ) / to_json_call
 

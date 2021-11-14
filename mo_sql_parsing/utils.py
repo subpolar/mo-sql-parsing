@@ -41,6 +41,17 @@ def keyword(keywords):
     ]).set_parser_name(keywords)
 
 
+def flag(keywords):
+    """
+    RETURN {keywords: True}
+    """
+    return (keyword(keywords) / (lambda: True))(keywords.replace(" ", "_"))
+
+
+def assign(key : str, value : ParserElement):
+    return keyword(key).suppress()+value(key.replace(" ", "_"))
+
+
 def simple_op(op, args, kwargs):
     if args is None:
         kwargs[op] = {}

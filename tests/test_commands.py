@@ -137,7 +137,7 @@ class TestWithOption(TestCase):
             "name": "student",
             "columns": [
                 {"name": "name", "type": {"varchar": {}}, "nullable": False},
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -151,7 +151,7 @@ class TestWithOption(TestCase):
             "name": "student",
             "columns": [
                 {"name": "name", "type": {"varchar": {}}, "nullable": True},
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -163,7 +163,7 @@ class TestWithOption(TestCase):
         expected = {"create table": {
             "columns": [
                 {"name": "name", "type": {"varchar": {}}, "unique": True},
-                {"name": "sunny", "primary key": True, "type": {"int": {}}},
+                {"name": "sunny", "primary_key": True, "type": {"int": {}}},
             ],
             "name": "student",
         }}
@@ -176,8 +176,8 @@ class TestWithOption(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "primary key": True},
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "name", "type": {"varchar": {}}, "primary_key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -195,7 +195,7 @@ class TestWithOption(TestCase):
                     "type": {"varchar": {}},
                     "references": {"table": "person", "columns": "colname"},
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -216,7 +216,7 @@ class TestWithOption(TestCase):
                         "columns": ["colname", "colname2"],
                     },
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -234,7 +234,7 @@ class TestWithOption(TestCase):
                     "type": {"varchar": {}},
                     "check": {"lt": [{"length": "name"}, 10]},
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -247,7 +247,7 @@ class TestWithOption(TestCase):
             "name": "student",
             "columns": [
                 {"name": "name", "type": {"varchar": {}}, "default": {"null": {}},},
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -264,7 +264,7 @@ class TestWithOption(TestCase):
                     "type": {"varchar": {}},
                     "default": {"literal": "null"},
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -281,7 +281,7 @@ class TestWithOption(TestCase):
                     "type": {"varchar": {}},
                     "default": {"literal": "text"},
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -299,7 +299,7 @@ class TestWithOption(TestCase):
                     "type": {"varchar": {}},
                     "default": {"mul": ["ex", 2]},
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -317,7 +317,7 @@ class TestWithOption(TestCase):
                     "type": {"varchar": {}},
                     "default": {"mul": ["ex", 2]},
                 },
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
@@ -333,10 +333,10 @@ class TestWithOption(TestCase):
                     "default": {"mul": ["ex", 2]},
                     "name": "name",
                     "nullable": False,
-                    "primary key": True,
+                    "primary_key": True,
                     "type": {"varchar": {}},
                 },
-                {"name": "sunny", "primary key": True, "type": {"int": {}}},
+                {"name": "sunny", "primary_key": True, "type": {"int": {}}},
             ],
             "name": "student",
         }}

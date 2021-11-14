@@ -142,7 +142,7 @@ class TestPostgres(TestCase):
                 {
                     "identity": {"generated": "by_default", "start_with": 10},
                     "name": "warehouse_id",
-                    "primary key": True,
+                    "primary_key": True,
                     "type": {"number": {}},
                 },
                 {"name": "warehouse_name", "type": {"varchar": 255}},
@@ -175,7 +175,7 @@ class TestPostgres(TestCase):
             "columns": {
                 "identity": {"generated": "always", "start_with": 10},
                 "name": "warehouse_id",
-                "primary key": True,
+                "primary_key": True,
                 "type": {"number": {}},
             },
         }}

@@ -836,13 +836,13 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_83(self):
         sql = """DROP TABLE IF EXISTS a"""
         result = parse(sql)
-        expected = {"drop": {"if exists": True, "table": "a"}}
+        expected = {"drop": {"if_exists": True, "table": "a"}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_84(self):
         sql = """DROP TABLE IF EXISTS a.b"""
         result = parse(sql)
-        expected = {"drop": {"if exists": True, "table": "a.b"}}
+        expected = {"drop": {"if_exists": True, "table": "a.b"}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_85(self):
@@ -860,13 +860,13 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_87(self):
         sql = """DROP VIEW IF EXISTS a"""
         result = parse(sql)
-        expected = {"drop": {"if exists": True, "view": "a"}}
+        expected = {"drop": {"if_exists": True, "view": "a"}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_88(self):
         sql = """DROP VIEW IF EXISTS a.b"""
         result = parse(sql)
-        expected = {"drop": {"if exists": True, "view": "a.b"}}
+        expected = {"drop": {"if_exists": True, "view": "a.b"}}
         self.assertEqual(result, expected)
 
     @skip("does not pass yet")
@@ -894,7 +894,7 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "insert": "x.z",
-            "if exists": True,
+            "if_exists": True,
             "query": {"from": "y", "select": "*"},
         }
         self.assertEqual(result, expected)
@@ -934,7 +934,7 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "insert": "x",
-            "if exists": True,
+            "if_exists": True,
             "overwrite": True,
             "query": {"from": "y", "select": "*"},
         }
@@ -945,7 +945,7 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "insert": "a.b",
-            "if exists": True,
+            "if_exists": True,
             "overwrite": True,
             "query": {"from": "y", "select": "*"},
         }

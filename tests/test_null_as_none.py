@@ -28,7 +28,7 @@ class TestNull(TestCase):
             "name": "student",
             "columns": [
                 {"name": "name", "type": {"varchar": {}}, "default": None},
-                {"name": "sunny", "type": {"int": {}}, "primary key": True},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)
