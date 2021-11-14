@@ -385,9 +385,10 @@ def parser(literal_string, ident):
             + Optional(assign("increment by", int_num))
         )
 
-        column_def_delete = assign("on delete", (
-            keyword("cascade") | keyword("set null") | keyword("set default")
-        ))
+        column_def_delete = assign(
+            "on delete",
+            (keyword("cascade") | keyword("set null") | keyword("set default")),
+        )
 
         column_type << (
             struct_type
@@ -404,7 +405,7 @@ def parser(literal_string, ident):
             + RB
         )("references")
 
-        collate = assign("collate", Optional(Char("=").suppress()) + var_name)
+        collate = assign("collate", Optional(EQ) + var_name)
 
         column_def_check = keyword("check").suppress() + LB + expr + RB
         column_def_default = assign("default", expr)
@@ -470,22 +471,6 @@ def parser(literal_string, ident):
             column_definition("columns") | table_constraint_definition("constraint")
         )
 
-        table_def_engine = (
-            assign("engine", Char("=").suppress() + var_name)
-        )
-        table_def_collate = (
-            assign("collate", Char("=").suppress() + var_name)
-        )
-        table_def_auto_increment = (
-            assign("auto_increment", Char("=").suppress() + int_num)
-        )
-        table_def_comment = (
-            assign("comment", Char("=").suppress() + literal_string)
-        )
-        table_def_char_set = (
-            assign("default character set", Char("=").suppress() + var_name)
-        )
-
         create_table = (
             keyword("create")
             + Optional(keyword("or") + flag("replace"))
@@ -495,11 +480,11 @@ def parser(literal_string, ident):
             + var_name("name")
             + Optional(LB + delimited_list(table_element) + RB)
             + ZeroOrMore(
-                table_def_engine
-                | table_def_collate
-                | table_def_auto_increment
-                | table_def_comment
-                | table_def_char_set
+                assign("engine", EQ + var_name)
+                | assign("collate", EQ + var_name)
+                | assign("auto_increment", EQ + int_num)
+                | assign("comment", EQ + literal_string)
+                | assign("default character set", EQ + var_name)
             )
             + Optional(AS.suppress() + infix_notation(query, [])("query"))
         )("create table")
@@ -520,7 +505,7 @@ def parser(literal_string, ident):
             + LB
             + Dict(delimited_list(Group(
                 literal_string / (lambda tokens: tokens[0]["literal"])
-                + Optional(Char("=").suppress())
+                + Optional(EQ)
                 + var_name
             )))
             + RB
@@ -557,7 +542,7 @@ def parser(literal_string, ident):
             + var_name("params")
             + keyword("set").suppress()
             + delimited_list(Group(
-                var_name("name") + Char("=").suppress() + expr("value")
+                var_name("name") + EQ + expr("value")
             ))("set")
             + Optional(WHERE + expr("where"))
         ) / to_json_call

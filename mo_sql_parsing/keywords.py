@@ -95,7 +95,7 @@ GTE = Literal(">=").set_parser_name("gte")
 LTE = Literal("<=").set_parser_name("lte")
 LT = Literal("<").set_parser_name("lt")
 GT = Literal(">").set_parser_name("gt")
-EQ = (
+EEQ = (
     Literal("==") | Literal("=")
 ).set_parser_name("eq")  # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
 DEQ = (
@@ -214,6 +214,7 @@ RESERVED = MatchFirst([
 
 LB = Literal("(").suppress()
 RB = Literal(")").suppress()
+EQ = Char("=").suppress()
 
 join_keywords = {
     "join",
@@ -284,7 +285,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EQ | NEQ | DEQ,
+    EEQ | NEQ | DEQ,
     AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
