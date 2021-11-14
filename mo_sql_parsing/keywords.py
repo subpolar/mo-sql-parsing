@@ -9,6 +9,7 @@
 
 # SQL CONSTANTS
 from mo_parsing import *
+from mo_parsing.infix import delimited_list
 
 from mo_sql_parsing.utils import (
     SQL_NULL,
@@ -73,6 +74,8 @@ KEY = keyword("key").suppress()
 UNIQUE = keyword("unique").suppress()
 INDEX = keyword("index").suppress()
 REFERENCES = keyword("references").suppress()
+RECURSIVE = keyword("recursive").suppress()
+VALUES = keyword("values").suppress()
 
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
@@ -92,13 +95,14 @@ GTE = Literal(">=").set_parser_name("gte")
 LTE = Literal("<=").set_parser_name("lte")
 LT = Literal("<").set_parser_name("lt")
 GT = Literal(">").set_parser_name("gt")
-EQ = (
+EEQ = (
     Literal("==") | Literal("=")
 ).set_parser_name("eq")  # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
 DEQ = (
     Literal("<=>").set_parser_name("eq!")
 )  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
+LAMBDA = Literal("->").set_parser_name("lambda")
 
 AND = keyword("and")
 BETWEEN = keyword("between")
@@ -110,23 +114,29 @@ IN = keyword("in")
 IS = keyword("is")
 NOT = keyword("not")
 OR = keyword("or")
+LATERAL = keyword("lateral")
+VIEW = keyword("view")
 
 # COMPOUND KEYWORDS
+
+
+joins = (
+    (
+        Optional(CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER)))
+        + JOIN
+        + Optional(LATERAL)
+    )
+    | LATERAL + VIEW + Optional(OUTER)
+) / (lambda tokens: " ".join(tokens).lower())
+
+
 CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
-CROSS_JOIN = (CROSS + JOIN).set_parser_name("cross join")
-FULL_JOIN = (FULL + JOIN).set_parser_name("full join")
-FULL_OUTER_JOIN = (FULL + OUTER + JOIN).set_parser_name("full outer join")
-GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
-INNER_JOIN = (INNER + JOIN).set_parser_name("inner join")
-LEFT_JOIN = (LEFT + JOIN).set_parser_name("left join")
-LEFT_OUTER_JOIN = (LEFT + OUTER + JOIN).set_parser_name("left outer join")
-ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
-PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
-RIGHT_JOIN = (RIGHT + JOIN).set_parser_name("right join")
-RIGHT_OUTER_JOIN = (RIGHT + OUTER + JOIN).set_parser_name("right outer join")
-SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
+SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
+PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
+GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
+ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
 
 # COMPOUND OPERATORS
 AT_TIME_ZONE = Group(keyword("at") + keyword("time") + keyword("zone"))
@@ -153,7 +163,6 @@ RESERVED = MatchFirst([
     COLLATE,
     CONSTRAINT,
     CREATE,
-    CROSS_JOIN,
     CROSS,
     DESC,
     DISTINCT,
@@ -176,6 +185,7 @@ RESERVED = MatchFirst([
     IS,
     JOIN,
     KEY,
+    LATERAL,
     LEFT,
     LIKE,
     LIMIT,
@@ -208,6 +218,7 @@ RESERVED = MatchFirst([
 
 LB = Literal("(").suppress()
 RB = Literal(")").suppress()
+EQ = Char("=").suppress()
 
 join_keywords = {
     "join",
@@ -242,6 +253,8 @@ precedence = {
     "gt": 6,
     "eq": 7,
     "neq": 7,
+    "missing": 7,
+    "exists": 7,
     "at_time_zone": 8,
     "between": 8,
     "not_between": 8,
@@ -256,6 +269,7 @@ precedence = {
     "not_similar_to": 8,
     "and": 10,
     "or": 11,
+    "lambda": 12,
     "select": 30,
     "from": 30,
     "window": 35,
@@ -278,7 +292,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EQ | NEQ | DEQ,
+    EEQ | NEQ | DEQ,
     AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),
@@ -295,6 +309,7 @@ KNOWN_OPS = [
     NOT,
     AND,
     OR,
+    LAMBDA,
 ]
 
 times = ["now", "today", "tomorrow", "eod"]
@@ -367,10 +382,11 @@ durations = {
 }
 
 _size = Optional(LB + int_num("params") + RB)
-_sizes = Optional(LB + int_num("params") + "," + int_num("params") + RB)
+_sizes = Optional(LB + delimited_list(int_num("params")) + RB)
 
 # KNOWN TYPES
-ARRAY = Group(keyword("array")("op")) / to_json_call
+known_types = Forward()
+
 BIGINT = Group(keyword("bigint")("op")) / to_json_call
 BOOL = Group(keyword("bool")("op")) / to_json_call
 BOOLEAN = Group(keyword("boolean")("op")) / to_json_call
@@ -383,31 +399,36 @@ INT = Group(keyword("int")("op")) / to_json_call
 INT32 = Group(keyword("int32")("op")) / to_json_call
 INT64 = Group(keyword("int64")("op")) / to_json_call
 REAL = Group(keyword("real")("op")) / to_json_call
-TEXT = Group(Keyword("text", caseless=True)("op")) / to_json_call
-SMALLINT = Group(Keyword("smallint", caseless=True)("op")) / to_json_call
-STRING = Group(Keyword("string", caseless=True)("op")) / to_json_call
-STRUCT = Group(Keyword("struct", caseless=True)("op")) / to_json_call
+TEXT = Group(keyword("text")("op")) / to_json_call
+SMALLINT = Group(keyword("smallint")("op")) / to_json_call
+STRING = Group(keyword("string")("op")) / to_json_call
+STRUCT = Group(keyword("struct")("op")) / to_json_call
 
-BLOB = (Keyword("blob", caseless=True)("op") + _size) / to_json_call
-BYTES = (Keyword("bytes", caseless=True)("op") + _size) / to_json_call
-CHAR = (Keyword("char", caseless=True)("op") + _size) / to_json_call
-VARCHAR = (Keyword("varchar", caseless=True)("op") + _size) / to_json_call
-VARBINARY = (Keyword("varbinary", caseless=True)("op") + _size) / to_json_call
-TINYINT = (Keyword("tinyint", caseless=True)("op") + _size) / to_json_call
+BLOB = (keyword("blob")("op") + _size) / to_json_call
+BYTES = (keyword("bytes")("op") + _size) / to_json_call
+CHAR = (keyword("char")("op") + _size) / to_json_call
+VARCHAR = (keyword("varchar")("op") + _size) / to_json_call
+VARBINARY = (keyword("varbinary")("op") + _size) / to_json_call
+TINYINT = (keyword("tinyint")("op") + _size) / to_json_call
 
-DECIMAL = (Keyword("decimal", caseless=True)("op") + _sizes) / to_json_call
+DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
 DOUBLE_PRECISION = (
-    Keyword("double", caseless=True) + Keyword("precision", caseless=True)("op")
-) / (lambda: {"double_precision": {}})
-NUMERIC = (Keyword("numeric", caseless=True)("op") + _sizes) / to_json_call
+    Group((keyword("double precision") / (lambda: "double_precision"))("op"))
+    / to_json_call
+)
+NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
 
+MAP_TYPE = (
+    keyword("map")("op") + LB + delimited_list(known_types("params")) + RB
+) / to_json_call
+ARRAY_TYPE = (keyword("array")("op") + LB + known_types("params") + RB) / to_json_call
 
-DATE = Keyword("date", caseless=True)
-DATETIME = Keyword("datetime", caseless=True)
-TIME = Keyword("time", caseless=True)
-TIMESTAMP = Keyword("timestamp", caseless=True)
-TIMESTAMPTZ = Keyword("timestamptz", caseless=True)
-TIMETZ = Keyword("timetz", caseless=True)
+DATE = keyword("date")
+DATETIME = keyword("datetime")
+TIME = keyword("time")
+TIMESTAMP = keyword("timestamp")
+TIMESTAMPTZ = keyword("timestamptz")
+TIMETZ = keyword("timetz")
 
 time_functions = DATE | DATETIME | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ
 
@@ -421,8 +442,8 @@ TIMESTAMP_TYPE = (TIMESTAMP("op") + _format) / to_json_call
 TIMESTAMPTZ_TYPE = (TIMESTAMPTZ("op") + _format) / to_json_call
 TIMETZ_TYPE = (TIMETZ("op") + _format) / to_json_call
 
-known_types = MatchFirst([
-    ARRAY,
+known_types << MatchFirst([
+    ARRAY_TYPE,
     BIGINT,
     BOOL,
     BOOLEAN,
@@ -437,6 +458,7 @@ known_types = MatchFirst([
     FLOAT64,
     FLOAT,
     GEOMETRY,
+    MAP_TYPE,
     INTEGER,
     INT,
     INT32,
@@ -458,6 +480,8 @@ known_types = MatchFirst([
 
 CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
 KNOWN_OPS = [CASTING] + KNOWN_OPS
+offset = Forward()
+
 unary_ops = {
     NEG: RIGHT_ASSOC,
     NOT: RIGHT_ASSOC,

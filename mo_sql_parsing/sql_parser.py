@@ -17,7 +17,10 @@ from mo_sql_parsing.windows import window
 
 def combined_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | sqlserver_ident | Word(IDENT_CHAR),
+        ansi_ident
+        | mysql_backtick_ident
+        | sqlserver_ident
+        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
@@ -28,7 +31,7 @@ def combined_parser():
 def mysql_parser():
     mysql_string = ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | Word(IDENT_CHAR),
+        mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("mysql identifier")
@@ -58,7 +61,6 @@ def parser(literal_string, ident):
             + END
         ) / to_case_call
 
-        # SWITCH
         switch = (
             CASE
             + expr("value")
@@ -69,13 +71,11 @@ def parser(literal_string, ident):
             + END
         ) / to_switch_call
 
-        # CAST
         cast = (
             Group(CAST("op") + LB + expr("params") + AS + known_types("params") + RB)
             / to_json_call
         )
 
-        # TRIM
         trim = (
             Group(
                 keyword("trim").suppress()
@@ -91,7 +91,9 @@ def parser(literal_string, ident):
             keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
-        duration = (real_num | int_num)("params") + _standard_time_intervals
+        duration = (
+            real_num | int_num | literal_string
+        )("params") + _standard_time_intervals
 
         interval = (
             INTERVAL + ("'" + delimited_list(duration) + "'" | duration)
@@ -116,23 +118,47 @@ def parser(literal_string, ident):
             + RB
         ) / to_json_call
 
-        named_column = Group(
-            Group(expr)("value") + Optional(Optional(AS) + Group(var_name))("name")
-        )
+        alias = Optional((
+            (
+                AS
+                + (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                | (var_name("name") + Optional(AS + delimited_list(var_name("col"))))
+            )
+            / to_alias
+        )("name"))
+
+        named_column = Group(Group(expr)("value") + alias)
+
+        stack = (
+            keyword("stack")("op")
+            + LB
+            + int_num("width")
+            + ","
+            + delimited_list(expr)("args")
+            + RB
+        ) / to_stack
+
+        create_array = (
+            keyword("array")("op") + LB + delimited_list(Group(expr))("args") + RB
+        ) / to_array
+
+        create_map = (
+            keyword("map") + Char("[") + expr("keys") + "," + expr("values") + Char("]")
+        ) / to_map
 
         distinct = (
             DISTINCT("op") + delimited_list(named_column)("params")
         ) / to_json_call
 
-        ordered_sql = Forward()
+        query = Forward().set_parser_name("query")
 
         call_function = (
             ident("op")
             + LB
-            + Optional(Group(ordered_sql) | delimited_list(Group(expr)))("params")
-            + Optional(keyword("ignore nulls"))("ignore_nulls")
+            + Optional(Group(query) | delimited_list(Group(expr)))("params")
+            + Optional(flag("ignore nulls"))
             + RB
-        ) / to_json_call
+        ).set_parser_name("call function") / to_json_call
 
         with NO_WHITESPACE:
 
@@ -155,7 +181,10 @@ def parser(literal_string, ident):
             | cast
             | distinct
             | trim
-            | (LB + Group(ordered_sql) + RB)
+            | stack
+            | create_array
+            | create_map
+            | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
             | hex_num.set_parser_name("hex")
@@ -164,7 +193,6 @@ def parser(literal_string, ident):
             | real_num.set_parser_name("float")
             | int_num.set_parser_name("int")
             | call_function
-            # | known_types
             | Combine(var_name + Optional(".*"))
         )
 
@@ -177,12 +205,18 @@ def parser(literal_string, ident):
                 Literal("*")
                 | infix_notation(
                     compound,
-                    [
+                    [(
+                        Char("[").suppress() + expr + Char("]").suppress(),
+                        1,
+                        LEFT_ASSOC,
+                        to_offset,
+                    )]
+                    + [
                         (
                             o,
                             1 if o in unary_ops else (3 if isinstance(o, tuple) else 2),
                             unary_ops[o] if o in unary_ops else LEFT_ASSOC,
-                            to_json_operator,
+                            to_lambda if o is LAMBDA else to_json_operator,
                         )
                         for o in KNOWN_OPS
                     ],
@@ -191,49 +225,24 @@ def parser(literal_string, ident):
             + Optional(window(expr, sort_column))
         ) / to_expression_call
 
-        alias = (
-            Group(var_name) + Optional(LB + delimited_list(ident("col")) + RB)
-        )("name").set_parser_name("alias") / to_alias
-
         select_column = (
             Group(
-                Group(expr).set_parser_name("expression1")("value")
-                + Optional(Optional(AS) + alias)
+                Group(expr).set_parser_name("expression")("value") + alias
                 | Literal("*")("value")
             ).set_parser_name("column")
             / to_select_call
         )
 
-        table_source = (
-            (
-                (LB + ordered_sql + RB) | call_function
-            )("value").set_parser_name("table source")
-            + Optional(Optional(AS) + alias)
-            | (var_name("value").set_parser_name("table name") + Optional(AS) + alias)
-            | var_name.set_parser_name("table name")
-        )
+        table_source = Forward()
 
         join = (
-            Group(
-                CROSS_JOIN
-                | FULL_JOIN
-                | FULL_OUTER_JOIN
-                | INNER_JOIN
-                | JOIN
-                | LEFT_JOIN
-                | LEFT_OUTER_JOIN
-                | RIGHT_JOIN
-                | RIGHT_OUTER_JOIN
-            )("op")
-            + Group(table_source)("join")
+            Group(joins)("op")
+            + table_source("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
         ) / to_join_call
 
         selection = (
-            SELECT
-            + DISTINCT
-            + ON
-            + LB
+            (SELECT + DISTINCT + ON + LB)
             + delimited_list(select_column)("distinct_on")
             + RB
             + delimited_list(select_column)("select")
@@ -251,21 +260,67 @@ def parser(literal_string, ident):
             )
         )
 
+        row = (LB + delimited_list(Group(expr)) + RB) / to_row
+        values = VALUES + delimited_list(row) / to_values
+
         unordered_sql = Group(
-            selection
+            values
+            | selection
             + Optional(
-                (FROM + delimited_list(Group(table_source)) + ZeroOrMore(join))("from")
+                (FROM + delimited_list(table_source) + ZeroOrMore(join))("from")
                 + Optional(WHERE + expr("where"))
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expr("having"))
             )
         ).set_parser_name("unordered sql")
 
-        ordered_sql << (
+        with NO_WHITESPACE:
+
+            def mult(tokens):
+                amount = tokens["bytes"]
+                scale = tokens["scale"].lower()
+                return {
+                    "bytes": amount
+                    * {"b": 1, "k": 1_000, "m": 1_000_000, "g": 1_000_000_000}[scale]
+                }
+
+            ts_bytes = (
+                (real_num | int_num)("bytes") + Char("bBkKmMgG")("scale")
+            ) / mult
+
+        tablesample = assign(
+            "tablesample",
+            LB
+            + (
+                (
+                    keyword("bucket")("op")
+                    + int_num("params")
+                    + keyword("out of")
+                    + int_num("params")
+                    + Optional(ON + expr("on"))
+                )
+                / to_json_call
+                | (real_num | int_num)("percent") + keyword("percent")
+                | int_num("rows") + keyword("rows")
+                | ts_bytes
+            )
+            + RB,
+        )
+
+        table_source << Group(
+            ((LB + query + RB) | stack | call_function | var_name)("value")
+            + Optional(flag("with ordinality"))
+            + Optional(tablesample)
+            + alias
+        ).set_parser_name("table_source") / to_table
+
+        ordered_sql = (
             (
                 unordered_sql
                 + ZeroOrMore(
-                    Group(UNION_ALL | UNION | INTERSECT | EXCEPT | MINUS)
+                    Group(
+                        (UNION | INTERSECT | EXCEPT | MINUS) + Optional(ALL | DISTINCT)
+                    )("op")
                     + unordered_sql
                 )
             )("union")
@@ -274,81 +329,88 @@ def parser(literal_string, ident):
             + Optional(OFFSET + expr("offset"))
         ).set_parser_name("ordered sql") / to_union_call
 
-        statement = Forward()
-        statement << (
-            Optional(
-                WITH
-                + delimited_list(Group(
-                    var_name("name") + AS + LB + (statement | expr)("value") + RB
-                ))
-            )("with")
+        with_expr = delimited_list(Group(
+            (
+                (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                / to_alias
+            )("name")
+            + (AS + LB + (query | expr)("value") + RB)
+        ))
+
+        query << (
+            Optional(assign("with recursive", with_expr) | assign("with", with_expr))
             + Group(ordered_sql)("query")
-        ) / to_statement
+        ) / to_query
 
         #####################################################################
-        # CREATE TABLE
+        # DML STATEMENTS
         #####################################################################
-        BigQuery_STRUCT = (
+        struct_type = (
             keyword("struct")("op")
             + Literal("<").suppress()
             + delimited_list(column_definition)("params")
             + Literal(">").suppress()
         ) / to_json_call
 
-        BigQuery_ARRAY = (
+        array_type = (
             keyword("array")("op")
             + Literal("<").suppress()
             + delimited_list(column_type)("params")
             + Literal(">").suppress()
         ) / to_json_call
 
+        column_def_comment = assign("comment", literal_string)
+
         column_def_identity = (
-            keyword("generated").suppress()
-            + (
-                (keyword("always") | keyword("by default")) / (lambda: "by_default")
-            )("generated")
+            assign(
+                "generated",
+                (keyword("always") | keyword("by default") / (lambda: "by_default")),
+            )
             + keyword("as identity").suppress()
-            + Optional(keyword("start with").suppress() + int_num("start_with"))
-            + Optional(keyword("increment by").suppress() + int_num("increment_by"))
+            + Optional(assign("start with", int_num))
+            + Optional(assign("increment by", int_num))
         )
 
-        column_def_delete = keyword("on delete").suppress() + (
-            keyword("cascade") | keyword("set null") | keyword("set default")
-        )("on_delete")
+        column_def_delete = assign(
+            "on delete",
+            (keyword("cascade") | keyword("set null") | keyword("set default")),
+        )
 
         column_type << (
-            BigQuery_STRUCT
-            | BigQuery_ARRAY
+            struct_type
+            | array_type
             | Group(ident("op") + Optional(LB + delimited_list(int_num)("params") + RB))
             / to_json_call
         )
 
-        column_def_references = (
-            REFERENCES
-            + var_name("table")
-            + LB
-            + delimited_list(var_name)("columns")
-            + RB
-        )("references")
+        column_def_references = assign(
+            "references",
+            var_name("table") + LB + delimited_list(var_name)("columns") + RB,
+        )
 
-        column_def_check = keyword("check").suppress() + LB + expr + RB
-        column_def_default = keyword("default").suppress() + expr("default")
+        collate = assign("collate", Optional(EQ) + var_name)
 
-        column_options = ZeroOrMore(Group(
-            (NOT + NULL) / (lambda: "not null")
-            | NULL / (lambda t: "nullable")
-            | keyword("unique")
-            | PRIMARY_KEY / (lambda: "primary key")
+        column_def_check = assign("check", LB + expr + RB)
+        column_def_default = assign("default", expr)
+
+        column_options = ZeroOrMore(
+            ((NOT + NULL) / (lambda: False))("nullable")
+            | (NULL / (lambda t: True))("nullable")
+            | flag("unique")
+            | flag("auto_increment")
+            | column_def_comment
+            | collate
+            | flag("primary key")
             | column_def_identity("identity")
             | column_def_references
-            | column_def_check("check")
+            | column_def_check
             | column_def_default
-        )).set_parser_name("column_options")
+        ).set_parser_name("column_options")
 
         column_definition << Group(
             var_name("name") / (lambda t: t[0].lower())
             + column_type("type")
-            + Optional(column_options)("option")
+            + column_options
         ).set_parser_name("column_definition")
 
         # MySQL's index_type := Using + ( "BTREE" | "HASH" )
@@ -366,9 +428,7 @@ def parser(literal_string, ident):
         index_options = ZeroOrMore(var_name)("table_constraint_options")
 
         table_constraint_definition = Optional(CONSTRAINT + var_name("name")) + (
-            (
-                PRIMARY_KEY + index_type + index_column_names + index_options
-            )("primary_key")
+            assign("primary key", index_type + index_column_names + index_options)
             | (
                 UNIQUE
                 + Optional(INDEX | KEY)
@@ -384,7 +444,7 @@ def parser(literal_string, ident):
                 + index_column_names
                 + index_options
             )("index")
-            | column_def_check("check")
+            | column_def_check
             | table_def_foreign_key("foreign_key")
         )
 
@@ -392,15 +452,89 @@ def parser(literal_string, ident):
             column_definition("columns") | table_constraint_definition("constraint")
         )
 
-        create_stmt = (
-            CREATE_TABLE
-            + (
-                var_name("name")
-                + Optional(LB + delimited_list(table_element) + RB)
-                + Optional(
-                    AS.suppress() + infix_notation(statement, [])
-                )("select_statement")
-            )("create table")
-        )
+        create_table = (
+            keyword("create")
+            + Optional(keyword("or") + flag("replace"))
+            + Optional(flag("temporary"))
+            + TABLE
+            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + var_name("name")
+            + Optional(LB + delimited_list(table_element) + RB)
+            + ZeroOrMore(
+                assign("engine", EQ + var_name)
+                | assign("collate", EQ + var_name)
+                | assign("auto_increment", EQ + int_num)
+                | assign("comment", EQ + literal_string)
+                | assign("default character set", EQ + var_name)
+            )
+            + Optional(AS.suppress() + infix_notation(query, [])("query"))
+        )("create table")
 
-        return (statement | create_stmt).finalize()
+        create_view = (
+            keyword("create")
+            + Optional(keyword("or") + flag("replace"))
+            + Optional(flag("temporary"))
+            + VIEW.suppress()
+            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + var_name("name")
+            + AS
+            + query("query")
+        )("create view")
+
+        cache_options = Optional((
+            keyword("options").suppress()
+            + LB
+            + Dict(delimited_list(Group(
+                literal_string / (lambda tokens: tokens[0]["literal"])
+                + Optional(EQ)
+                + var_name
+            )))
+            + RB
+        )("options"))
+
+        create_cache = (
+            keyword("cache").suppress()
+            + Optional(flag("lazy"))
+            + TABLE
+            + var_name("name")
+            + cache_options
+            + Optional(AS + query("query"))
+        )("cache")
+
+        drop_table = (
+            keyword("drop table") + Optional(flag("if exists")) + var_name("table")
+        )("drop")
+
+        drop_view = (
+            keyword("drop view") + Optional(flag("if exists")) + var_name("view")
+        )("drop")
+
+        insert = (
+            keyword("insert")("op")
+            + (flag("overwrite") | keyword("into").suppress())
+            + keyword("table").suppress()
+            + var_name("params")
+            + Optional(flag("if exists"))
+            + (values | query)("query")
+        ) / to_json_call
+
+        update = (
+            keyword("update")("op")
+            + var_name("params")
+            + assign("set", Dict(delimited_list(Group(var_name + EQ + expr))))
+            + Optional(assign("where", expr))
+        ) / to_json_call
+
+        delete = (
+            keyword("delete")("op")
+            + keyword("from").suppress()
+            + var_name("params")
+            + Optional(assign("where", expr))
+        ) / to_json_call
+
+        return (
+            query
+            | (insert | update | delete)
+            | (create_table | create_view | create_cache)
+            | (drop_table | drop_view)
+        ).finalize()

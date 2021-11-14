@@ -10,8 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
@@ -142,11 +140,9 @@ class TestPostgres(TestCase):
         expected = {"create table": {
             "columns": [
                 {
+                    "identity": {"generated": "by_default", "start_with": 10},
                     "name": "warehouse_id",
-                    "option": [
-                        {"identity": {"generated": "by_default", "start_with": 10}},
-                        "primary key",
-                    ],
+                    "primary_key": True,
                     "type": {"number": {}},
                 },
                 {"name": "warehouse_name", "type": {"varchar": 255}},
@@ -162,4 +158,67 @@ class TestPostgres(TestCase):
             },
             "name": "warehouses",
         }}
+        self.assertEqual(result, expected)
+
+    def test_create_table_always(self):
+        sql = """
+        CREATE TABLE warehouses
+          (
+            warehouse_id NUMBER 
+                         GENERATED ALWAYS AS IDENTITY START WITH 10 
+                         PRIMARY KEY
+          );
+          """
+        result = parse(sql)
+        expected = {"create table": {
+            "name": "warehouses",
+            "columns": {
+                "identity": {"generated": "always", "start_with": 10},
+                "name": "warehouse_id",
+                "primary_key": True,
+                "type": {"number": {}},
+            },
+        }}
+        self.assertEqual(result, expected)
+
+    def test_lateral_join1(self):
+        sql = """SELECT * 
+            FROM departments AS d, 
+            LATERAL (SELECT * FROM employees) AS iv2
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "d", "value": "departments"},
+                {
+                    "name": "iv2",
+                    "value": {"lateral": {"from": "employees", "select": "*"}},
+                },
+            ],
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_lateral_join2(self):
+        sql = """SELECT * 
+            FROM departments AS d
+            JOIN LATERAL (SELECT up_seconds / cal_seconds AS up_pct) t3 ON true
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "d", "value": "departments"},
+                {
+                    "join lateral": {
+                        "name": "t3",
+                        "value": {"select": {
+                            "name": "up_pct",
+                            "value": {"div": ["up_seconds", "cal_seconds"]},
+                        }},
+                    },
+                    "on": True,
+                },
+            ],
+            "select": "*",
+        }
         self.assertEqual(result, expected)

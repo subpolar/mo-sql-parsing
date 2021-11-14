@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse as sql_parse
 from mo_sql_parsing.utils import normal_op
 from tests.util import assertRaises
@@ -1135,10 +1137,10 @@ class TestSimpleUsingOperators(TestCase):
         sql = "select * from some_table.some_function('parameter', 1, some_col)"
         result = parse(sql)
         expected = {
-            "from": {"value": {
+            "from": {
                 "args": [{"literal": "parameter"}, 1, "some_col"],
                 "op": "some_table.some_function",
-            }},
+            },
             "select": "*",
         }
         self.assertEqual(result, expected)

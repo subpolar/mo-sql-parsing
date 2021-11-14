@@ -466,7 +466,7 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-    def test_issue_37_parenthesis3(self):
+    def test_issue_37_parenthesis2(self):
         query = """SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE country = 'United States')"""
         parse_result = parse(query)
         format_result = format(parse_result)
@@ -582,3 +582,63 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, """SELECT CAST(10.008 AS DECIMAL(10, 2))""")
 
+    def test_issues_45_cast(self):
+        sql = """select node,datetime from e where ((900 - ( cast(p as FLOAT) + cast(p as FLOAT) ) ) / 900) < 0.9 order by datetime limit 100"""
+        result = parse(sql)
+        parsed_query = {
+            "from": "e",
+            "limit": 100,
+            "orderby": {"value": "datetime"},
+            "select": [{"value": "node"}, {"value": "datetime"}],
+            "where": {"lt": [
+                {"div": [
+                    {"sub": [
+                        900,
+                        {"add": [
+                            {"cast": ["p", {"float": {}}]},
+                            {"cast": ["p", {"float": {}}]},
+                        ]},
+                    ]},
+                    900,
+                ]},
+                0.9,
+            ]},
+        }
+        self.assertEqual(result, parsed_query)
+
+        re_format_query = format(result)
+        self.assertEqual(
+            re_format_query,
+            """SELECT node, datetime FROM e WHERE (900 - (CAST(p AS FLOAT) + CAST(p AS FLOAT))) / 900 < 0.9 ORDER BY datetime LIMIT 100""",
+        )
+
+    def test_issue_47_precedence(self):
+        sql = """SELECT c1, c2 FROM t1 WHERE ((900 - (CAST(c3 AS FLOAT) + CAST(c4 AS FLOAT))) / 900) < 0.9 ORDER BY c2 LIMIT 100"""
+        expected_sql = """SELECT c1, c2 FROM t1 WHERE (900 - (CAST(c3 AS FLOAT) + CAST(c4 AS FLOAT))) / 900 < 0.9 ORDER BY c2 LIMIT 100"""
+
+        result = parse(sql)
+        expected_result = {
+            "from": "t1",
+            "limit": 100,
+            "orderby": {"value": "c2"},
+            "select": [{"value": "c1"}, {"value": "c2"}],
+            "where": {"lt": [
+                {"div": [
+                    {"sub": [
+                        900,
+                        {"add": [
+                            {"cast": ["c3", {"float": {}}]},
+                            {"cast": ["c4", {"float": {}}]},
+                        ]},
+                    ]},
+                    900,
+                ]},
+                0.9,
+            ]},
+        }
+        self.assertEqual(result, expected_result)
+        format_result = format(result)
+        self.assertEqual(format_result, expected_sql)
+
+        second_result = parse(sql)
+        self.assertEqual(second_result, expected_result)

@@ -77,7 +77,7 @@ def Operator(_op):
 
         for i, v in enumerate(listwrap(json)):
             if i == 0:
-                acc.append(self.dispatch(v, op_prec + 1))
+                acc.append(self.dispatch(v, op_prec + 0.25))
             else:
                 acc.append(self.dispatch(v, op_prec))
         if prec >= op_prec:
@@ -266,7 +266,11 @@ class Formatter:
         attr = f"_{key}"
         if hasattr(self, attr) and not key.startswith("_"):
             method = getattr(self, attr)
-            return method(value, prec)
+            op_prec = precedence.get(key, MAX_PRECEDENCE)
+            if prec >= op_prec:
+                return method(value, op_prec)
+            else:
+                return f"({method(value, op_prec )})"
 
         # treat as regular function call
         if isinstance(value, dict) and len(value) == 0:
@@ -306,7 +310,15 @@ class Formatter:
         return " ".join(parts)
 
     def _cast(self, json, prec):
-        return "".join(["CAST(", self.dispatch(json[0]), " AS ", self.dispatch(json[1]), ")"])
+        expr, type = json
+
+        type_name, params = first(type.items())
+        if not params:
+            type = type_name.upper()
+        else:
+            type = {type_name.upper(): params}
+
+        return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
 
     def _literal(self, json, prec):
         if isinstance(json, list):
@@ -436,7 +448,8 @@ class Formatter:
         is_join = False
         from_ = json["from"]
         if isinstance(from_, dict) and is_set_op & from_.keys():
-            return self.op(from_, precedence["from"])
+            source = self.op(from_, precedence["from"])
+            return f"FROM {source}"
 
         from_ = listwrap(from_)
         parts = []
@@ -448,10 +461,11 @@ class Formatter:
                 parts.append(self.dispatch(v, precedence["from"] - 1))
         joiner = " " if is_join else ", "
         rest = joiner.join(parts)
-        return "FROM {0}".format(rest)
+        return f"FROM {rest}"
 
     def where(self, json, prec):
-        return "WHERE {0}".format(self.dispatch(json["where"]))
+        expr = self.dispatch(json["where"])
+        return f"WHERE {expr}"
 
     def groupby(self, json, prec):
         param = ", ".join(self.dispatch(s) for s in listwrap(json["groupby"]))

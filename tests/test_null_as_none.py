@@ -27,8 +27,8 @@ class TestNull(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": [
-                {"name": "name", "type": {"varchar": {}}, "option": {"default": None},},
-                {"name": "sunny", "type": {"int": {}}, "option": "primary key"},
+                {"name": "name", "type": {"varchar": {}}, "default": None},
+                {"name": "sunny", "type": {"int": {}}, "primary_key": True},
             ],
         }}
         self.assertEqual(result, expected)

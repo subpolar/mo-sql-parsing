@@ -29,6 +29,7 @@ class Call(object):
 
 
 IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
+FIRST_IDENT_CHAR = "".join(set(IDENT_CHAR) - set('0123456789'))
 SQL_NULL = Call("null", [], {})
 
 null_locations = []
@@ -40,8 +41,19 @@ def keyword(keywords):
     ]).set_parser_name(keywords)
 
 
+def flag(keywords):
+    """
+    RETURN {keywords: True}
+    """
+    return (keyword(keywords) / (lambda: True))(keywords.replace(" ", "_"))
+
+
+def assign(key : str, value : ParserElement):
+    return keyword(key).suppress()+value(key.replace(" ", "_"))
+
+
 def simple_op(op, args, kwargs):
-    if not args:
+    if args is None:
         kwargs[op] = {}
     else:
         kwargs[op] = args
@@ -118,6 +130,11 @@ def _chunk(values, size):
         yield acc
 
 
+def to_lambda(tokens):
+    params, op, expr = list(tokens)
+    return Call("lambda", [expr], {"params":list(params)})
+
+
 def to_json_operator(tokens):
     # ARRANGE INTO {op: params} FORMAT
     length = len(tokens.tokens)
@@ -183,6 +200,11 @@ def to_json_operator(tokens):
     return binary_op
 
 
+def to_offset(tokens):
+    expr, offset = tokens.tokens
+    return Call("get", [expr, offset], {})
+
+
 def to_tuple_call(tokens):
     # IS THIS ONE VALUE IN (), OR MANY?
     tokens = list(tokens)
@@ -234,6 +256,7 @@ binary_ops = {
     "not_simlilar_to": "not_similar_to",
     "or": "or",
     "and": "and",
+    "->": "lambda",
     "union": "union",
     "union_all": "union_all",
     "union all": "union_all",
@@ -257,17 +280,14 @@ def to_json_call(tokens):
     op = tokens["op"].lower()
     op = binary_ops.get(op, op)
 
-    params = listwrap(tokens["params"])
-    if tokens["ignore_nulls"]:
-        ignore_nulls = True
-    else:
-        ignore_nulls = None
+    args = listwrap(tokens["params"])
+    kwargs = {k: v for k,v in tokens.items() if k not in ("op", "params")}
 
     return ParseResults(
         tokens.type,
         tokens.start,
         tokens.end,
-        [Call(op, params, {"ignore_nulls": ignore_nulls})],
+        [Call(op, args, kwargs)],
         tokens.failures,
     )
 
@@ -336,12 +356,17 @@ def to_expression_call(tokens):
         listwrap(tokens["value"]),
         tokens.failures,
     )
+
+    offset = tokens["offset"]
+    if offset:
+        return {"get": [expr, offset]}
+
     return expr
 
 
 def to_alias(tokens):
     cols = tokens["col"]
-    name = tokens[0][0]
+    name = tokens['name']
     if cols:
         return {name: cols}
     return name
@@ -363,6 +388,39 @@ def to_top_clause(tokens):
         return {"percent": value}
     else:
         return [value]
+
+
+def to_row(tokens):
+    columns = list(tokens)
+    if len(columns) > 1:
+        return {"select": [{"value": v[0]} for v in columns]}
+    else:
+        return {"select": {"value": columns[0]}}
+
+
+def to_values(tokens):
+    rows = list(tokens)
+    if len(rows) > 1:
+        return {"union_all": list(tokens)}
+    else:
+        return rows
+
+
+def to_stack(tokens):
+    width = tokens["width"]
+    args = listwrap(tokens["args"])
+    return Call("stack", args, {"width": width})
+
+
+def to_array(tokens):
+    args = list(tokens["args"])
+    return Call("array", args, {})
+
+
+def to_map(tokens):
+    keys = tokens["keys"]
+    values = tokens["values"]
+    return Call("create_map", [keys, values], {})
 
 
 def to_select_call(tokens):
@@ -408,10 +466,19 @@ def to_union_call(tokens):
     return output
 
 
-def to_statement(tokens):
+def to_query(tokens):
     output = tokens["query"][0]
     output["with"] = tokens["with"]
+    output["with_recursive"] = tokens["with_recursive"]
     return output
+
+
+def to_table(tokens):
+    output = dict(tokens)
+    if len(list(output.keys())) > 1:
+        return output
+    else:
+        return output['value']
 
 
 def unquote(tokens):
