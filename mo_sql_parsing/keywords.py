@@ -113,6 +113,8 @@ IN = keyword("in")
 IS = keyword("is")
 NOT = keyword("not")
 OR = keyword("or")
+LATERAL = keyword("lateral")
+VIEW = keyword("view")
 
 # COMPOUND KEYWORDS
 CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
@@ -121,6 +123,8 @@ FULL_JOIN = (FULL + JOIN).set_parser_name("full join")
 FULL_OUTER_JOIN = (FULL + OUTER + JOIN).set_parser_name("full outer join")
 GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
 INNER_JOIN = (INNER + JOIN).set_parser_name("inner join")
+LATERAL_VIEW_OUTER = (LATERAL + VIEW + OUTER).set_parser_name("lateral_view_outer")
+LATERAL_VIEW = (LATERAL + VIEW).set_parser_name("lateral_view")
 LEFT_JOIN = (LEFT + JOIN).set_parser_name("left join")
 LEFT_OUTER_JOIN = (LEFT + OUTER + JOIN).set_parser_name("left outer join")
 LEFT_INNER_JOIN = (LEFT + INNER + JOIN).set_parser_name("left inner join")
@@ -182,6 +186,7 @@ RESERVED = MatchFirst([
     IS,
     JOIN,
     KEY,
+    LATERAL,
     LEFT,
     LIKE,
     LIMIT,
@@ -404,10 +409,15 @@ VARBINARY = (keyword("varbinary")("op") + _size) / to_json_call
 TINYINT = (keyword("tinyint")("op") + _size) / to_json_call
 
 DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
-DOUBLE_PRECISION = Group((keyword("double precision")/(lambda: "double_precision"))("op")) / to_json_call
+DOUBLE_PRECISION = (
+    Group((keyword("double precision") / (lambda: "double_precision"))("op"))
+    / to_json_call
+)
 NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
 
-MAP_TYPE = (keyword("map")("op") + LB + delimited_list(known_types("params")) + RB) / to_json_call
+MAP_TYPE = (
+    keyword("map")("op") + LB + delimited_list(known_types("params")) + RB
+) / to_json_call
 ARRAY_TYPE = (keyword("array")("op") + LB + known_types("params") + RB) / to_json_call
 
 DATE = keyword("date")

@@ -360,7 +360,7 @@ def to_expression_call(tokens):
 
 def to_alias(tokens):
     cols = tokens["col"]
-    name = tokens[0][0]
+    name = tokens['name']
     if cols:
         return {name: cols}
     return name
@@ -402,7 +402,7 @@ def to_values(tokens):
 
 def to_stack(tokens):
     width = tokens["width"]
-    args = list(tokens["args"])
+    args = listwrap(tokens["args"])
     return Call("stack", args, {"width": width})
 
 
@@ -468,10 +468,11 @@ def to_query(tokens):
 
 
 def to_table(tokens):
-    if len(list(tokens.keys())) > 1:
-        return tokens
+    output = dict(tokens)
+    if len(list(output.keys())) > 1:
+        return output
     else:
-        return tokens['value']
+        return output['value']
 
 
 def unquote(tokens):

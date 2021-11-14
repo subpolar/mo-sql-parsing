@@ -118,9 +118,16 @@ def parser(literal_string, ident):
             + RB
         ) / to_json_call
 
-        named_column = Group(
-            Group(expr)("value") + Optional(Optional(AS) + Group(var_name))("name")
-        )
+        alias = Optional((
+            (
+                AS
+                + (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                | (var_name("name") + Optional(AS + delimited_list(var_name("col"))))
+            )
+            / to_alias
+        )("name"))
+
+        named_column = Group(Group(expr)("value") + alias)
 
         stack = (
             keyword("stack")("op")
@@ -218,14 +225,9 @@ def parser(literal_string, ident):
             + Optional(window(expr, sort_column))
         ) / to_expression_call
 
-        alias = (
-            Group(var_name) + Optional(LB + delimited_list(ident("col")) + RB)
-        )("name").set_parser_name("alias") / to_alias
-
         select_column = (
             Group(
-                Group(expr).set_parser_name("expression1")("value")
-                + Optional(Optional(AS) + alias)
+                Group(expr).set_parser_name("expression")("value") + alias
                 | Literal("*")("value")
             ).set_parser_name("column")
             / to_select_call
@@ -247,6 +249,8 @@ def parser(literal_string, ident):
                 | RIGHT_JOIN
                 | RIGHT_OUTER_JOIN
                 | RIGHT_INNER_JOIN
+                | LATERAL_VIEW_OUTER
+                | LATERAL_VIEW
             )("op")
             + table_source("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
@@ -322,9 +326,10 @@ def parser(literal_string, ident):
         )
 
         table_source << Group(
-            ((LB + query + RB) | call_function | var_name)("value")
+            ((LB + query + RB) | stack | call_function | var_name)("value")
+            + Optional(flag("with ordinality"))
             + Optional(tablesample)
-            + Optional(Optional(AS) + alias)
+            + alias
         ).set_parser_name("table_source") / to_table
 
         ordered_sql = (
@@ -346,7 +351,17 @@ def parser(literal_string, ident):
             Optional(
                 assign(
                     "with recursive",
-                    alias("name") + AS + LB + (query | expr)("value") + RB,
+                    (
+                        (
+                            var_name("name")
+                            + Optional(LB + delimited_list(ident("col")) + RB)
+                        )
+                        / to_alias
+                    )("name")
+                    + AS
+                    + LB
+                    + (query | expr)("value")
+                    + RB,
                 )
                 | assign(
                     "with",
@@ -490,7 +505,7 @@ def parser(literal_string, ident):
             keyword("create")
             + Optional(keyword("or") + flag("replace"))
             + Optional(flag("temporary"))
-            + keyword("view").suppress()
+            + VIEW.suppress()
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + var_name("name")
             + AS

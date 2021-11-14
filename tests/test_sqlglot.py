@@ -249,7 +249,10 @@ class TestSqlGlot(TestCase):
         ]}
         self.assertEqual(result, expected)
 
-    @skip("alias (AS x) in compound operator not allowed https://sqlite.org/syntax/select-stmt.html")
+    @skip(
+        "alias (AS x) in compound operator not allowed"
+        " https://sqlite.org/syntax/select-stmt.html"
+    )
     def test_issue_46_sqlglot_27(self):
         sql = """SELECT * FROM ((SELECT 1) AS a UNION ALL (SELECT 2) AS b)"""
         result = parse(sql)
@@ -390,7 +393,7 @@ class TestSqlGlot(TestCase):
         }}
         self.assertEqual(result, expected)
 
-    @skip("not legitimate https://www.sqlite.org/windowfunctions.html")
+    @skip("PRECEDING must have a qualifier https://www.sqlite.org/windowfunctions.html")
     def test_issue_46_sqlglot_37(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND PRECEDING)"""
         result = parse(sql)
@@ -424,14 +427,20 @@ class TestSqlGlot(TestCase):
         }}
         self.assertEqual(result, expected)
 
-    @skip("not legitimate https://www.sqlite.org/windowfunctions.html")
+    @skip(
+        "values must be qualified with preceding/following"
+        " https://www.sqlite.org/windowfunctions.html"
+    )
     def test_issue_46_sqlglot_41(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 AND 3)"""
         result = parse(sql)
         expected = {}
         self.assertEqual(result, expected)
 
-    @skip("not legitimate https://www.sqlite.org/windowfunctions.html")
+    @skip(
+        "values must be qualified with preceding/following"
+        " https://www.sqlite.org/windowfunctions.html"
+    )
     def test_issue_46_sqlglot_42(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 FOLLOWING AND 3)"""
         result = parse(sql)
@@ -468,46 +477,82 @@ class TestSqlGlot(TestCase):
         }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_46(self):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score"""
+        # with Debugger():
         result = parse(sql)
-        expected = {}
+        expected = {'from': ['tests',
+          {'lateral view': {'name': {'t': 'score'},
+                            'value': {'explode': 'scores'}}}],
+ 'select': [{'value': 'student'}, {'value': 'score'}]}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_47(self):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score, name"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': ['tests',
+          {'lateral view': {'name': {'t': ['score', 'name']},
+                            'value': {'explode': 'scores'}}}],
+ 'select': [{'value': 'student'}, {'value': 'score'}]}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_48(self):
         sql = """SELECT student, score FROM tests LATERAL VIEW OUTER EXPLODE(scores) t AS score, name"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                "tests",
+                {"lateral view outer": {
+                    "name": {"t": ["score", "name"]},
+                    "value": {"explode": "scores"},
+                }},
+            ],
+            "select": [{"value": "student"}, {"value": "score"}],
+        }
+
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_49(self):
         sql = """SELECT tf.* FROM (SELECT 0) AS t LATERAL VIEW STACK(1, 2) tf"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                {"name": "t", "value": {"select": {"value": 0}}},
+                {"lateral view": {"name": "tf", "value": {"stack": 2, "width": 1}}},
+            ],
+            "select": {"value": "tf.*"},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_50(self):
         sql = """SELECT tf.* FROM (SELECT 0) AS t LATERAL VIEW STACK(1, 2) tf AS col0, col1, col2"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                {"name": "t", "value": {"select": {"value": 0}}},
+                {"lateral view": {
+                    "name": {"tf": ["col0", "col1", "col2"]},
+                    "value": {"stack": 2, "width": 1},
+                }},
+            ],
+            "select": {"value": "tf.*"},
+        }
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_51(self):
         sql = """SELECT student, score FROM tests CROSS JOIN UNNEST(scores) WITH ORDINALITY AS t (a, b)"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                "tests",
+                {"cross join": {
+                    "name": {"t": ["a", "b"]},
+                    "value": {"unnest": "scores"},
+                    "with_ordinality": True,
+                }},
+            ],
+            "select": [{"value": "student"}, {"value": "score"}],
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_52(self):
