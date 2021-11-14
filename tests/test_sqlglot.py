@@ -132,37 +132,49 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_15(self):
         sql = """SELECT a FROM test TABLESAMPLE(BUCKET 1 OUT OF 5)"""
         result = parse(sql)
-        expected = {'from': {'tablesample': {'bucket': [1, 5]}, 'value': 'test'},
- 'select': {'value': 'a'}}
+        expected = {
+            "from": {"tablesample": {"bucket": [1, 5]}, "value": "test"},
+            "select": {"value": "a"},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_16(self):
         sql = """SELECT a FROM test TABLESAMPLE(BUCKET 1 OUT OF 5 ON x)"""
         result = parse(sql)
-        expected = {'from': {'tablesample': {'bucket': [1, 5], 'on': 'x'}, 'value': 'test'},
- 'select': {'value': 'a'}}
+        expected = {
+            "from": {"tablesample": {"bucket": [1, 5], "on": "x"}, "value": "test"},
+            "select": {"value": "a"},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_17(self):
         sql = """SELECT a FROM test TABLESAMPLE(BUCKET 1 OUT OF 5 ON RAND())"""
         result = parse(sql)
-        expected = {'from': {'tablesample': {'bucket': [1, 5], 'on': {'rand': {}}},
-          'value': 'test'},
- 'select': {'value': 'a'}}
+        expected = {
+            "from": {
+                "tablesample": {"bucket": [1, 5], "on": {"rand": {}}},
+                "value": "test",
+            },
+            "select": {"value": "a"},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_18(self):
         sql = """SELECT a FROM test TABLESAMPLE(0.1 PERCENT)"""
         result = parse(sql)
-        expected = {'from': {'tablesample': {'percent': 0.1}, 'value': 'test'},
- 'select': {'value': 'a'}}
+        expected = {
+            "from": {"tablesample": {"percent": 0.1}, "value": "test"},
+            "select": {"value": "a"},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_19(self):
         sql = """SELECT a FROM test TABLESAMPLE(100 ROWS)"""
         result = parse(sql)
-        expected = {'from': {'tablesample': {'rows': 100}, 'value': 'test'},
- 'select': {'value': 'a'}}
+        expected = {
+            "from": {"tablesample": {"rows": 100}, "value": "test"},
+            "select": {"value": "a"},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_20(self):
@@ -233,12 +245,10 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "select": "*",
-            "from": {
-                "union_all": [
-                    {"from": {"value": {"select": 1}, "name": "a"}},
-                    {"from": {"value": {"select": 2}, "name": "b"}},
-                ]
-            }
+            "from": {"union_all": [
+                {"from": {"value": {"select": 1}, "name": "a"}},
+                {"from": {"value": {"select": 2}, "name": "b"}},
+            ]},
         }
         self.assertEqual(result, expected)
 
@@ -381,7 +391,10 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_38(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {'select': {'over': {'partitionby': 'a', 'range': {}}, 'value': {'sum': 'x'}}}
+        expected = {"select": {
+            "over": {"partitionby": "a", "range": {}},
+            "value": {"sum": "x"},
+        }}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_39(self):

@@ -229,14 +229,7 @@ def parser(literal_string, ident):
             / to_select_call
         )
 
-        table_source = (
-            (
-                (LB + query + RB) | call_function
-            )("value").set_parser_name("table source")
-            + Optional(Optional(AS) + alias)
-            | (var_name("value").set_parser_name("table name") + Optional(AS) + alias)
-            | var_name.set_parser_name("table name")
-        )
+        table_source = Forward()
 
         join = (
             Group(
@@ -285,9 +278,13 @@ def parser(literal_string, ident):
         unordered_sql = values | Group(
             selection
             + Optional(
-                (FROM + delimited_list(Group(table_source)) + ZeroOrMore(join))("from")
+                (
+                    FROM + delimited_list(Group(table_source)) + ZeroOrMore(join)
+                )("from")
                 + Optional(WHERE + expr("where"))
-                + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
+                + Optional(
+                    GROUP_BY + delimited_list(Group(named_column))("groupby")
+                )
                 + Optional(HAVING + expr("having"))
             )
         ).set_parser_name("unordered sql")
@@ -310,6 +307,12 @@ def parser(literal_string, ident):
             )
             + RB
         )("tablesample")
+
+        table_source << (
+            ((LB + query + RB) | call_function | var_name)("value")
+            + Optional(tablesample)
+            + Optional(Optional(AS) + alias)
+        ).set_parser_name("table_source") / to_table
 
         ordered_sql = (
             (
