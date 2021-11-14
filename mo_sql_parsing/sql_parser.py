@@ -248,7 +248,7 @@ def parser(literal_string, ident):
                 | RIGHT_OUTER_JOIN
                 | RIGHT_INNER_JOIN
             )("op")
-            + Group(table_source)("join")
+            + table_source("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
         ) / to_join_call
 
@@ -281,23 +281,31 @@ def parser(literal_string, ident):
             values
             | selection
             + Optional(
-                (FROM + delimited_list(Group(table_source)) + ZeroOrMore(join))("from")
+                (FROM + delimited_list(table_source) + ZeroOrMore(join))("from")
                 + Optional(WHERE + expr("where"))
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expr("having"))
             )
+            # | table_source
         ).set_parser_name("unordered sql")
 
         with NO_WHITESPACE:
+
             def mult(tokens):
                 amount = tokens["bytes"]
                 scale = tokens["scale"].lower()
-                return {"bytes": amount * {'b': 1, 'k': 1_000, 'm': 1_000_000, 'g': 1_000_000_000}[scale]}
-            ts_bytes = ((real_num | int_num)("bytes") + Char("bBkKmMgG")("scale"))/mult
+                return {
+                    "bytes": amount
+                    * {"b": 1, "k": 1_000, "m": 1_000_000, "g": 1_000_000_000}[scale]
+                }
 
-        tablesample = (
-            keyword("tablesample").suppress()
-            + LB
+            ts_bytes = (
+                (real_num | int_num)("bytes") + Char("bBkKmMgG")("scale")
+            ) / mult
+
+        tablesample = assign(
+            "tablesample",
+            LB
             + (
                 (
                     keyword("bucket")("op")
@@ -311,10 +319,10 @@ def parser(literal_string, ident):
                 | int_num("rows") + keyword("rows")
                 | ts_bytes
             )
-            + RB
-        )("tablesample")
+            + RB,
+        )
 
-        table_source << (
+        table_source << Group(
             ((LB + query + RB) | call_function | var_name)("value")
             + Optional(tablesample)
             + Optional(Optional(AS) + alias)
