@@ -286,7 +286,6 @@ def parser(literal_string, ident):
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expr("having"))
             )
-            # | table_source
         ).set_parser_name("unordered sql")
 
         with NO_WHITESPACE:

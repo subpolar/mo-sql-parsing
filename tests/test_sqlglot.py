@@ -179,8 +179,7 @@ class TestSqlGlot(TestCase):
 
     def test_issue_46_sqlglot_19b(self):
         sql = """SELECT a FROM test TABLESAMPLE(100G)"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {
             "from": {"tablesample": {"bytes": 100_000_000_000}, "value": "test"},
             "select": {"value": "a"},
@@ -250,6 +249,7 @@ class TestSqlGlot(TestCase):
         ]}
         self.assertEqual(result, expected)
 
+    @skip("alias (AS x) in compound operator not allowed https://sqlite.org/syntax/select-stmt.html")
     def test_issue_46_sqlglot_27(self):
         sql = """SELECT * FROM ((SELECT 1) AS a UNION ALL (SELECT 2) AS b)"""
         result = parse(sql)
@@ -262,7 +262,7 @@ class TestSqlGlot(TestCase):
         }
         self.assertEqual(result, expected)
 
-    @skip("not legitimate https://sqlite.org/syntax/select-stmt.html")
+    @skip("JOIN is not a compound operator https://sqlite.org/syntax/select-stmt.html")
     def test_issue_46_sqlglot_28(self):
         sql = """SELECT 1 FROM ((SELECT 1) AS a JOIN (SELECT 1) AS b)"""
         result = parse(sql)
