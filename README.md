@@ -148,3 +148,30 @@ then you may avoid all the is-it-a-list checks :
 for select in listwrap(parsed_result.get('select')):
     do_something(select)
 ```
+
+## Version Changes
+
+### Version 8
+
+* Version 8 brings flatter `create table` structures.  
+    The `option` list in column definition has been flattened:<br>
+    **Old column format**
+    
+        {"create table": {
+            "columns": {
+                "name": "name",
+                "type": {"decimal": [2, 3]},
+                "option": "not null",
+            }
+        }}
+        
+    **New column format**
+                
+        {"create table": {
+            "columns": {
+                "name": "name", 
+                "type": {"decimal": [2, 3]}
+                "nullable": False, 
+            }
+        }}
+* Added basic DML (`insert`/`update`/`delete`)              

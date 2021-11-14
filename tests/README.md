@@ -28,6 +28,7 @@ Once you have written a failing test, you can use `with Debugger():` in your tes
  
 ## History
 
+* **November 2021** - added basic DML statements
 * **October 2021** - handle `select distinct on` and change parsing of `select distinct`, again.
 * **September 2021** - added option for `{"op": op, "args":args}` form
 * **August 2021** - good work of ykawakamy added  [create table](https://github.com/klahnakoski/mo-sql-parsing/pull/16) syntax
