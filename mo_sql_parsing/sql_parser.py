@@ -373,7 +373,7 @@ def parser(literal_string, ident):
             + Literal(">").suppress()
         ) / to_json_call
 
-        column_def_comment = keyword("comment").suppress() + literal_string("comment")
+        column_def_comment = assign("comment", literal_string)
 
         column_def_identity = (
             keyword("generated").suppress()
@@ -382,12 +382,12 @@ def parser(literal_string, ident):
             )("generated")
             + keyword("as identity").suppress()
             + Optional(assign("start with", int_num))
-            + Optional(keyword("increment by").suppress() + int_num("increment_by"))
+            + Optional(assign("increment by", int_num))
         )
 
-        column_def_delete = keyword("on delete").suppress() + (
+        column_def_delete = assign("on delete", (
             keyword("cascade") | keyword("set null") | keyword("set default")
-        )("on_delete")
+        ))
 
         column_type << (
             struct_type
@@ -404,12 +404,10 @@ def parser(literal_string, ident):
             + RB
         )("references")
 
-        collate = (
-            keyword("collate").suppress() + Optional(Char("=").suppress()) + var_name
-        )("collate")
+        collate = assign("collate", Optional(Char("=").suppress()) + var_name)
 
         column_def_check = keyword("check").suppress() + LB + expr + RB
-        column_def_default = keyword("default").suppress() + expr("default")
+        column_def_default = assign("default", expr)
 
         column_options = ZeroOrMore(
             ((NOT + NULL) / (lambda: False))("nullable")
@@ -473,25 +471,19 @@ def parser(literal_string, ident):
         )
 
         table_def_engine = (
-            keyword("engine").suppress() + Char("=").suppress() + var_name("engine")
+            assign("engine", Char("=").suppress() + var_name)
         )
         table_def_collate = (
-            keyword("collate").suppress() + Char("=").suppress() + var_name("collate")
+            assign("collate", Char("=").suppress() + var_name)
         )
         table_def_auto_increment = (
-            keyword("auto_increment").suppress()
-            + Char("=").suppress()
-            + int_num("auto_increment")
+            assign("auto_increment", Char("=").suppress() + int_num)
         )
         table_def_comment = (
-            keyword("comment").suppress()
-            + Char("=").suppress()
-            + literal_string("comment")
+            assign("comment", Char("=").suppress() + literal_string)
         )
         table_def_char_set = (
-            keyword("default character set").suppress()
-            + Char("=").suppress()
-            + var_name("default character set")
+            assign("default character set", Char("=").suppress() + var_name)
         )
 
         create_table = (

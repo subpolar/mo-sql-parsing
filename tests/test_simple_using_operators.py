@@ -1279,8 +1279,7 @@ class TestSimpleUsingOperators(TestCase):
 
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {"select": {"value": {
             "args": ["A", {"null": {}}, {"literal": "b"}],
             "op": "decode",

@@ -255,8 +255,7 @@ class TestSqlGlot(TestCase):
     @skip("not legitimate https://sqlite.org/syntax/select-stmt.html")
     def test_issue_46_sqlglot_28(self):
         sql = """SELECT 1 FROM ((SELECT 1) AS a JOIN (SELECT 1) AS b)"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {}
         self.assertEqual(result, expected)
 
@@ -711,7 +710,7 @@ class TestSqlGlot(TestCase):
             "collate": "utf8_bin",
             "columns": {"name": "a", "type": {"int": {}}},
             "comment": {"literal": "x"},
-            "default character set": "utf8",
+            "default_character_set": "utf8",
             "engine": "InnoDB",
             "name": "z",
         }}
@@ -726,7 +725,7 @@ class TestSqlGlot(TestCase):
             "columns": {"default": {"null": {}}, "name": "a", "type": {"int": {}}},
             "comment": {"literal": "x"},
             "constraint": {"primary_key": {"columns": "a"}},
-            "default character set": "utf8",
+            "default_character_set": "utf8",
             "engine": "InnoDB",
             "name": "z",
         }}

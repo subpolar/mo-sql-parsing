@@ -43,8 +43,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_select_one_column(self):
-        with Debugger():
-            result = parse("Select A from dual")
+        result = parse("Select A from dual")
         expected = {"select": {"value": "A"}, "from": "dual"}
         self.assertEqual(result, expected)
 
