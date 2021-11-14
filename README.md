@@ -8,6 +8,8 @@ Parse SQL into JSON parse trees so we can translate it for non-sql datastores!
 |master      | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing) |
 |dev         | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=dev)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing)    |
 
+[See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)
+
 
 ## Problem Statement
 
@@ -151,17 +153,23 @@ for select in listwrap(parsed_result.get('select')):
 
 ## Version Changes
 
-### Version 8
 
-* Version 8 brings flatter `create table` structures.  
-    The `option` list in column definition has been flattened:<br>
+
+### Version 8
+ 
+*November 2021*
+
+* flatter `CREATE TABLE` structures. The `option` list in column definition has been flattened:<br>
     **Old column format**
     
         {"create table": {
             "columns": {
                 "name": "name",
                 "type": {"decimal": [2, 3]},
-                "option": "not null",
+                "option": [
+                    "not null",
+                    "check": {"lt": [{"length": "name"}, 10]}
+                ]
             }
         }}
         
@@ -171,7 +179,41 @@ for select in listwrap(parsed_result.get('select')):
             "columns": {
                 "name": "name", 
                 "type": {"decimal": [2, 3]}
-                "nullable": False, 
+                "nullable": False,
+                "check": {"lt": [{"length": "name"}, 10]} 
             }
         }}
-* Added basic DML (`insert`/`update`/`delete`)              
+* Added basic DML (`INSERT`/`UPDATE`/`DELETE`)              
+
+### Version 7 
+
+*October 2021*
+
+* changed error reporting; still terrible
+* upgraded mo-parsing library which forced version change
+
+### Version 6 
+
+*October 2021*
+
+* fixed `SELECT DISTINCT` parsing
+* added `DISTINCT ON` parsing
+
+### Version 5 
+
+*August 2021*
+
+* remove inline module `mo-parsing`
+* support `CREATE TABLE`, add SQL "flavours" emit `{null:{}}` for None
+
+### Version 4
+
+*November 2021*
+
+* changed parse result of `SELECT DISTINCT`
+* simpler `ORDER BY` clause in window functions
+
+
+
+
+
