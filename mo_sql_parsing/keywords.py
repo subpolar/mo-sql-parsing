@@ -118,26 +118,25 @@ LATERAL = keyword("lateral")
 VIEW = keyword("view")
 
 # COMPOUND KEYWORDS
+
+
+joins = (
+    (
+        Optional(CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER)))
+        + JOIN
+        + Optional(LATERAL)
+    )
+    | LATERAL + VIEW + Optional(OUTER)
+) / (lambda tokens: " ".join(tokens).lower())
+
+
 CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
-CROSS_JOIN = (CROSS + JOIN).set_parser_name("cross join")
-FULL_JOIN = (FULL + JOIN).set_parser_name("full join")
-FULL_OUTER_JOIN = (FULL + OUTER + JOIN).set_parser_name("full outer join")
-GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
-INNER_JOIN = (INNER + JOIN).set_parser_name("inner join")
-LATERAL_VIEW_OUTER = (LATERAL + VIEW + OUTER).set_parser_name("lateral_view_outer")
-LATERAL_VIEW = (LATERAL + VIEW).set_parser_name("lateral_view")
-LEFT_JOIN = (LEFT + JOIN).set_parser_name("left join")
-LEFT_OUTER_JOIN = (LEFT + OUTER + JOIN).set_parser_name("left outer join")
-LEFT_INNER_JOIN = (LEFT + INNER + JOIN).set_parser_name("left inner join")
-ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
-OUTER_JOIN = (OUTER + JOIN).set_parser_name("outer join")
-PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
-RIGHT_JOIN = (RIGHT + JOIN).set_parser_name("right join")
-RIGHT_OUTER_JOIN = (RIGHT + OUTER + JOIN).set_parser_name("right outer join")
-RIGHT_INNER_JOIN = (RIGHT + INNER + JOIN).set_parser_name("right inner join")
-SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
+SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
+PARTITION_BY = Group(PARTITION + BY).set_parser_name("partition by")
+GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
+ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
 
 # COMPOUND OPERATORS
 AT_TIME_ZONE = Group(keyword("at") + keyword("time") + keyword("zone"))
@@ -164,7 +163,6 @@ RESERVED = MatchFirst([
     COLLATE,
     CONSTRAINT,
     CREATE,
-    CROSS_JOIN,
     CROSS,
     DESC,
     DISTINCT,

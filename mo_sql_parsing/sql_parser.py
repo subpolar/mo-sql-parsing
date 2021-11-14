@@ -236,22 +236,7 @@ def parser(literal_string, ident):
         table_source = Forward()
 
         join = (
-            Group(
-                CROSS_JOIN
-                | FULL_JOIN
-                | FULL_OUTER_JOIN
-                | OUTER_JOIN
-                | INNER_JOIN
-                | JOIN
-                | LEFT_JOIN
-                | LEFT_OUTER_JOIN
-                | LEFT_INNER_JOIN
-                | RIGHT_JOIN
-                | RIGHT_OUTER_JOIN
-                | RIGHT_INNER_JOIN
-                | LATERAL_VIEW_OUTER
-                | LATERAL_VIEW
-            )("op")
+            Group(joins)("op")
             + table_source("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
         ) / to_join_call

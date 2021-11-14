@@ -180,3 +180,45 @@ class TestPostgres(TestCase):
             },
         }}
         self.assertEqual(result, expected)
+
+    def test_lateral_join1(self):
+        sql = """SELECT * 
+            FROM departments AS d, 
+            LATERAL (SELECT * FROM employees) AS iv2
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "d", "value": "departments"},
+                {
+                    "name": "iv2",
+                    "value": {"lateral": {"from": "employees", "select": "*"}},
+                },
+            ],
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_lateral_join2(self):
+        sql = """SELECT * 
+            FROM departments AS d
+            JOIN LATERAL (SELECT up_seconds / cal_seconds AS up_pct) t3 ON true
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "d", "value": "departments"},
+                {
+                    "join lateral": {
+                        "name": "t3",
+                        "value": {"select": {
+                            "name": "up_pct",
+                            "value": {"div": ["up_seconds", "cal_seconds"]},
+                        }},
+                    },
+                    "on": True,
+                },
+            ],
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
