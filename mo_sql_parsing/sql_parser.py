@@ -376,12 +376,7 @@ def parser(literal_string, ident):
             (keyword("cascade") | keyword("set null") | keyword("set default")),
         )
 
-        column_type << (
-            struct_type
-            | array_type
-            | Group(ident("op") + Optional(LB + delimited_list(int_num)("params") + RB))
-            / to_json_call
-        )
+        column_type << (struct_type | array_type | known_types)
 
         column_def_references = assign(
             "references",
@@ -409,12 +404,12 @@ def parser(literal_string, ident):
 
         column_definition << Group(
             var_name("name") / (lambda t: t[0].lower())
-            + column_type("type")
+            + (column_type | var_name)("type")
             + column_options
         ).set_parser_name("column_definition")
 
         # MySQL's index_type := Using + ( "BTREE" | "HASH" )
-        index_type = Optional(USING + ident("index_type"))
+        index_type = Optional(assign("using", ident("index_type")))
 
         index_column_names = LB + delimited_list(var_name("columns")) + RB
 
@@ -430,16 +425,9 @@ def parser(literal_string, ident):
         table_constraint_definition = Optional(CONSTRAINT + var_name("name")) + (
             assign("primary key", index_type + index_column_names + index_options)
             | (
-                UNIQUE
+                Optional(flag("unique"))
                 + Optional(INDEX | KEY)
-                + Optional(var_name("index_name"))
-                + index_type
-                + index_column_names
-                + index_options
-            )("unique")
-            | (
-                (INDEX | KEY)
-                + Optional(var_name("index_name"))
+                + Optional(var_name("name"))
                 + index_type
                 + index_column_names
                 + index_options
@@ -481,6 +469,20 @@ def parser(literal_string, ident):
             + query("query")
         )("create view")
 
+        #  CREATE INDEX a ON u USING btree (e);
+        create_index = (
+            keyword("create index")
+            + Optional(keyword("or") + flag("replace"))
+            (INDEX | KEY)
+            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + var_name("name")
+            + ON
+            + var_name("table")
+            + index_type
+            + index_column_names
+            + index_options
+        )("create index")
+
         cache_options = Optional((
             keyword("options").suppress()
             + LB
@@ -509,6 +511,10 @@ def parser(literal_string, ident):
             keyword("drop view") + Optional(flag("if exists")) + var_name("view")
         )("drop")
 
+        drop_index = (
+            keyword("drop index") + Optional(flag("if exists")) + var_name("index")
+        )("drop")
+
         insert = (
             keyword("insert")("op")
             + (flag("overwrite") | keyword("into").suppress())
@@ -535,6 +541,6 @@ def parser(literal_string, ident):
         return (
             query
             | (insert | update | delete)
-            | (create_table | create_view | create_cache)
-            | (drop_table | drop_view)
+            | (create_table | create_view | create_cache | create_index)
+            | (drop_table | drop_view | drop_index)
         ).finalize()

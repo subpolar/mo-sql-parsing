@@ -38,7 +38,7 @@ null_locations = []
 def keyword(keywords):
     return And([
         Keyword(k, caseless=True) for k in keywords.split(" ")
-    ]).set_parser_name(keywords)
+    ]).set_parser_name(keywords) / (lambda: keywords.replace(" ", "_"))
 
 
 def flag(keywords):

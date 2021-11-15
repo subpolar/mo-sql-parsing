@@ -130,7 +130,6 @@ joins = (
 ) / (lambda tokens: " ".join(tokens).lower())
 
 
-CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
@@ -395,21 +394,23 @@ FLOAT64 = Group(keyword("float64")("op")) / to_json_call
 FLOAT = Group(keyword("float")("op")) / to_json_call
 GEOMETRY = Group(keyword("geometry")("op")) / to_json_call
 INTEGER = Group(keyword("integer")("op")) / to_json_call
-INT = Group(keyword("int")("op")) / to_json_call
+INT = (keyword("int")("op") + _size) / to_json_call
 INT32 = Group(keyword("int32")("op")) / to_json_call
 INT64 = Group(keyword("int64")("op")) / to_json_call
 REAL = Group(keyword("real")("op")) / to_json_call
 TEXT = Group(keyword("text")("op")) / to_json_call
 SMALLINT = Group(keyword("smallint")("op")) / to_json_call
 STRING = Group(keyword("string")("op")) / to_json_call
-STRUCT = Group(keyword("struct")("op")) / to_json_call
 
 BLOB = (keyword("blob")("op") + _size) / to_json_call
 BYTES = (keyword("bytes")("op") + _size) / to_json_call
 CHAR = (keyword("char")("op") + _size) / to_json_call
+NCHAR = (keyword("nchar")("op") + _size) / to_json_call
 VARCHAR = (keyword("varchar")("op") + _size) / to_json_call
+VARCHAR2 = (keyword("varchar2")("op") + _size) / to_json_call
 VARBINARY = (keyword("varbinary")("op") + _size) / to_json_call
 TINYINT = (keyword("tinyint")("op") + _size) / to_json_call
+UUID = Group(keyword("uuid")("op"))/to_json_call
 
 DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
 DOUBLE_PRECISION = (
@@ -417,6 +418,7 @@ DOUBLE_PRECISION = (
     / to_json_call
 )
 NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
+NUMBER = (keyword("number")("op") + _sizes) / to_json_call
 
 MAP_TYPE = (
     keyword("map")("op") + LB + delimited_list(known_types("params")) + RB
@@ -425,8 +427,10 @@ ARRAY_TYPE = (keyword("array")("op") + LB + known_types("params") + RB) / to_jso
 
 DATE = keyword("date")
 DATETIME = keyword("datetime")
+DATETIME_W_TIMEZONE = keyword("datetime with time zone")
 TIME = keyword("time")
 TIMESTAMP = keyword("timestamp")
+TIMESTAMP_W_TIMEZONE = keyword("timestamp with time zone")
 TIMESTAMPTZ = keyword("timestamptz")
 TIMETZ = keyword("timetz")
 
@@ -437,8 +441,10 @@ _format = Optional((ansi_string | ansi_ident)("params"))
 
 DATE_TYPE = (DATE("op") + _format) / to_json_call
 DATETIME_TYPE = (DATETIME("op") + _format) / to_json_call
+DATETIME_W_TIMEZONE_TYPE = (DATETIME_W_TIMEZONE("op") + _format) / to_json_call
 TIME_TYPE = (TIME("op") + _format) / to_json_call
 TIMESTAMP_TYPE = (TIMESTAMP("op") + _format) / to_json_call
+TIMESTAMP_W_TIMEZONE_TYPE = (TIMESTAMP_W_TIMEZONE("op") + _format) / to_json_call
 TIMESTAMPTZ_TYPE = (TIMESTAMPTZ("op") + _format) / to_json_call
 TIMETZ_TYPE = (TIMETZ("op") + _format) / to_json_call
 
@@ -451,6 +457,7 @@ known_types << MatchFirst([
     BYTES,
     CHAR,
     DATE_TYPE,
+    DATETIME_W_TIMEZONE_TYPE,
     DATETIME_TYPE,
     DECIMAL,
     DOUBLE_PRECISION,
@@ -463,19 +470,23 @@ known_types << MatchFirst([
     INT,
     INT32,
     INT64,
+    NCHAR,
+    NUMBER,
     NUMERIC,
     REAL,
     TEXT,
     SMALLINT,
     STRING,
-    STRUCT,
     TIME_TYPE,
+    TIMESTAMP_W_TIMEZONE_TYPE,
     TIMESTAMP_TYPE,
     TIMESTAMPTZ_TYPE,
     TIMETZ_TYPE,
-    VARCHAR,
-    VARBINARY,
     TINYINT,
+    UUID,
+    VARCHAR,
+    VARCHAR2,
+    VARBINARY,
 ])
 
 CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")

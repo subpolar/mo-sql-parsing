@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 
@@ -43,7 +45,7 @@ class TestCreateSimple(TestCase):
         expected = {"create table": {
             "name": "customers",
             "columns": [
-                {"name": "id", "type": {"name": {}}},
+                {"name": "id", "type": "name"},
                 {"name": "name", "type": {"varchar": {}}},
                 {"name": "salary", "type": {"decimal": {}}},
             ],
@@ -389,9 +391,10 @@ class TestTableConstraint(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": {"name": "name", "type": {"varchar": {}}},
-            "constraint": {"unique": {
-                "index_name": "unique_student",
+            "constraint": {"index": {
+                "name": "unique_student",
                 "columns": "name",
+                "unique": True,
             }},
         }}
         self.assertEqual(result, expected)
@@ -407,9 +410,10 @@ class TestTableConstraint(TestCase):
                 {"name": "name", "type": {"varchar": {}}, "nullable": False},
                 {"name": "id", "type": {"varchar": {}}, "nullable": False},
             ],
-            "constraint": {"unique": {
-                "index_name": "unique_student",
+            "constraint": {"index": {
+                "name": "unique_student",
                 "columns": ["name", "id"],
+                "unique": True,
             }},
         }}
         self.assertEqual(result, expected)
@@ -647,5 +651,55 @@ class TestCreateForBigQuery(TestCase):
                     {"name": "is_valid", "type": {"array": {"boolean": {}}}},
                 ]},
             },
+        }}
+        self.assertEqual(result, expected)
+
+    def test_timestamp_column(self):
+        sql = """        
+            CREATE TABLE u (
+                id UUID DEFAULT uuid_generate_v4(),
+                email VARCHAR(256) UNIQUE NOT NULL,
+                is_boolean BOOLEAN DEFAULT False,
+                t TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
+            )
+        """
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": [
+                {
+                    "default": {"uuid_generate_v4": {}},
+                    "name": "id",
+                    "type": {"uuid": {}},
+                },
+                {
+                    "name": "email",
+                    "nullable": False,
+                    "type": {"varchar": 256},
+                    "unique": True,
+                },
+                {"default": False, "name": "is_boolean", "type": {"boolean": {}}},
+                {
+                    "default": "CURRENT_TIMESTAMP",
+                    "name": "t",
+                    "type": {"timestamp_with_time_zone": {}},
+                },
+            ],
+            "constraint": {"primary_key": {"columns": "id"}},
+            "name": "u",
+        }}
+
+        self.assertEqual(result, expected)
+
+    def test_create_index(self):
+        sql = """
+            CREATE INDEX a ON u USING btree (e);
+        """
+        result = parse(sql)
+        expected = {"create index": {
+            "columns": "e",
+            "name": "a",
+            "table": "u",
+            "using": "btree",
         }}
         self.assertEqual(result, expected)
