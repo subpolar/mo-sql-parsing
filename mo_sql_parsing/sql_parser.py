@@ -345,7 +345,7 @@ def parser(literal_string, ident):
                 | int_num("rows") + keyword("rows")
                 | ts_bytes
             )
-            + RB,
+            + RB
         )
 
         table_source << Group(
@@ -357,12 +357,12 @@ def parser(literal_string, ident):
 
         ordered_sql = (
             (
-                unordered_sql
+                (unordered_sql | (LB + query + RB))
                 + ZeroOrMore(
                     Group(
                         (UNION | INTERSECT | EXCEPT | MINUS) + Optional(ALL | DISTINCT)
                     )("op")
-                    + unordered_sql
+                    + (unordered_sql | (LB + query + RB))
                 )
             )("union")
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))

@@ -72,17 +72,13 @@ class TestNull(TestCase):
     def test_null_parameter3(self):
         sql = "select DECODE(NULL,a)"
         result = parse(sql)
-        #  see to_json_call. when param is null, set {}.
         expected = {"select": {"value": {"decode": [{"null": {}}, "a"]}}}
-        # expected = {"select": {"value": {"decode": Null}}}
         self.assertEqual(result, expected)
 
     def test_null_parameter4(self):
         sql = "select DECODE(a,NULL)"
         result = parse(sql)
-        #  see to_json_call. when param is null, set {}.
         expected = {"select": {"value": {"decode": ["a", {"null": {}}]}}}
-        # expected = {"select": {"value": {"decode": Null}}}
         self.assertEqual(result, expected)
 
     def test_issue18(self):

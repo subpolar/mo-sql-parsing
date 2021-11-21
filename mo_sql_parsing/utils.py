@@ -442,9 +442,9 @@ def to_select_call(tokens):
             output = ParseResults(tokens.type, tokens.start, tokens.end, expr.tokens, tokens.failures)
             output['name'] = tokens['name']
             return output
-    except Exception as cause:
-        print("temp")
+    except Exception:
         pass
+
 
 def to_union_call(tokens):
     unions = tokens["union"]
@@ -476,9 +476,13 @@ def to_union_call(tokens):
 
 def to_query(tokens):
     output = tokens["query"][0]
-    output["with"] = tokens["with"]
-    output["with_recursive"] = tokens["with_recursive"]
-    return output
+    try:
+        output["with"] = tokens["with"]
+        output["with_recursive"] = tokens["with_recursive"]
+
+        return output
+    except Exception as cause:
+        return
 
 
 def to_table(tokens):

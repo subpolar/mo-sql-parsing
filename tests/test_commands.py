@@ -76,11 +76,11 @@ class TestCreateSimple(TestCase):
         expected = {"create table": {
             "name": "persons",
             "columns": [
-                {"name": "personid", "type": {"int": {}}},
-                {"name": "lastname", "type": {"varchar": {}}},
-                {"name": "firstname", "type": {"varchar": {}}},
-                {"name": "address", "type": {"varchar": {}}},
-                {"name": "city", "type": {"varchar": {}}},
+                {"name": "PersonID", "type": {"int": {}}},
+                {"name": "LastName", "type": {"varchar": {}}},
+                {"name": "FirstName", "type": {"varchar": {}}},
+                {"name": "Address", "type": {"varchar": {}}},
+                {"name": "City", "type": {"varchar": {}}},
             ],
         }}
         self.assertEqual(result, expected)
@@ -104,11 +104,11 @@ class TestCreateSimple(TestCase):
         expected = {"create table": {
             "name": "persons",
             "columns": [
-                {"name": "personid", "type": {"int": 2}},
-                {"name": "lastname", "type": {"varchar": 10}},
-                {"name": "firstname", "type": {"varchar": 10}},
-                {"name": "address", "type": {"varchar": 50}},
-                {"name": "city", "type": {"varchar": 10}},
+                {"name": "PersonID", "type": {"int": 2}},
+                {"name": "LastName", "type": {"varchar": 10}},
+                {"name": "FirstName", "type": {"varchar": 10}},
+                {"name": "Address", "type": {"varchar": 50}},
+                {"name": "City", "type": {"varchar": 10}},
             ],
         }}
         self.assertEqual(result, expected)

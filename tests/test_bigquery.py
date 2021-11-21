@@ -8,14 +8,13 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import TestCase
-
 from mo_parsing.debug import Debugger
+from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse_bigquery as parse
 
 
-class TestBigQuery(TestCase):
+class TestBigQuery(FuzzyTestCase):
     def test_with_expression(self):
         # https://github.com/pyparsing/pyparsing/issues/291
         sql = (
@@ -245,7 +244,7 @@ class TestBigQuery(TestCase):
                 ]}},
                 {"value": {"create_struct": [1, 3]}},
                 {"value": {"cast": [
-                    {"create_struct": [2, "foo"]},
+                    {"create_struct": [2, {"literal": "foo"}]},
                     {"struct": [{"int64": {}}, {"string": {}}]},
                 ]}},
             ],
