@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_sql_parsing import parse
+from mo_sql_parsing import parse_sqlserver as parse
 
 
 class TestSqlServer(TestCase):

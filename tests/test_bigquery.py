@@ -8,13 +8,15 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from unittest import TestCase
+
 from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse_bigquery as parse
 
 
-class TestBigQuery(FuzzyTestCase):
+class TestBigQuery(TestCase):
     def test_with_expression(self):
         # https://github.com/pyparsing/pyparsing/issues/291
         sql = (
@@ -38,46 +40,52 @@ class TestBigQuery(FuzzyTestCase):
     def testA(self):
         sql = """SELECT FIRST_VALUE(finish_time) OVER w1 AS fastest_time"""
         result = parse(sql)
-        expected = {'select': {'name': 'fastest_time',
-            'over': 'w1',
-            'value': {'first_value': 'finish_time'}}}
+        expected = {"select": {
+            "name": "fastest_time",
+            "over": "w1",
+            "value": {"first_value": "finish_time"},
+        }}
         self.assertEqual(result, expected)
 
     def testB(self):
         sql = """
-            WITH finishers AS
-             (SELECT 'Sophia Liu' as name,
-              TIMESTAMP '2016-10-18 2:51:45' as finish_time,
-              'F30-34' as division
-              UNION ALL SELECT 'Lisa Stelzner', TIMESTAMP '2016-10-18 2:54:11', 'F35-39'
-              UNION ALL SELECT 'Nikki Leith', TIMESTAMP '2016-10-18 2:59:01', 'F30-34'
-              UNION ALL SELECT 'Lauren Matthews', TIMESTAMP '2016-10-18 3:01:17', 'F35-39'
-              UNION ALL SELECT 'Desiree Berry', TIMESTAMP '2016-10-18 3:05:42', 'F35-39'
-              UNION ALL SELECT 'Suzy Slane', TIMESTAMP '2016-10-18 3:06:24', 'F35-39'
-              UNION ALL SELECT 'Jen Edwards', TIMESTAMP '2016-10-18 3:06:36', 'F30-34'
-              UNION ALL SELECT 'Meghan Lederer', TIMESTAMP '2016-10-18 3:07:41', 'F30-34'
-              UNION ALL SELECT 'Carly Forte', TIMESTAMP '2016-10-18 3:08:58', 'F25-29'
-              UNION ALL SELECT 'Lauren Reasoner', TIMESTAMP '2016-10-18 3:10:14', 'F30-34')
-            SELECT name,
-              FORMAT_TIMESTAMP('%X', finish_time) AS finish_time,
-              division,
-              FORMAT_TIMESTAMP('%X', fastest_time) AS fastest_time,
-              FORMAT_TIMESTAMP('%X', second_fastest) AS second_fastest
-            FROM (
-              SELECT name,
-              finish_time,
-              division,finishers,
-              FIRST_VALUE(finish_time)
-                OVER w1 AS fastest_time,
-              NTH_VALUE(finish_time, 2)
-                OVER w1 as second_fastest
-              FROM finishers
-              WINDOW w1 AS (
-                PARTITION BY division ORDER BY finish_time ASC
-                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))
-            """
+          SELECT 
+            name,
+            FIRST_VALUE(finish_time) OVER w1 AS fastest_time,
+            NTH_VALUE(finish_time, 2) OVER w1 as second_fastest
+          FROM finishers
+          WINDOW w1 AS (
+            PARTITION BY division ORDER BY finish_time ASC
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+          )
+        """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                "finishers",
+                {"window": {
+                    "name": "w1",
+                    "value": {
+                        "orderby": {"sort": "asc", "value": "finish_time"},
+                        "partitionby": "division",
+                        "range": {},
+                    },
+                }},
+            ],
+            "select": [
+                {"value": "name"},
+                {
+                    "name": "fastest_time",
+                    "over": "w1",
+                    "value": {"first_value": "finish_time"},
+                },
+                {
+                    "name": "second_fastest",
+                    "over": "w1",
+                    "value": {"nth_value": ["finish_time", 2]},
+                },
+            ],
+        }
         self.assertEqual(result, expected)
 
     def testF(self):
@@ -98,11 +106,23 @@ class TestBigQuery(FuzzyTestCase):
             },
             "limit": 1,
             "select": [
-                {"name": "min", "value": {"percentile_cont": ["x", 0]}},
-                {"name": "percentile1", "value": {"percentile_cont": ["x", 0.01]}},
-                {"name": "median", "value": {"percentile_cont": ["x", 0.5]}},
-                {"name": "percentile90", "value": {"percentile_cont": ["x", 0.9]}},
-                {"name": "max", "value": {"percentile_cont": ["x", 1]}},
+                {"name": "min", "over": {}, "value": {"percentile_cont": ["x", 0]}},
+                {
+                    "name": "percentile1",
+                    "over": {},
+                    "value": {"percentile_cont": ["x", 0.01]},
+                },
+                {
+                    "name": "median",
+                    "over": {},
+                    "value": {"percentile_cont": ["x", 0.5]},
+                },
+                {
+                    "name": "percentile90",
+                    "over": {},
+                    "value": {"percentile_cont": ["x", 0.9]},
+                },
+                {"name": "max", "over": {}, "value": {"percentile_cont": ["x", 1]}},
             ],
         }
         self.assertEqual(result, expected)
@@ -117,108 +137,117 @@ class TestBigQuery(FuzzyTestCase):
                FROM UNNEST(['c', NULL, 'b', 'a']) AS x
                """
         result = parse(sql)
-        expected = {'from': {'name': 'x',
-                             'value': {'unnest': {'create_array': [{'literal': 'c'},
-                                                                   {'null': {}},
-                                                                   {'literal': 'b'},
-                                                                   {'literal': 'a'}]}}},
-                    'select': [{'value': 'x'},
-                               {'name': 'min', 'value': {'percentile_disc': ['x', 0]}},
-                               {'name': 'median', 'value': {'percentile_disc': ['x', 0.5]}},
-                               {'name': 'max', 'value': {'percentile_disc': ['x', 1]}}]}
+        expected = {
+            "from": {
+                "name": "x",
+                "value": {"unnest": {"create_array": [
+                    {"literal": "c"},
+                    {"null": {}},
+                    {"literal": "b"},
+                    {"literal": "a"},
+                ]}},
+            },
+            "select": [
+                {"value": "x"},
+                {"name": "min", "over": {}, "value": {"percentile_disc": ["x", 0]}},
+                {
+                    "name": "median",
+                    "over": {},
+                    "value": {"percentile_disc": ["x", 0.5]},
+                },
+                {"name": "max", "over": {}, "value": {"percentile_disc": ["x", 1]}},
+            ],
+        }
+
         self.assertEqual(result, expected)
 
     def testL(self):
         sql = """SELECT PERCENTILE_DISC(x, 0) OVER() AS min"""
         result = parse(sql)
-        expected = {'select': {'name': 'min', 'value': {'percentile_disc': ['x', 0]}, "over": {}}}
+        expected = {"select": {
+            "name": "min",
+            "value": {"percentile_disc": ["x", 0]},
+            "over": {},
+        }}
         self.assertEqual(result, expected)
 
     def testI(self):
         sql = """
             WITH date_hour_slots AS (
              SELECT
-               [
+                [
                     STRUCT(
                         " 00:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
+                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range
+                    ),
                     STRUCT(
                         " 01:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 02:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 03:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 04:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 05:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 06:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 07:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 08:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY ) as dt_range),
-                    STRUCT(
-                        " 09:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01', current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 10:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 11:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 12:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 13:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 14:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 15:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 16:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 17:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 18:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 19:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 20:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 21:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 22:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range),
-                    STRUCT(
-                        " 23:00:00 UTC" as hrs,
-                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range)
-                ]
-                AS full_timestamps)
-                SELECT
-              dt AS dates, hrs, CAST(CONCAT( CAST(dt as STRING), CAST(hrs as STRING)) as TIMESTAMP) as timestamp_value
-              FROM `date_hour_slots`, date_hour_slots.full_timestamps LEFT JOIN full_timestamps.dt_range as dt
+                        GENERATE_DATE_ARRAY('2016-01-01',current_date(), INTERVAL 1 DAY) as dt_range
+                    )
+                ] AS full_timestamps
+            )
+            SELECT
+                dt AS dates, 
+                hrs, 
+                CAST(CONCAT( CAST(dt as STRING), CAST(hrs as STRING)) as TIMESTAMP) as timestamp_value
+            FROM 
+                `date_hour_slots`, 
+                date_hour_slots.full_timestamps 
+            LEFT JOIN 
+                full_timestamps.dt_range as dt
             """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": [
+                "date_hour_slots",
+                "date_hour_slots.full_timestamps",
+                {"left join": {"name": "dt", "value": "full_timestamps.dt_range"}},
+            ],
+            "select": [
+                {"name": "dates", "value": "dt"},
+                {"value": "hrs"},
+                {
+                    "name": "timestamp_value",
+                    "value": {"cast": [
+                        {"concat": [
+                            {"cast": ["dt", {"string": {}}]},
+                            {"cast": ["hrs", {"string": {}}]},
+                        ]},
+                        {"timestamp": {}},
+                    ]},
+                },
+            ],
+            "with": {
+                "name": "date_hour_slots",
+                "value": {"select": {
+                    "name": "full_timestamps",
+                    "value": {"create_array": [
+                        {"create_struct": [
+                            {"name": "hrs", "value": {"literal": " 00:00:00 UTC"}},
+                            {
+                                "name": "dt_range",
+                                "value": {"generate_date_array": [
+                                    {"literal": "2016-01-01"},
+                                    {"current_date": {}},
+                                    {"interval": [1, "day"]},
+                                ]},
+                            },
+                        ]},
+                        {"create_struct": [
+                            {"name": "hrs", "value": {"literal": " 01:00:00 UTC"}},
+                            {
+                                "name": "dt_range",
+                                "value": {"generate_date_array": [
+                                    {"literal": "2016-01-01"},
+                                    {"current_date": {}},
+                                    {"interval": [1, "day"]},
+                                ]},
+                            },
+                        ]},
+                    ]},
+                }},
+            },
+        }
         self.assertEqual(result, expected)
 
     def testH(self):
@@ -338,18 +367,39 @@ class TestBigQuery(FuzzyTestCase):
             SELECT h FROM a
             """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "from": "a",
+            "select": {"value": "h"},
+            "with": {
+                "name": "a",
+                "value": {"union_all": [
+                    {"from": "c", "select": {"value": "b"}},
+                    {
+                        "from": "d",
+                        "select": {"value": "g"},
+                        "with": {
+                            "name": "d",
+                            "value": {"from": "f", "select": {"value": "e"}},
+                        },
+                    },
+                ]},
+            },
+        }
         self.assertEqual(result, expected)
-
-    def testS(self):
-        sql = """
-            SELECT * FROM 'a'.b.`c`
-            """
-        with self.assertRaises("""'a'.b.`c`" (at char 27), (line:2, col:27)"""):
-            parse(sql)
 
     def testU(self):
         sql = """SELECT  * FROM `a`.b.`c`"""
         result = parse(sql)
-        expected = {'from': 'a.b.c', 'select': '*'}
+        expected = {"from": "a.b.c", "select": "*"}
         self.assertEqual(result, expected)
+
+
+class TestBigQuery2(FuzzyTestCase):
+    def testS(self):
+        sql = """
+            SELECT * FROM 'a'.b.`c`
+            """
+        with FuzzyTestCase.assertRaises(
+            """'a'.b.`c`" (at char 27), (line:2, col:27)"""
+        ):
+            parse(sql)

@@ -425,7 +425,7 @@ def to_map(tokens):
 
 def to_struct(tokens):
     types = list(tokens["types"])
-    args = list(tokens["args"])
+    args = list(d for a in tokens["args"] for d in [a if a['name'] else a['value']])
 
     output = Call("create_struct", args, {})
     if types:
@@ -443,12 +443,14 @@ def to_select_call(tokens):
             output['name'] = tokens['name']
             return output
     except Exception:
-        pass
+        return
 
 
 def to_union_call(tokens):
     unions = tokens["union"]
-    if unions.type.parser_name == "unordered sql":
+    if isinstance(unions, dict):
+        return unions
+    elif unions.type.parser_name == "unordered sql":
         output = {k: v for k, v in unions.items()}  # REMOVE THE Group()
     else:
         unions = list(unions)
@@ -541,4 +543,4 @@ mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / to_string
 # BASIC IDENTIFIERS
 ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / unquote
 mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / unquote
-sqlserver_ident = Regex(r"\[(\]\]|[^\] ,])*\]") / unquote  # EXCLUDE SPACE AND COMMA
+sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / unquote

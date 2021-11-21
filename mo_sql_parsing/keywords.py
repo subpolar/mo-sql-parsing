@@ -76,6 +76,7 @@ INDEX = keyword("index").suppress()
 REFERENCES = keyword("references").suppress()
 RECURSIVE = keyword("recursive").suppress()
 VALUES = keyword("values").suppress()
+WINDOW = keyword("window")
 
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
@@ -211,6 +212,7 @@ RESERVED = MatchFirst([
     USING,
     WHEN,
     WHERE,
+    WINDOW,
     WITH,
     WITHIN,
 ])

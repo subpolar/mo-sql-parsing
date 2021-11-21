@@ -16,12 +16,9 @@ from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
 
-def combined_parser():
+def common_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident
-        | mysql_backtick_ident
-        | sqlserver_ident
-        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        ansi_ident | mysql_backtick_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
@@ -40,7 +37,20 @@ def mysql_parser():
     return parser(mysql_string, mysql_ident)
 
 
-def parser(literal_string, ident):
+def sqlserver_parser():
+    combined_ident = Combine(delimited_list(
+        ansi_ident
+        | mysql_backtick_ident
+        | sqlserver_ident
+        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        separator=".",
+        combine=True,
+    )).set_parser_name("identifier")
+
+    return parser(ansi_string, combined_ident, sqlserver=True)
+
+
+def parser(literal_string, ident, sqlserver=False):
     with Whitespace() as engine:
         engine.add_ignore(Literal("--") + restOfLine)
         engine.add_ignore(Literal("#") + restOfLine)
@@ -141,27 +151,27 @@ def parser(literal_string, ident):
         ) / to_stack
 
         # ARRAY[foo],
-        # // ARRAY < STRING > [foo, bar], INVALID
+        # ARRAY < STRING > [foo, bar], INVALID
         # ARRAY < STRING > [foo, bar],
         create_array = (
-            Literal("[") + delimited_list(Group(expr))("args") + Literal("]")
-            | (
-                keyword("array")("op")
-                + Optional(
-                    Literal("<").suppress()
-                    + column_type("type")
-                    + Literal(">").suppress()
-                )
-                + (
-                    LB + delimited_list(Group(expr))("args") + RB
-                    | (
-                        Literal("[")
-                        + delimited_list(Group(expr))("args")
-                        + Literal("]")
-                    )
-                )
+            keyword("array")("op")
+            + Optional(
+                Literal("<").suppress() + column_type("type") + Literal(">").suppress()
             )
-        ) / to_array
+            + (
+                LB + delimited_list(Group(expr))("args") + RB
+                | (Literal("[") + delimited_list(Group(expr))("args") + Literal("]"))
+            )
+        )
+
+        if not sqlserver:
+            # SQL SERVER DOES NOT SUPPORT [] FOR ARRAY CONSTRUCTION (USED FOR IDENTITY)
+            create_array = (
+                Literal("[") + delimited_list(Group(expr))("args") + Literal("]")
+                | create_array
+            )
+
+        create_array = create_array / to_array
 
         create_map = (
             keyword("map")
@@ -180,7 +190,7 @@ def parser(literal_string, ident):
                 + Literal(">").suppress()
             )
             + LB
-            + delimited_list(expr("value") + alias)("args")
+            + delimited_list(Group((expr("value") + alias) / to_select_call))("args")
             + RB
         ).set_parser_name("create struct") / to_struct
 
@@ -242,6 +252,8 @@ def parser(literal_string, ident):
             DESC("sort") | ASC("sort")
         ) | expr("value").set_parser_name("sort2")
 
+        window_clause, over_clause = window(expr, var_name, sort_column)
+
         expr << (
             (
                 Literal("*")
@@ -264,7 +276,7 @@ def parser(literal_string, ident):
                     ],
                 )
             )("value").set_parser_name("expression")
-            + Optional(window(expr, var_name, sort_column))
+            + Optional(window_clause)
         ) / to_expression_call
 
         select_column = (
@@ -280,6 +292,10 @@ def parser(literal_string, ident):
             Group(joins)("op")
             + table_source("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
+            | (
+                Group(WINDOW)("op")
+                + Group(var_name("name") + AS + over_clause("value"))("join")
+            )
         ) / to_join_call
 
         selection = (
@@ -345,7 +361,7 @@ def parser(literal_string, ident):
                 | int_num("rows") + keyword("rows")
                 | ts_bytes
             )
-            + RB
+            + RB,
         )
 
         table_source << Group(
