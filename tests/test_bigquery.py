@@ -225,7 +225,7 @@ class TestBigQuery(TestCase):
     def testH(self):
         sql = """
             SELECT
-                [foo],
+                -- [foo],
                 ARRAY[foo],
                 -- ARRAY<int64, STRING>[foo, bar],  INVALID
                 ARRAY<STRING>[foo, bar],
@@ -239,14 +239,13 @@ class TestBigQuery(TestCase):
             "from": "T",
             "select": [
                 {"value": {"create_array": "foo"}},
-                {"value": {"create_array": "foo"}},
                 {"value": {"cast": [
                     {"create_array": ["foo", "bar"]},
                     {"array": {"string": {}}},
                 ]}},
-                {"value": {"struct": [1, 3]}},
+                {"value": {"create_struct": [1, 3]}},
                 {"value": {"cast": [
-                    {"struct": [2, "foo"]},
+                    {"create_struct": [2, "foo"]},
                     {"struct": [{"int64": {}}, {"string": {}}]},
                 ]}},
             ],
@@ -347,6 +346,11 @@ class TestBigQuery(TestCase):
         sql = """
             SELECT * FROM 'a'.b.`c`
             """
+        with self.assertRaises("""'a'.b.`c`" (at char 27), (line:2, col:27)"""):
+            parse(sql)
+
+    def testU(self):
+        sql = """SELECT  * FROM `a`.b.`c`"""
         result = parse(sql)
-        expected = {}
+        expected = {'from': 'a.b.c', 'select': '*'}
         self.assertEqual(result, expected)

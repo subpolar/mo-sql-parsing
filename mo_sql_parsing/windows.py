@@ -89,23 +89,22 @@ def window(expr, var_name, sort_column):
         RANGE.suppress() + (between_expr | bound_expr)
     )
 
-    return (
-        # Optional((keyword("ignore nulls"))("ignore_nulls") / (lambda: True))
-        Optional((
-            WITHIN_GROUP
-            + LB
+    return Optional((
+        WITHIN_GROUP
+        + LB
+        + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
+        + RB
+    )("within")) + ((
+        OVER
+        + (
+            LB
+            + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
+            + Optional(row_clause("range"))
             + RB
-        )("within"))
-        + Optional((
-            OVER
-            + (
-                LB
-                + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
-                + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
-                + Optional(row_clause("range"))
-                + RB
-                | var_name
-            )/to_over
-        )("over"))
-    )
+            | var_name
+        )
+        / to_over
+    )(
+        "over"
+    ))

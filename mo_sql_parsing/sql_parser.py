@@ -18,7 +18,10 @@ from mo_sql_parsing.windows import window
 
 def combined_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        ansi_ident
+        | mysql_backtick_ident
+        | sqlserver_ident
+        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
@@ -29,7 +32,7 @@ def combined_parser():
 def mysql_parser():
     mysql_string = ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
         separator=".",
         combine=True,
     )).set_parser_name("mysql identifier")
@@ -138,7 +141,7 @@ def parser(literal_string, ident):
         ) / to_stack
 
         # ARRAY[foo],
-        # // ARRAY < int64, STRING > [foo, bar], INVALID
+        # // ARRAY < STRING > [foo, bar], INVALID
         # ARRAY < STRING > [foo, bar],
         create_array = (
             Literal("[") + delimited_list(Group(expr))("args") + Literal("]")
@@ -177,7 +180,7 @@ def parser(literal_string, ident):
                 + Literal(">").suppress()
             )
             + LB
-            + delimited_list(expr)("args")
+            + delimited_list(expr("value") + alias)("args")
             + RB
         ).set_parser_name("create struct") / to_struct
 
@@ -199,6 +202,7 @@ def parser(literal_string, ident):
         ).set_parser_name("call function") / to_json_call
 
         with NO_WHITESPACE:
+
             def scale(tokens):
                 return {"mul": [tokens[0], tokens[1]]}
 
@@ -238,34 +242,34 @@ def parser(literal_string, ident):
             DESC("sort") | ASC("sort")
         ) | expr("value").set_parser_name("sort2")
 
-        expr << ((
-            Literal("*")
-            | infix_notation(
-                compound,
-                [(
-                    Literal("[").suppress() + expr + Literal("]").suppress(),
-                    1,
-                    LEFT_ASSOC,
-                    to_offset,
-                )]
-                + [
-                    (
-                        o,
-                        1 if o in unary_ops else (3 if isinstance(o, tuple) else 2),
-                        unary_ops.get(o, LEFT_ASSOC),
-                        to_lambda if o is LAMBDA else to_json_operator,
-                    )
-                    for o in KNOWN_OPS
-                ],
-            ).set_parser_name("expression")
-        )) / to_expression_call
+        expr << (
+            (
+                Literal("*")
+                | infix_notation(
+                    compound,
+                    [(
+                        Literal("[").suppress() + expr + Literal("]").suppress(),
+                        1,
+                        LEFT_ASSOC,
+                        to_offset,
+                    )]
+                    + [
+                        (
+                            o,
+                            1 if o in unary_ops else (3 if isinstance(o, tuple) else 2),
+                            unary_ops.get(o, LEFT_ASSOC),
+                            to_lambda if o is LAMBDA else to_json_operator,
+                        )
+                        for o in KNOWN_OPS
+                    ],
+                )
+            )("value").set_parser_name("expression")
+            + Optional(window(expr, var_name, sort_column))
+        ) / to_expression_call
 
         select_column = (
             Group(
-                expr("value")
-                + Optional(window(expr, var_name, sort_column))
-                + alias
-                | Literal("*")("value")
+                expr("value") + alias | Literal("*")("value")
             ).set_parser_name("column")
             / to_select_call
         )

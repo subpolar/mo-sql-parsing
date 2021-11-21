@@ -193,7 +193,7 @@ def get_column_type(expr, var_name, literal_string):
     ).set_parser_name("column_options")
 
     column_definition << Group(
-        var_name("name") / (lambda t: t[0].lower())
+        var_name("name")
         + (column_type | var_name)("type")
         + column_options
     ).set_parser_name("column_definition")

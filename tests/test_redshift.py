@@ -381,7 +381,7 @@ class TestRedshift(TestCase):
                     "partitionby": "venuestate",
                     "range": {},
                 },
-                "value": {"first_value": "venuename", "ignore_nulls": True},
+                "value": {"first_value": "venuename", "nulls": "ignore"},
             }},
         )
 

@@ -10,7 +10,7 @@
 import ast
 
 from mo_dots import is_data, is_null, Data, from_data, exists, is_missing
-from mo_future import text, number_types, binary_type
+from mo_future import text, number_types, binary_type, is_text
 from mo_imports import expect
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
@@ -343,23 +343,16 @@ def to_join_call(tokens):
 
 
 def to_expression_call(tokens):
-    return
-    # if set(tokens.keys()) & {"over", "within"}:
-    #     return
-    #
-    # expr = ParseResults(
-    #     tokens.type,
-    #     tokens.start,
-    #     tokens.end,
-    #     listwrap(tokens["value"]),
-    #     tokens.failures,
-    # )
-    #
-    # # offset = tokens["offset"]
-    # # if offset:
-    # #     return {"get": [expr, offset]}
-    #
-    # return expr
+    if set(tokens.keys()) & {"over", "within"}:
+        return
+
+    return ParseResults(
+        tokens.type,
+        tokens.start,
+        tokens.end,
+        listwrap(tokens["value"]),
+        tokens.failures,
+    )
 
 
 def to_over(tokens):
@@ -441,10 +434,17 @@ def to_struct(tokens):
 
 
 def to_select_call(tokens):
-    value = tokens["value"]
-    if value == "*":
-        return ["*"]
-
+    try:
+        expr = tokens['value']
+        if expr == "*":
+            return ["*"]
+        if expr['value']:
+            output = ParseResults(tokens.type, tokens.start, tokens.end, expr.tokens, tokens.failures)
+            output['name'] = tokens['name']
+            return output
+    except Exception as cause:
+        print("temp")
+        pass
 
 def to_union_call(tokens):
     unions = tokens["union"]
@@ -537,4 +537,4 @@ mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / to_string
 # BASIC IDENTIFIERS
 ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / unquote
 mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / unquote
-# sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / unquote
+sqlserver_ident = Regex(r"\[(\]\]|[^\] ,])*\]") / unquote  # EXCLUDE SPACE AND COMMA
