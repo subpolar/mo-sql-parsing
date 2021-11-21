@@ -68,3 +68,34 @@ class TestSqlServer(TestCase):
         sql = "SELECT TOP a(b) PERCENT"
         with self.assertRaises(Exception):
             parse(sql)  # MISSING ANY COLUMN
+
+    def test_issue143a(self):
+        sql = "Select [A] from dual"
+        result = parse(sql)
+        expected = {"select": {"value": "A"}, "from": "dual"}
+        self.assertEqual(result, expected)
+
+    def test_issue143b(self):
+        sql = "Select [A] from [dual]"
+        result = parse(sql)
+        expected = {"select": {"value": "A"}, "from": "dual"}
+        self.assertEqual(result, expected)
+
+    def test_issue143c(self):
+        sql = "Select [A] from dual [T1]"
+        result = parse(sql)
+        expected = {"select": {"value": "A"}, "from": {"value": "dual", "name": "T1"}}
+        self.assertEqual(result, expected)
+
+    def test_issue143d_quote(self):
+        sql = 'Select ["]'
+        result = parse(sql)
+        expected = {"select": {"value": '"'}}
+        self.assertEqual(result, expected)
+
+    def test_issue143e_close(self):
+        sql = "Select []]]"
+        result = parse(sql)
+        expected = {"select": {"value": "]"}}
+        self.assertEqual(result, expected)
+

@@ -122,7 +122,7 @@ class TestSqlGlot(TestCase):
         sql = """SELECT EXISTS(ARRAY(2, 3), (x) -> x % 2 = 0)"""
         result = parse(sql)
         expected = {"select": {"value": {"exists": [
-            {"array": [2, 3]},
+            {"create_array": [2, 3]},
             {"lambda": {"eq": [{"mod": ["x", 2]}, 0]}, "params": "x"},
         ]}}}
         self.assertEqual(result, expected)
@@ -477,7 +477,7 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "from": "x",
-            "select": {"value": {"get": [{"get": [{"array": {"array": 0}}, 0]}, 0]}},
+            "select": {"value": {"get": [{"get": [{"create_array": {"create_array": 0}}, 0]}, 0]}},
         }
         self.assertEqual(result, expected)
 
@@ -487,7 +487,7 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": "x",
             "select": {"value": {"get": [
-                {"create_map": [{"array": {"literal": "x"}}, {"array": 0}]},
+                {"create_map": [{"create_array": {"literal": "x"}}, {"create_array": 0}]},
                 {"literal": "x"},
             ]}},
         }

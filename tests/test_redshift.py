@@ -70,6 +70,7 @@ class TestRedshift(TestCase):
                 "select": {
                     "value": {"listagg": "sellerid"},
                     "within": {"orderby": {"value": "sellerid"}},
+                    "over": {}
                 },
             },
         )

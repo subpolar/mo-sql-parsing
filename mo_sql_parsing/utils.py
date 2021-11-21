@@ -7,16 +7,15 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from __future__ import absolute_import, division, unicode_literals
-
 import ast
 
-from mo_dots import is_data, is_null, Data, from_data
+from mo_dots import is_data, is_null, Data, from_data, exists, is_missing
 from mo_future import text, number_types, binary_type
+from mo_imports import expect
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
 
-unary_ops = None
+unary_ops = expect("unary_ops")
 
 
 class Call(object):
@@ -29,7 +28,7 @@ class Call(object):
 
 
 IDENT_CHAR = Regex("[@_$0-9A-Za-zÀ-ÖØ-öø-ƿ]").expr.parser_config.include
-FIRST_IDENT_CHAR = "".join(set(IDENT_CHAR) - set('0123456789'))
+FIRST_IDENT_CHAR = "".join(set(IDENT_CHAR) - set("0123456789"))
 SQL_NULL = Call("null", [], {})
 
 null_locations = []
@@ -48,8 +47,8 @@ def flag(keywords):
     return (keyword(keywords) / (lambda: True))(keywords.replace(" ", "_"))
 
 
-def assign(key : str, value : ParserElement):
-    return keyword(key).suppress()+value(key.replace(" ", "_"))
+def assign(key: str, value: ParserElement):
+    return keyword(key).suppress() + value(key.replace(" ", "_"))
 
 
 def simple_op(op, args, kwargs):
@@ -132,7 +131,7 @@ def _chunk(values, size):
 
 def to_lambda(tokens):
     params, op, expr = list(tokens)
-    return Call("lambda", [expr], {"params":list(params)})
+    return Call("lambda", [expr], {"params": list(params)})
 
 
 def to_json_operator(tokens):
@@ -281,7 +280,7 @@ def to_json_call(tokens):
     op = binary_ops.get(op, op)
 
     args = listwrap(tokens["params"])
-    kwargs = {k: v for k,v in tokens.items() if k not in ("op", "params")}
+    kwargs = {k: v for k, v in tokens.items() if k not in ("op", "params")}
 
     return ParseResults(
         tokens.type,
@@ -344,29 +343,33 @@ def to_join_call(tokens):
 
 
 def to_expression_call(tokens):
-    over = tokens["over"]
-    within = tokens["within"]
-    if over or within:
-        return
+    return
+    # if set(tokens.keys()) & {"over", "within"}:
+    #     return
+    #
+    # expr = ParseResults(
+    #     tokens.type,
+    #     tokens.start,
+    #     tokens.end,
+    #     listwrap(tokens["value"]),
+    #     tokens.failures,
+    # )
+    #
+    # # offset = tokens["offset"]
+    # # if offset:
+    # #     return {"get": [expr, offset]}
+    #
+    # return expr
 
-    expr = ParseResults(
-        tokens.type,
-        tokens.start,
-        tokens.end,
-        listwrap(tokens["value"]),
-        tokens.failures,
-    )
 
-    offset = tokens["offset"]
-    if offset:
-        return {"get": [expr, offset]}
-
-    return expr
+def to_over(tokens):
+    if not tokens:
+        return {}
 
 
 def to_alias(tokens):
     cols = tokens["col"]
-    name = tokens['name']
+    name = tokens["name"]
     if cols:
         return {name: cols}
     return name
@@ -413,8 +416,12 @@ def to_stack(tokens):
 
 
 def to_array(tokens):
+    types = list(tokens["type"])
     args = list(tokens["args"])
-    return Call("array", args, {})
+    output = Call("create_array", args, {})
+    if types:
+        output = Call("cast", [output, Call("array", types, {})], {})
+    return output
 
 
 def to_map(tokens):
@@ -423,19 +430,20 @@ def to_map(tokens):
     return Call("create_map", [keys, values], {})
 
 
+def to_struct(tokens):
+    types = list(tokens["types"])
+    args = list(tokens["args"])
+
+    output = Call("create_struct", args, {})
+    if types:
+        output = Call("cast", [output, Call("struct", types, {})], {})
+    return output
+
+
 def to_select_call(tokens):
     value = tokens["value"]
-    if value.value() == "*":
+    if value == "*":
         return ["*"]
-
-    if value["over"] or value["within"]:
-        output = ParseResults(
-            tokens.type, tokens.start, tokens.end, value.tokens, tokens.failures
-        )
-        output["name"] = tokens["name"]
-        return output
-    else:
-        return
 
 
 def to_union_call(tokens):
@@ -478,7 +486,7 @@ def to_table(tokens):
     if len(list(output.keys())) > 1:
         return output
     else:
-        return output['value']
+        return output["value"]
 
 
 def unquote(tokens):
@@ -529,4 +537,4 @@ mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / to_string
 # BASIC IDENTIFIERS
 ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / unquote
 mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / unquote
-sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / unquote
+# sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / unquote
