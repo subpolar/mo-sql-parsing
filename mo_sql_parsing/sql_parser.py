@@ -7,6 +7,10 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
+
+from mo_parsing import *
+from mo_parsing.enhancement import LookAhead
+from mo_parsing.tokens import LookBehind
 from mo_parsing.helpers import restOfLine
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
@@ -16,11 +20,25 @@ from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
 
+def no_dashes(tokens, start, string):
+    if "-" in tokens[0]:
+        index = tokens[0].find("-")
+        raise ParseException(
+            tokens.type,
+            start+index,
+            string,
+            """Ambiguity: Use backticks (``) around identifiers with dashes, or add space around subtraction operator.""",
+        )
+
+
+digit = Char('0123456789')
+simple_ident = Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
+simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
+
+
 def common_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
-        separator=".",
-        combine=True,
+        ansi_ident | mysql_backtick_ident | simple_ident, separator=".", combine=True,
     )).set_parser_name("identifier")
 
     return parser(ansi_string, combined_ident)
@@ -29,7 +47,7 @@ def common_parser():
 def mysql_parser():
     mysql_string = ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        mysql_backtick_ident | sqlserver_ident | simple_ident,
         separator=".",
         combine=True,
     )).set_parser_name("mysql identifier")
