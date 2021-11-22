@@ -9,8 +9,6 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from mo_parsing.helpers import delimited_list
-
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.utils import *
 
@@ -69,7 +67,7 @@ ROWS = keyword("rows")
 RANGE = keyword("range")
 
 
-def window(expr, sort_column):
+def window(expr, var_name, sort_column):
     bound_row = (
         CURRENT_ROW("zero")
         | (UNBOUNDED | int_num)("limit") + (PRECEDING | FOLLOWING)("direction")
@@ -89,20 +87,19 @@ def window(expr, sort_column):
         RANGE.suppress() + (between_expr | bound_expr)
     )
 
-    return (
-        # Optional((keyword("ignore nulls"))("ignore_nulls") / (lambda: True))
-        Optional(
-            WITHIN_GROUP
-            + LB
-            + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
-            + RB
-        )("within")
-        + Optional(
-            OVER
-            + LB
-            + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
-            + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
-            + Optional(row_clause)("range")
-            + RB
-        )("over")
+    over_clause = (
+        LB
+        + Optional(PARTITION_BY + delimited_list(Group(expr))("partitionby"))
+        + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
+        + Optional(row_clause("range"))
+        + RB
     )
+
+    window_clause = Optional((
+        WITHIN_GROUP
+        + LB
+        + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
+        + RB
+    )("within")) + ((OVER + (over_clause | var_name) / to_over)("over"))
+
+    return window_clause, over_clause

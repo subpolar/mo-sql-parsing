@@ -14,6 +14,7 @@ from unittest import TestCase
 
 from mo_future import get_function_name
 from mo_logs import Log
+from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import format, parse
 from mo_sql_parsing.keywords import join_keywords
@@ -40,7 +41,7 @@ class TestFormatAndParse(TestCase):
         new_json = ""
         try:
             new_sql = format(expected_json)
-            # self.assertEqual(remove_whitespace((new_sql), remove_whitespace((expected_sql)
+            # with Debugger():
             new_json = parse(new_sql)
             self.assertEqual(new_json, expected_json)
         except Exception as cause:

@@ -16,7 +16,7 @@ from mo_sql_parsing import parse, format
 
 class TestErrors(FuzzyTestCase):
     def test_dash_in_tablename(self):
-        with self.assertRaises(["group", "order", "having", "limit", "where"]):
+        with self.assertRaises(['Use backticks (``) around identifiers']):
             #              012345678901234567890123456789012345678901234567890123456789
             parse("select * from coverage-summary.source.file.covered limit 20")
 
@@ -54,3 +54,20 @@ class TestErrors(FuzzyTestCase):
             parse(
                 """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
             )
+
+    def test_issue_50_subtraction3(self):
+        sql = """select A from test-1nformation"""
+        with self.assertRaises('found "-1nformati" (at char 18), (line:1, col:19)'):
+            parse(sql)
+
+    def test_issue_50_dashes_in_name(self):
+        sql = """select col-cpu-usage from test-information"""
+        with self.assertRaises('Use backticks (``) around identifiers'):
+            parse(sql)
+
+    def test_issue_50_subtraction1(self):
+        sql = """select col-0pu-usage from test-information"""
+        with self.assertRaises('found "-usage fro" (at char 14), (line:1, col:15)'):
+            parse(sql)
+
+

@@ -10,9 +10,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
-from mo_sql_parsing import parse
+from mo_sql_parsing import parse, parse_mysql
 
 try:
     from tests.util import assertRaises
@@ -1091,36 +1089,6 @@ class TestSimple(TestCase):
         ]}}}
         self.assertEqual(result, expected)
 
-    def test_issue143a(self):
-        sql = "Select [A] from dual"
-        result = parse(sql)
-        expected = {"select": {"value": "A"}, "from": "dual"}
-        self.assertEqual(result, expected)
-
-    def test_issue143b(self):
-        sql = "Select [A] from [dual]"
-        result = parse(sql)
-        expected = {"select": {"value": "A"}, "from": "dual"}
-        self.assertEqual(result, expected)
-
-    def test_issue143c(self):
-        sql = "Select [A] from dual [T1]"
-        result = parse(sql)
-        expected = {"select": {"value": "A"}, "from": {"value": "dual", "name": "T1"}}
-        self.assertEqual(result, expected)
-
-    def test_issue143d_quote(self):
-        sql = 'Select ["]'
-        result = parse(sql)
-        expected = {"select": {"value": '"'}}
-        self.assertEqual(result, expected)
-
-    def test_issue143e_close(self):
-        sql = "Select []]]"
-        result = parse(sql)
-        expected = {"select": {"value": "]"}}
-        self.assertEqual(result, expected)
-
     def test_issue140(self):
         sql = "select rank(*) over (partition by a order by b, c) from tab"
         result = parse(sql)
@@ -1460,3 +1428,9 @@ class TestSimple(TestCase):
             {"select": "*", "from": "A"},
         ]}
         self.assertEqual(result, expected)
+
+    def test_issue_49(self):
+        # bad spelling of distinct
+        q = "select DISTICT col_a, col_b from table_test"
+        parsed_query = parse_mysql(q)
+        self.assertEqual(parsed_query, {'select': [{'value': 'DISTICT', 'name': 'col_a'}, {'value': 'col_b'}], 'from': 'table_test'})

@@ -7,15 +7,55 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from mo_parsing.helpers import delimited_list, restOfLine
+
+from mo_parsing import *
+from mo_parsing.enhancement import LookAhead
+from mo_parsing.tokens import LookBehind
+from mo_parsing.helpers import restOfLine
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing.keywords import *
+from mo_sql_parsing.types import get_column_type, simple_types, time_functions
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
 
-def combined_parser():
+def no_dashes(tokens, start, string):
+    if "-" in tokens[0]:
+        index = tokens[0].find("-")
+        raise ParseException(
+            tokens.type,
+            start+index,
+            string,
+            """Ambiguity: Use backticks (``) around identifiers with dashes, or add space around subtraction operator.""",
+        )
+
+
+digit = Char('0123456789')
+simple_ident = Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
+simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
+
+
+def common_parser():
+    combined_ident = Combine(delimited_list(
+        ansi_ident | mysql_backtick_ident | simple_ident, separator=".", combine=True,
+    )).set_parser_name("identifier")
+
+    return parser(ansi_string, combined_ident)
+
+
+def mysql_parser():
+    mysql_string = ansi_string | mysql_doublequote_string
+    mysql_ident = Combine(delimited_list(
+        mysql_backtick_ident | sqlserver_ident | simple_ident,
+        separator=".",
+        combine=True,
+    )).set_parser_name("mysql identifier")
+
+    return parser(mysql_string, mysql_ident)
+
+
+def sqlserver_parser():
     combined_ident = Combine(delimited_list(
         ansi_ident
         | mysql_backtick_ident
@@ -25,21 +65,10 @@ def combined_parser():
         combine=True,
     )).set_parser_name("identifier")
 
-    return parser(ansi_string, combined_ident)
+    return parser(ansi_string, combined_ident, sqlserver=True)
 
 
-def mysql_parser():
-    mysql_string = ansi_string | mysql_doublequote_string
-    mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
-        separator=".",
-        combine=True,
-    )).set_parser_name("mysql identifier")
-
-    return parser(mysql_string, mysql_ident)
-
-
-def parser(literal_string, ident):
+def parser(literal_string, ident, sqlserver=False):
     with Whitespace() as engine:
         engine.add_ignore(Literal("--") + restOfLine)
         engine.add_ignore(Literal("#") + restOfLine)
@@ -47,9 +76,10 @@ def parser(literal_string, ident):
         var_name = ~RESERVED + ident
 
         # EXPRESSIONS
-        column_definition = Forward()
-        column_type = Forward()
         expr = Forward()
+        column_type, column_definition, column_def_references = get_column_type(
+            expr, var_name, literal_string
+        )
 
         # CASE
         case = (
@@ -72,7 +102,7 @@ def parser(literal_string, ident):
         ) / to_switch_call
 
         cast = (
-            Group(CAST("op") + LB + expr("params") + AS + known_types("params") + RB)
+            Group(CAST("op") + LB + expr("params") + AS + simple_types("params") + RB)
             / to_json_call
         )
 
@@ -138,13 +168,49 @@ def parser(literal_string, ident):
             + RB
         ) / to_stack
 
+        # ARRAY[foo],
+        # ARRAY < STRING > [foo, bar], INVALID
+        # ARRAY < STRING > [foo, bar],
         create_array = (
-            keyword("array")("op") + LB + delimited_list(Group(expr))("args") + RB
-        ) / to_array
+            keyword("array")("op")
+            + Optional(
+                Literal("<").suppress() + column_type("type") + Literal(">").suppress()
+            )
+            + (
+                LB + delimited_list(Group(expr))("args") + RB
+                | (Literal("[") + delimited_list(Group(expr))("args") + Literal("]"))
+            )
+        )
+
+        if not sqlserver:
+            # SQL SERVER DOES NOT SUPPORT [] FOR ARRAY CONSTRUCTION (USED FOR IDENTITY)
+            create_array = (
+                Literal("[") + delimited_list(Group(expr))("args") + Literal("]")
+                | create_array
+            )
+
+        create_array = create_array / to_array
 
         create_map = (
-            keyword("map") + Char("[") + expr("keys") + "," + expr("values") + Char("]")
+            keyword("map")
+            + Literal("[")
+            + expr("keys")
+            + ","
+            + expr("values")
+            + Literal("]")
         ) / to_map
+
+        create_struct = (
+            keyword("struct")("op")
+            + Optional(
+                Literal("<").suppress()
+                + delimited_list(column_type)("types")
+                + Literal(">").suppress()
+            )
+            + LB
+            + delimited_list(Group((expr("value") + alias) / to_select_call))("args")
+            + RB
+        ).set_parser_name("create struct") / to_struct
 
         distinct = (
             DISTINCT("op") + delimited_list(named_column)("params")
@@ -156,7 +222,10 @@ def parser(literal_string, ident):
             ident("op")
             + LB
             + Optional(Group(query) | delimited_list(Group(expr)))("params")
-            + Optional(flag("ignore nulls"))
+            + Optional(
+                (keyword("respect") | keyword("ignore"))("nulls")
+                + keyword("nulls").suppress()
+            )
             + RB
         ).set_parser_name("call function") / to_json_call
 
@@ -184,6 +253,7 @@ def parser(literal_string, ident):
             | stack
             | create_array
             | create_map
+            | create_struct
             | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
@@ -200,13 +270,15 @@ def parser(literal_string, ident):
             DESC("sort") | ASC("sort")
         ) | expr("value").set_parser_name("sort2")
 
+        window_clause, over_clause = window(expr, var_name, sort_column)
+
         expr << (
             (
                 Literal("*")
                 | infix_notation(
                     compound,
                     [(
-                        Char("[").suppress() + expr + Char("]").suppress(),
+                        Literal("[").suppress() + expr + Literal("]").suppress(),
                         1,
                         LEFT_ASSOC,
                         to_offset,
@@ -215,20 +287,19 @@ def parser(literal_string, ident):
                         (
                             o,
                             1 if o in unary_ops else (3 if isinstance(o, tuple) else 2),
-                            unary_ops[o] if o in unary_ops else LEFT_ASSOC,
+                            unary_ops.get(o, LEFT_ASSOC),
                             to_lambda if o is LAMBDA else to_json_operator,
                         )
                         for o in KNOWN_OPS
                     ],
-                ).set_parser_name("expression")
-            )("value")
-            + Optional(window(expr, sort_column))
+                )
+            )("value").set_parser_name("expression")
+            + Optional(window_clause)
         ) / to_expression_call
 
         select_column = (
             Group(
-                Group(expr).set_parser_name("expression")("value") + alias
-                | Literal("*")("value")
+                expr("value") + alias | Literal("*")("value")
             ).set_parser_name("column")
             / to_select_call
         )
@@ -239,6 +310,10 @@ def parser(literal_string, ident):
             Group(joins)("op")
             + table_source("join")
             + Optional((ON + expr("on")) | (USING + expr("using")))
+            | (
+                Group(WINDOW)("op")
+                + Group(var_name("name") + AS + over_clause("value"))("join")
+            )
         ) / to_join_call
 
         selection = (
@@ -316,12 +391,12 @@ def parser(literal_string, ident):
 
         ordered_sql = (
             (
-                unordered_sql
+                (unordered_sql | (LB + query + RB))
                 + ZeroOrMore(
                     Group(
                         (UNION | INTERSECT | EXCEPT | MINUS) + Optional(ALL | DISTINCT)
                     )("op")
-                    + unordered_sql
+                    + (unordered_sql | (LB + query + RB))
                 )
             )("union")
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
@@ -345,78 +420,16 @@ def parser(literal_string, ident):
         #####################################################################
         # DML STATEMENTS
         #####################################################################
-        struct_type = (
-            keyword("struct")("op")
-            + Literal("<").suppress()
-            + delimited_list(column_definition)("params")
-            + Literal(">").suppress()
-        ) / to_json_call
 
-        array_type = (
-            keyword("array")("op")
-            + Literal("<").suppress()
-            + delimited_list(column_type)("params")
-            + Literal(">").suppress()
-        ) / to_json_call
+        # MySQL's index_type := Using + ( "BTREE" | "HASH" )
+        index_type = Optional(assign("using", ident("index_type")))
 
-        column_def_comment = assign("comment", literal_string)
-
-        column_def_identity = (
-            assign(
-                "generated",
-                (keyword("always") | keyword("by default") / (lambda: "by_default")),
-            )
-            + keyword("as identity").suppress()
-            + Optional(assign("start with", int_num))
-            + Optional(assign("increment by", int_num))
-        )
+        index_column_names = LB + delimited_list(var_name("columns")) + RB
 
         column_def_delete = assign(
             "on delete",
             (keyword("cascade") | keyword("set null") | keyword("set default")),
         )
-
-        column_type << (
-            struct_type
-            | array_type
-            | Group(ident("op") + Optional(LB + delimited_list(int_num)("params") + RB))
-            / to_json_call
-        )
-
-        column_def_references = assign(
-            "references",
-            var_name("table") + LB + delimited_list(var_name)("columns") + RB,
-        )
-
-        collate = assign("collate", Optional(EQ) + var_name)
-
-        column_def_check = assign("check", LB + expr + RB)
-        column_def_default = assign("default", expr)
-
-        column_options = ZeroOrMore(
-            ((NOT + NULL) / (lambda: False))("nullable")
-            | (NULL / (lambda t: True))("nullable")
-            | flag("unique")
-            | flag("auto_increment")
-            | column_def_comment
-            | collate
-            | flag("primary key")
-            | column_def_identity("identity")
-            | column_def_references
-            | column_def_check
-            | column_def_default
-        ).set_parser_name("column_options")
-
-        column_definition << Group(
-            var_name("name") / (lambda t: t[0].lower())
-            + column_type("type")
-            + column_options
-        ).set_parser_name("column_definition")
-
-        # MySQL's index_type := Using + ( "BTREE" | "HASH" )
-        index_type = Optional(USING + ident("index_type"))
-
-        index_column_names = LB + delimited_list(var_name("columns")) + RB
 
         table_def_foreign_key = FOREIGN_KEY + Optional(
             Optional(var_name("index_name"))
@@ -430,21 +443,14 @@ def parser(literal_string, ident):
         table_constraint_definition = Optional(CONSTRAINT + var_name("name")) + (
             assign("primary key", index_type + index_column_names + index_options)
             | (
-                UNIQUE
+                Optional(flag("unique"))
                 + Optional(INDEX | KEY)
-                + Optional(var_name("index_name"))
-                + index_type
-                + index_column_names
-                + index_options
-            )("unique")
-            | (
-                (INDEX | KEY)
-                + Optional(var_name("index_name"))
+                + Optional(var_name("name"))
                 + index_type
                 + index_column_names
                 + index_options
             )("index")
-            | column_def_check
+            | assign("check", LB + expr + RB)
             | table_def_foreign_key("foreign_key")
         )
 
@@ -481,6 +487,19 @@ def parser(literal_string, ident):
             + query("query")
         )("create view")
 
+        #  CREATE INDEX a ON u USING btree (e);
+        create_index = (
+            keyword("create index")
+            + Optional(keyword("or") + flag("replace"))(INDEX | KEY)
+            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + var_name("name")
+            + ON
+            + var_name("table")
+            + index_type
+            + index_column_names
+            + index_options
+        )("create index")
+
         cache_options = Optional((
             keyword("options").suppress()
             + LB
@@ -509,6 +528,10 @@ def parser(literal_string, ident):
             keyword("drop view") + Optional(flag("if exists")) + var_name("view")
         )("drop")
 
+        drop_index = (
+            keyword("drop index") + Optional(flag("if exists")) + var_name("index")
+        )("drop")
+
         insert = (
             keyword("insert")("op")
             + (flag("overwrite") | keyword("into").suppress())
@@ -535,6 +558,6 @@ def parser(literal_string, ident):
         return (
             query
             | (insert | update | delete)
-            | (create_table | create_view | create_cache)
-            | (drop_table | drop_view)
+            | (create_table | create_view | create_cache | create_index)
+            | (drop_table | drop_view | drop_index)
         ).finalize()

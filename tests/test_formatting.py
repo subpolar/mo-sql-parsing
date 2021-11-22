@@ -642,3 +642,11 @@ class TestSimple(TestCase):
 
         second_result = parse(sql)
         self.assertEqual(second_result, expected_result)
+
+    def test_issue_50_dashes_in_names(self):
+        sql = """select `col-cpu-usage` from `test-information`"""
+        result = parse(sql)
+        new_sql = format(result)
+        expected = 'SELECT "col-cpu-usage" FROM "test-information"'
+        self.assertEqual(new_sql, expected)
+

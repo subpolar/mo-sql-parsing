@@ -76,6 +76,7 @@ INDEX = keyword("index").suppress()
 REFERENCES = keyword("references").suppress()
 RECURSIVE = keyword("recursive").suppress()
 VALUES = keyword("values").suppress()
+WINDOW = keyword("window")
 
 PRIMARY_KEY = Group(PRIMARY + KEY).set_parser_name("primary_key")
 FOREIGN_KEY = Group(FOREIGN + KEY).set_parser_name("foreign_key")
@@ -130,7 +131,6 @@ joins = (
 ) / (lambda tokens: " ".join(tokens).lower())
 
 
-CREATE_TABLE = Group(CREATE + TABLE).set_parser_name("create_table")
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
@@ -212,6 +212,7 @@ RESERVED = MatchFirst([
     USING,
     WHEN,
     WHERE,
+    WINDOW,
     WITH,
     WITHIN,
 ])
@@ -359,6 +360,7 @@ durations = {
     "week": "week",
     "w": "week",
     "months": "month",
+    "month": "month",
     "mons": "month",
     "mon": "month",
     "quarters": "quarter",
@@ -381,115 +383,3 @@ durations = {
     "epoch": "epoch",
 }
 
-_size = Optional(LB + int_num("params") + RB)
-_sizes = Optional(LB + delimited_list(int_num("params")) + RB)
-
-# KNOWN TYPES
-known_types = Forward()
-
-BIGINT = Group(keyword("bigint")("op")) / to_json_call
-BOOL = Group(keyword("bool")("op")) / to_json_call
-BOOLEAN = Group(keyword("boolean")("op")) / to_json_call
-DOUBLE = Group(keyword("double")("op")) / to_json_call
-FLOAT64 = Group(keyword("float64")("op")) / to_json_call
-FLOAT = Group(keyword("float")("op")) / to_json_call
-GEOMETRY = Group(keyword("geometry")("op")) / to_json_call
-INTEGER = Group(keyword("integer")("op")) / to_json_call
-INT = Group(keyword("int")("op")) / to_json_call
-INT32 = Group(keyword("int32")("op")) / to_json_call
-INT64 = Group(keyword("int64")("op")) / to_json_call
-REAL = Group(keyword("real")("op")) / to_json_call
-TEXT = Group(keyword("text")("op")) / to_json_call
-SMALLINT = Group(keyword("smallint")("op")) / to_json_call
-STRING = Group(keyword("string")("op")) / to_json_call
-STRUCT = Group(keyword("struct")("op")) / to_json_call
-
-BLOB = (keyword("blob")("op") + _size) / to_json_call
-BYTES = (keyword("bytes")("op") + _size) / to_json_call
-CHAR = (keyword("char")("op") + _size) / to_json_call
-VARCHAR = (keyword("varchar")("op") + _size) / to_json_call
-VARBINARY = (keyword("varbinary")("op") + _size) / to_json_call
-TINYINT = (keyword("tinyint")("op") + _size) / to_json_call
-
-DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
-DOUBLE_PRECISION = (
-    Group((keyword("double precision") / (lambda: "double_precision"))("op"))
-    / to_json_call
-)
-NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
-
-MAP_TYPE = (
-    keyword("map")("op") + LB + delimited_list(known_types("params")) + RB
-) / to_json_call
-ARRAY_TYPE = (keyword("array")("op") + LB + known_types("params") + RB) / to_json_call
-
-DATE = keyword("date")
-DATETIME = keyword("datetime")
-TIME = keyword("time")
-TIMESTAMP = keyword("timestamp")
-TIMESTAMPTZ = keyword("timestamptz")
-TIMETZ = keyword("timetz")
-
-time_functions = DATE | DATETIME | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ
-
-# KNOWNN TIME TYPES
-_format = Optional((ansi_string | ansi_ident)("params"))
-
-DATE_TYPE = (DATE("op") + _format) / to_json_call
-DATETIME_TYPE = (DATETIME("op") + _format) / to_json_call
-TIME_TYPE = (TIME("op") + _format) / to_json_call
-TIMESTAMP_TYPE = (TIMESTAMP("op") + _format) / to_json_call
-TIMESTAMPTZ_TYPE = (TIMESTAMPTZ("op") + _format) / to_json_call
-TIMETZ_TYPE = (TIMETZ("op") + _format) / to_json_call
-
-known_types << MatchFirst([
-    ARRAY_TYPE,
-    BIGINT,
-    BOOL,
-    BOOLEAN,
-    BLOB,
-    BYTES,
-    CHAR,
-    DATE_TYPE,
-    DATETIME_TYPE,
-    DECIMAL,
-    DOUBLE_PRECISION,
-    DOUBLE,
-    FLOAT64,
-    FLOAT,
-    GEOMETRY,
-    MAP_TYPE,
-    INTEGER,
-    INT,
-    INT32,
-    INT64,
-    NUMERIC,
-    REAL,
-    TEXT,
-    SMALLINT,
-    STRING,
-    STRUCT,
-    TIME_TYPE,
-    TIMESTAMP_TYPE,
-    TIMESTAMPTZ_TYPE,
-    TIMETZ_TYPE,
-    VARCHAR,
-    VARBINARY,
-    TINYINT,
-])
-
-CASTING = (Literal("::").suppress() + known_types("params")).set_parser_name("cast")
-KNOWN_OPS = [CASTING] + KNOWN_OPS
-offset = Forward()
-
-unary_ops = {
-    NEG: RIGHT_ASSOC,
-    NOT: RIGHT_ASSOC,
-    BINARY_NOT: RIGHT_ASSOC,
-    CASTING: LEFT_ASSOC,
-}
-
-from mo_sql_parsing import utils
-
-utils.unary_ops = unary_ops
-del utils

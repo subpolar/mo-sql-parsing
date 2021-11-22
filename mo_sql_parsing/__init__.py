@@ -16,8 +16,9 @@ from mo_sql_parsing.sql_parser import scrub
 from mo_sql_parsing.utils import ansi_string, simple_op, normal_op
 
 parse_locker = Lock()  # ENSURE ONLY ONE PARSING AT A TIME
-combined_parser = None
+common_parser = None
 mysql_parser = None
+sqlserver_parser = None
 
 SQL_NULL = {"null": {}}
 
@@ -28,12 +29,12 @@ def parse(sql, null=SQL_NULL, calls=simple_op):
     :param null: What value to use as NULL (default is the null function `{"null":{}}`)
     :return: parse tree
     """
-    global combined_parser
+    global common_parser
 
     with parse_locker:
-        if not combined_parser:
-            combined_parser = sql_parser.combined_parser()
-        result = _parse(combined_parser, sql, null, calls)
+        if not common_parser:
+            common_parser = sql_parser.common_parser()
+        result = _parse(common_parser, sql, null, calls)
         return result
 
 
@@ -50,6 +51,21 @@ def parse_mysql(sql, null=SQL_NULL, calls=simple_op):
         if not mysql_parser:
             mysql_parser = sql_parser.mysql_parser()
         return _parse(mysql_parser, sql, null, calls)
+
+
+def parse_sqlserver(sql, null=SQL_NULL, calls=simple_op):
+    """
+    PARSE MySQL ASSUME DOUBLE QUOTED STRINGS ARE LITERALS
+    :param sql: String of SQL
+    :param null: What value to use as NULL (default is the null function `{"null":{}}`)
+    :return: parse tree
+    """
+    global sqlserver_parser
+
+    with parse_locker:
+        if not sqlserver_parser:
+            sqlserver_parser = sql_parser.sqlserver_parser()
+        return _parse(sqlserver_parser, sql, null, calls)
 
 
 parse_bigquery = parse_mysql
