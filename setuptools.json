@@ -31,9 +31,6 @@
             "",
             "Parse SQL into JSON parse trees so we can translate it for non-sql datastores!",
             "",
-            "# SQL Parser",
-            "This package convert S",
-            "",
             "[See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)",
             "",
             "",
@@ -251,6 +248,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "8.4.21326",
+    "version": "8.5.21328",
     "zip_safe": true
 }

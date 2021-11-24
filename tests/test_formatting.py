@@ -650,3 +650,7 @@ class TestSimple(TestCase):
         expected = 'SELECT "col-cpu-usage" FROM "test-information"'
         self.assertEqual(new_sql, expected)
 
+    def test_issue_51_interval(self):
+        result = format(parse("select now() + interval 2 week"))
+        expected = "SELECT NOW() + INTERVAL 2 WEEK"
+        self.assertEqual(result, expected)

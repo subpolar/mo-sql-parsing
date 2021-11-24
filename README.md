@@ -6,9 +6,6 @@
 
 Parse SQL into JSON parse trees so we can translate it for non-sql datastores!
 
-# SQL Parser
-This package convert S
-
 [See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)
 
 
