@@ -320,6 +320,11 @@ class Formatter:
 
         return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
 
+    def _interval(self, json, prec):
+        amount = self.dispatch(json[0], precedence["and"])
+        type = self.dispatch(json[1], precedence["and"])
+        return f"INTERVAL {amount} {type.upper()}"
+
     def _literal(self, json, prec):
         if isinstance(json, list):
             return "({0})".format(", ".join(
