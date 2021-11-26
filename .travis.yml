@@ -18,3 +18,4 @@ env:
 script:
   - python -Werror tests/smoke_test.py
   - python -m unittest discover tests
+  - echo test
