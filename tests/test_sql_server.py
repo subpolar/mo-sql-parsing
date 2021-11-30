@@ -102,7 +102,7 @@ class TestSqlServer(TestCase):
     def test_issue_52(self):
         sql = """SELECT [Timestamp] ,[RowsCount] ,[DataName] FROM [myDB].[myTable] where [Timestamp] >='2020-01-01' and [Timestamp]<'2020-12-31'"""
         result = parse(sql)
-        expected = {"select": {"value": "]"}} != {
+        expected = {
             "from": "myDB.myTable",
             "select": [
                 {"value": "Timestamp"},
