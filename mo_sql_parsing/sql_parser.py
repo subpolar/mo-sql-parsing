@@ -25,14 +25,17 @@ def no_dashes(tokens, start, string):
         index = tokens[0].find("-")
         raise ParseException(
             tokens.type,
-            start+index,
+            start + index,
             string,
             """Ambiguity: Use backticks (``) around identifiers with dashes, or add space around subtraction operator.""",
         )
 
 
-digit = Char('0123456789')
-simple_ident = Char(FIRST_IDENT_CHAR) + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
+digit = Char("0123456789")
+simple_ident = (
+    Char(FIRST_IDENT_CHAR)
+    + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
+)
 simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
 
 
@@ -152,7 +155,13 @@ def parser(literal_string, ident, sqlserver=False):
             (
                 AS
                 + (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
-                | (var_name("name") + Optional(AS + delimited_list(var_name("col"))))
+                | (
+                    var_name("name")
+                    + Optional(
+                        (LB + delimited_list(ident("col")) + RB)
+                        | (AS + delimited_list(var_name("col")))
+                    )
+                )
             )
             / to_alias
         )("name"))
@@ -183,7 +192,7 @@ def parser(literal_string, ident, sqlserver=False):
         )
 
         if not sqlserver:
-            # SQL SERVER DOES NOT SUPPORT [] FOR ARRAY CONSTRUCTION (USED FOR IDENTITY)
+            # SQL SERVER DOES NOT SUPPORT [] FOR ARRAY CONSTRUCTION (USED FOR IDENTIFIERS)
             create_array = (
                 Literal("[") + delimited_list(Group(expr))("args") + Literal("]")
                 | create_array
@@ -266,9 +275,11 @@ def parser(literal_string, ident, sqlserver=False):
             | Combine(var_name + Optional(".*"))
         )
 
-        sort_column = expr("value").set_parser_name("sort1") + Optional(
-            DESC("sort") | ASC("sort")
-        ) | expr("value").set_parser_name("sort2")
+        sort_column = (
+            expr("value").set_parser_name("sort1")
+            + Optional(DESC("sort") | ASC("sort"))
+            + Optional(assign("nulls", keyword("first") | keyword("last")))
+        )
 
         window_clause, over_clause = window(expr, var_name, sort_column)
 
@@ -282,7 +293,7 @@ def parser(literal_string, ident, sqlserver=False):
                         1,
                         LEFT_ASSOC,
                         to_offset,
-                    )]
+                    ),]
                     + [
                         (
                             o,
@@ -295,6 +306,7 @@ def parser(literal_string, ident, sqlserver=False):
                 )
             )("value").set_parser_name("expression")
             + Optional(window_clause)
+            + Optional(assign("filter", LB + WHERE + expr + RB))
         ) / to_expression_call
 
         select_column = (

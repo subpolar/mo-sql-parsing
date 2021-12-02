@@ -343,7 +343,7 @@ def to_join_call(tokens):
 
 
 def to_expression_call(tokens):
-    if set(tokens.keys()) & {"over", "within"}:
+    if set(tokens.keys()) & {"over", "within", "filter"}:
         return
 
     return ParseResults(
