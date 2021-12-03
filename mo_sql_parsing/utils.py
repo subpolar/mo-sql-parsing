@@ -186,6 +186,8 @@ def to_json_operator(tokens):
             while isinstance(operand, ParseResults) and isinstance(operand.type, Group):
                 # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
+                if isinstance(operand, ParseResults) and isinstance(operand.type, Forward):
+                    operand = operand[0]
 
             if isinstance(operand, Call) and operand.op == op:
                 acc.extend(operand.args)
@@ -202,6 +204,11 @@ def to_json_operator(tokens):
 def to_offset(tokens):
     expr, offset = tokens.tokens
     return Call("get", [expr, offset], {})
+
+
+def to_window_mod(tokens):
+    expr, window = tokens.tokens
+    return Call("value", [expr], {**window})
 
 
 def to_tuple_call(tokens):
@@ -278,8 +285,12 @@ def to_json_call(tokens):
     # ARRANGE INTO {op: params} FORMAT
     op = tokens["op"].lower()
     op = binary_ops.get(op, op)
+    params = tokens["params"]
+    if isinstance(params, (dict, str, int, Call)):
+        args=[params]
+    else:
+        args = list(params)
 
-    args = listwrap(tokens["params"])
     kwargs = {k: v for k, v in tokens.items() if k not in ("op", "params")}
 
     return ParseResults(
@@ -372,7 +383,9 @@ def to_top_clause(tokens):
     value = tokens["value"]
     if not value:
         return None
-    elif tokens["ties"]:
+
+    value = value.value()
+    if tokens["ties"]:
         output = {}
         output["ties"] = True
         if tokens["percent"]:
@@ -434,16 +447,15 @@ def to_struct(tokens):
 
 
 def to_select_call(tokens):
+    expr = tokens['value']
+    if expr == "*":
+        return ["*"]
     try:
-        expr = tokens['value']
-        if expr == "*":
-            return ["*"]
-        if expr['value']:
-            output = ParseResults(tokens.type, tokens.start, tokens.end, expr.tokens, tokens.failures)
-            output['name'] = tokens['name']
-            return output
-    except Exception:
-        return
+        call = expr[0][0]
+        if call.op == "value":
+            return {"name": tokens['name'], "value": call.args, **call.kwargs}
+    except:
+        pass
 
 
 def to_union_call(tokens):

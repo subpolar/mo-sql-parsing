@@ -288,12 +288,21 @@ def parser(literal_string, ident, sqlserver=False):
                 Literal("*")
                 | infix_notation(
                     compound,
-                    [(
-                        Literal("[").suppress() + expr + Literal("]").suppress(),
-                        1,
-                        LEFT_ASSOC,
-                        to_offset,
-                    ),]
+                    [
+                        (
+                            Literal("[").suppress() + expr + Literal("]").suppress(),
+                            1,
+                            LEFT_ASSOC,
+                            to_offset,
+                        ),
+                        (window_clause, 1, LEFT_ASSOC, to_window_mod),
+                        (
+                            assign("filter", LB + WHERE + expr + RB),
+                            1,
+                            LEFT_ASSOC,
+                            to_window_mod,
+                        ),
+                    ]
                     + [
                         (
                             o,
@@ -305,9 +314,7 @@ def parser(literal_string, ident, sqlserver=False):
                     ],
                 )
             )("value").set_parser_name("expression")
-            + Optional(window_clause)
-            + Optional(assign("filter", LB + WHERE + expr + RB))
-        ) / to_expression_call
+        )
 
         select_column = (
             Group(

@@ -41,11 +41,18 @@ class TestAthena(TestCase):
     def test_issue_57_window_in_expression(self):
         sql = """SELECT X() OVER () = 1 AS is_true"""
         result = parse(sql)
-        expected = {}
+        expected = {"select": {
+            "name": "is_true",
+            "value": {"eq": [{"over": {}, "value": {"x": {}}}, 1]},
+        }}
         self.assertEqual(result, expected)
 
     def test_issue_58_filter_on_aggregate(self):
         sql = """SELECT MAX(1) FILTER (WHERE 1=1) AS foo"""
         result = parse(sql)
-        expected = {'select': {'filter': {'eq': [1, 1]}, 'name': 'foo', 'value': {'max': 1}}}
+        expected = {"select": {
+            "filter": {"eq": [1, 1]},
+            "name": "foo",
+            "value": {"max": 1},
+        }}
         self.assertEqual(result, expected)
