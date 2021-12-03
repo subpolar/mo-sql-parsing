@@ -1134,7 +1134,7 @@ class TestSimple(TestCase):
         result = parse(sql)
         self.assertEqual(
             result,
-            {"from": "A", "select": {"value": {"count": {"distinct": {"value": "Y"}}}}},
+            {"from": "A", "select": {"value": {"count": {"distinct": "Y"}}}},
         )
 
     def test_issue2b_of_fork(self):

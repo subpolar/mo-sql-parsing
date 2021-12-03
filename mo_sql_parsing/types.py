@@ -151,14 +151,14 @@ def get_column_type(expr, var_name, literal_string):
     struct_type = (
         keyword("struct")("op")
         + Literal("<").suppress()
-        + delimited_list(column_definition)("params")
+        + Group(delimited_list(column_definition))("params")
         + Literal(">").suppress()
     ) / to_json_call
 
     array_type = (
         keyword("array")("op")
         + Literal("<").suppress()
-        + delimited_list(column_type)("params")
+        + Group(delimited_list(column_type))("params")
         + Literal(">").suppress()
     ) / to_json_call
 

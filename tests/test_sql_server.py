@@ -99,3 +99,19 @@ class TestSqlServer(TestCase):
         expected = {"select": {"value": "]"}}
         self.assertEqual(result, expected)
 
+    def test_issue_52(self):
+        sql = """SELECT [Timestamp] ,[RowsCount] ,[DataName] FROM [myDB].[myTable] where [Timestamp] >='2020-01-01' and [Timestamp]<'2020-12-31'"""
+        result = parse(sql)
+        expected = {
+            "from": "myDB.myTable",
+            "select": [
+                {"value": "Timestamp"},
+                {"value": "RowsCount"},
+                {"value": "DataName"},
+            ],
+            "where": {"and": [
+                {"gte": ["Timestamp", {"literal": "2020-01-01"}]},
+                {"lt": ["Timestamp", {"literal": "2020-12-31"}]},
+            ]},
+        }
+        self.assertEqual(result, expected)

@@ -1338,7 +1338,7 @@ class TestSimpleUsingOperators(TestCase):
             {
                 "from": "A",
                 "select": {"value": {
-                    "args": [{"args": [{"value": "Y"}], "op": "distinct"}],
+                    "args": [{"args": ["Y"], "op": "distinct"}],
                     "op": "count",
                 }},
             },
