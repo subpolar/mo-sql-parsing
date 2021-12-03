@@ -105,7 +105,7 @@ def parser(literal_string, ident, sqlserver=False):
         ) / to_switch_call
 
         cast = (
-            Group(CAST("op") + LB + expr("params") + AS + simple_types("params") + RB)
+            Group(CAST("op") + LB + expr("params") + AS + column_type("params") + RB)
             / to_json_call
         )
 

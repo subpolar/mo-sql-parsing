@@ -50,6 +50,18 @@ The `SELECT` clause is an array of objects containing `name` and `value` propert
 
 There are a few parsing modes you may be interested in:
 
+
+#### SQLServer Identifiers (`[]`)
+
+SQLServer uses square brackets to delimit identifiers. For example
+
+    SELECT [Timestamp] FROM [table]
+    
+which conflicts with BigQuery array constructor (eg `[1, 2, 3, 4]`). You may use the SqlServer flavour with 
+    
+    from mo_sql_parsing import parse_sqlserver as parse
+
+
 #### NULL is None
 
 The default output for this parser is to emit a null function `{"null":{}}` wherever `NULL` is encountered in the SQL.  If you would like something different, you can replace nulls with `None` (or anything else for that matter):
@@ -157,6 +169,8 @@ for select in listwrap(parsed_result.get('select')):
  
 *November 2021*
 
+* Prefer BigQuery `[]` (create array) over SQLServer `[]` (identity) 
+* Added basic DML (`INSERT`/`UPDATE`/`DELETE`)              
 * flatter `CREATE TABLE` structures. The `option` list in column definition has been flattened:<br>
     **Old column format**
     
@@ -181,7 +195,6 @@ for select in listwrap(parsed_result.get('select')):
                 "check": {"lt": [{"length": "name"}, 10]} 
             }
         }}
-* Added basic DML (`INSERT`/`UPDATE`/`DELETE`)              
 
 ### Version 7 
 

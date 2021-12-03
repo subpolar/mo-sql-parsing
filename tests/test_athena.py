@@ -56,3 +56,15 @@ class TestAthena(TestCase):
             "value": {"max": 1},
         }}
         self.assertEqual(result, expected)
+
+    def test_issue_60_row(self):
+        # eg CAST(ROW(1, 2.0) AS ROW(x BIGINT, y DOUBLE))
+        sql = """SELECT CAST(x AS ROW(y VARCHAR))"""
+        with Debugger():
+            result = parse(sql)
+        expected = {"select": {"value": {"cast": [
+            "x",
+            {"row": {"name": "y", "type": {"varchar": {}}}},
+        ]}}}
+
+        self.assertEqual(result, expected)
