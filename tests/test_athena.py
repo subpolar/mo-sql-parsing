@@ -72,3 +72,16 @@ class TestAthena(TestCase):
         result = parse(sql)
         expected = {'select': {'value': {'get': [{'get': ['b', {'literal': 'c'}]}, 'd']}}}
         self.assertEqual(result, expected)
+
+    def test_issue_59_is_distinct_from(self):
+        # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
+        sql = """SELECT 1 IS DISTINCT FROM 2"""
+        result = parse(sql)
+        expected = {'select': {'value': {'eq!': [1, 2]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_59_is_not_distinct_from(self):
+        sql = """SELECT 1 IS NOT DISTINCT FROM 2"""
+        result = parse(sql)
+        expected = {'select': {'value': {'ne!': [1, 2]}}}
+        self.assertEqual(result, expected)

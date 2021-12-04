@@ -97,11 +97,24 @@ LTE = Literal("<=").set_parser_name("lte")
 LT = Literal("<").set_parser_name("lt")
 GT = Literal(">").set_parser_name("gt")
 EEQ = (
+    # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
     Literal("==") | Literal("=")
-).set_parser_name("eq")  # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
+).set_parser_name("eq")
 DEQ = (
+    # decisive equality
+    # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
     Literal("<=>").set_parser_name("eq!")
-)  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
+)
+IDF = (
+    # decisive equality
+    # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
+    keyword("is distinct from").set_parser_name("eq!")
+)
+INDF = (
+    # decisive equality
+    # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
+    keyword("is not distinct from").set_parser_name("ne!")
+)
 NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 LAMBDA = Literal("->").set_parser_name("lambda")
 
@@ -294,7 +307,7 @@ KNOWN_OPS = [
     BINARY_AND,
     BINARY_OR,
     GTE | LTE | LT | GT,
-    EEQ | NEQ | DEQ,
+    EEQ | NEQ | DEQ | IDF | INDF,
     AT_TIME_ZONE,
     (BETWEEN, AND),
     (NOT_BETWEEN, AND),

@@ -165,6 +165,16 @@ def to_json_operator(tokens):
             return Call("exists", tokens[0], {})
         elif tokens[0] is SQL_NULL:
             return Call("exists", tokens[2], {})
+    elif op == "eq!":
+        if tokens[2] is SQL_NULL:
+            return Call("missing", tokens[0], {})
+        elif tokens[0] is SQL_NULL:
+            return Call("missing", tokens[2], {})
+    elif op == "ne!":
+        if tokens[2] is SQL_NULL:
+            return Call("exists", tokens[0], {})
+        elif tokens[0] is SQL_NULL:
+            return Call("exists", tokens[2], {})
     elif op == "is":
         if tokens[2] is SQL_NULL:
             return Call("missing", tokens[0], {})
@@ -245,6 +255,10 @@ binary_ops = {
     ">=": "gte",
     "=": "eq",
     "==": "eq",
+    "is distinct from": "eq!",  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
+    "is_distinct_from": "eq!",
+    "is not distinct from": "ne!",
+    "is_not_distinct_from": "ne!",
     "<=>": "eq!",  # https://sparkbyexamples.com/apache-hive/hive-relational-arithmetic-logical-operators/
     "!=": "neq",
     "<>": "neq",
