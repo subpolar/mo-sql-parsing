@@ -155,6 +155,13 @@ def get_column_type(expr, var_name, literal_string):
         + Literal(">").suppress()
     ) / to_json_call
 
+    row_type = (
+        keyword("row")("op")
+        + LB
+        + Group(delimited_list(column_definition))("params")
+        + RB
+    ) / to_json_call
+
     array_type = (
         keyword("array")("op")
         + Literal("<").suppress()
@@ -162,7 +169,7 @@ def get_column_type(expr, var_name, literal_string):
         + Literal(">").suppress()
     ) / to_json_call
 
-    column_type << (struct_type | array_type | simple_types)
+    column_type << (struct_type | row_type | array_type | simple_types)
 
     column_def_identity = (
         assign(

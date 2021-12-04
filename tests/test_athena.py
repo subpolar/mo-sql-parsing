@@ -56,3 +56,32 @@ class TestAthena(TestCase):
             "value": {"max": 1},
         }}
         self.assertEqual(result, expected)
+
+    def test_issue_60_row_type(self):
+        # eg CAST(ROW(1, 2.0) AS ROW(x BIGINT, y DOUBLE))
+        sql = """SELECT CAST(x AS ROW(y VARCHAR))"""
+        result = parse(sql)
+        expected = {"select": {"value": {"cast": [
+            "x",
+            {"row": {"name": "y", "type": {"varchar": {}}}},
+        ]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_61_dot(self):
+        sql = """SELECT b['c'].d"""
+        result = parse(sql)
+        expected = {'select': {'value': {'get': [{'get': ['b', {'literal': 'c'}]}, 'd']}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_59_is_distinct_from(self):
+        # https://prestodb.io/docs/current/functions/comparison.html#is-distinct-from-and-is-not-distinct-from
+        sql = """SELECT 1 IS DISTINCT FROM 2"""
+        result = parse(sql)
+        expected = {'select': {'value': {'eq!': [1, 2]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_59_is_not_distinct_from(self):
+        sql = """SELECT 1 IS NOT DISTINCT FROM 2"""
+        result = parse(sql)
+        expected = {'select': {'value': {'ne!': [1, 2]}}}
+        self.assertEqual(result, expected)

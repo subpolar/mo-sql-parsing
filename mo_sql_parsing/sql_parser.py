@@ -8,14 +8,11 @@
 #
 
 
-from mo_parsing import *
-from mo_parsing.enhancement import LookAhead
-from mo_parsing.tokens import LookBehind
 from mo_parsing.helpers import restOfLine
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing.keywords import *
-from mo_sql_parsing.types import get_column_type, simple_types, time_functions
+from mo_sql_parsing.types import get_column_type, time_functions
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
@@ -105,7 +102,7 @@ def parser(literal_string, ident, sqlserver=False):
         ) / to_switch_call
 
         cast = (
-            Group(CAST("op") + LB + expr("params") + AS + simple_types("params") + RB)
+            Group(CAST("op") + LB + expr("params") + AS + column_type("params") + RB)
             / to_json_call
         )
 
@@ -291,6 +288,12 @@ def parser(literal_string, ident, sqlserver=False):
                     [
                         (
                             Literal("[").suppress() + expr + Literal("]").suppress(),
+                            1,
+                            LEFT_ASSOC,
+                            to_offset,
+                        ),
+                        (
+                            Literal(".").suppress() + simple_ident,
                             1,
                             LEFT_ASSOC,
                             to_offset,
