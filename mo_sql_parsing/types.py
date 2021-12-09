@@ -12,7 +12,18 @@
 from mo_parsing import Forward, Group, Optional, MatchFirst, Literal, ZeroOrMore, export
 from mo_parsing.infix import delimited_list, RIGHT_ASSOC, LEFT_ASSOC
 
-from mo_sql_parsing.keywords import RB, LB, NEG, NOT, BINARY_NOT, NULL, EQ, KNOWN_OPS
+from mo_sql_parsing.keywords import (
+    RB,
+    LB,
+    NEG,
+    NOT,
+    BINARY_NOT,
+    NULL,
+    EQ,
+    KNOWN_OPS,
+    LT,
+    GT,
+)
 from mo_sql_parsing.utils import (
     keyword,
     to_json_call,
@@ -150,9 +161,9 @@ def get_column_type(expr, var_name, literal_string):
 
     struct_type = (
         keyword("struct")("op")
-        + Literal("<").suppress()
+        + LT.suppress()
         + Group(delimited_list(column_definition))("params")
-        + Literal(">").suppress()
+        + GT.suppress()
     ) / to_json_call
 
     row_type = (
@@ -164,9 +175,14 @@ def get_column_type(expr, var_name, literal_string):
 
     array_type = (
         keyword("array")("op")
-        + Literal("<").suppress()
-        + Group(delimited_list(column_type))("params")
-        + Literal(">").suppress()
+        + (
+            (
+                LT.suppress()
+                + Group(delimited_list(column_type))("params")
+                + GT.suppress()
+            )
+            | (LB + Group(delimited_list(column_type))("params") + RB)
+        )
     ) / to_json_call
 
     column_type << (struct_type | row_type | array_type | simple_types)
@@ -200,9 +216,7 @@ def get_column_type(expr, var_name, literal_string):
     ).set_parser_name("column_options")
 
     column_definition << Group(
-        var_name("name")
-        + (column_type | var_name)("type")
-        + column_options
+        var_name("name") + (column_type | var_name)("type") + column_options
     ).set_parser_name("column_definition")
 
     return column_type, column_definition, column_def_references
