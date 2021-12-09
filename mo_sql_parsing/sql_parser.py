@@ -180,7 +180,7 @@ def parser(literal_string, ident, sqlserver=False):
         create_array = (
             keyword("array")("op")
             + Optional(
-                Literal("<").suppress() + column_type("type") + Literal(">").suppress()
+                LT.suppress() + column_type("type") + GT.suppress()
             )
             + (
                 LB + delimited_list(Group(expr))("args") + RB
@@ -209,9 +209,9 @@ def parser(literal_string, ident, sqlserver=False):
         create_struct = (
             keyword("struct")("op")
             + Optional(
-                Literal("<").suppress()
+                LT.suppress()
                 + delimited_list(column_type)("types")
-                + Literal(">").suppress()
+                + GT.suppress()
             )
             + LB
             + delimited_list(Group((expr("value") + alias) / to_select_call))("args")
