@@ -4,7 +4,7 @@
 [![Build Status](https://app.travis-ci.com/klahnakoski/mo-sql-parsing.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-sql-parsing)
 
 
-Parse SQL into JSON parse trees so we can translate it for non-sql datastores!
+Parse SQL into JSON so we can translate it for other datastores!
 
 [See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)
 

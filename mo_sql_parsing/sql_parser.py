@@ -22,7 +22,7 @@ def no_dashes(tokens, start, string):
         index = tokens[0].find("-")
         raise ParseException(
             tokens.type,
-            start + index,
+            start + index + 1,  # +1 TO ENSURE THIS MESSAGE HAS PRIORITY
             string,
             """Ambiguity: Use backticks (``) around identifiers with dashes, or add space around subtraction operator.""",
         )
