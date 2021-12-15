@@ -16,9 +16,12 @@ from mo_sql_parsing import parse, format
 
 class TestErrors(FuzzyTestCase):
     def test_dash_in_tablename(self):
-        with self.assertRaises(['Use backticks (``) around identifiers']):
-            #              012345678901234567890123456789012345678901234567890123456789
+        #          012345678901234567890123456789012345678901234567890123456789
+        try:
             parse("select * from coverage-summary.source.file.covered limit 20")
+            self.assertTrue(False)
+        except Exception as cause:
+            self.assertIn("Use backticks (``) around identifiers", cause.message)
 
     def test_join_on_using_together(self):
         with self.assertRaises(["union", "order", "having", "limit", "where"]):
@@ -62,12 +65,10 @@ class TestErrors(FuzzyTestCase):
 
     def test_issue_50_dashes_in_name(self):
         sql = """select col-cpu-usage from test-information"""
-        with self.assertRaises('Use backticks (``) around identifiers'):
+        with self.assertRaises("Use backticks (``) around identifiers"):
             parse(sql)
 
     def test_issue_50_subtraction1(self):
         sql = """select col-0pu-usage from test-information"""
-        with self.assertRaises('found "-usage fro" (at char 14), (line:1, col:15)'):
+        with self.assertRaises("Use backticks (``) around identifiers"):
             parse(sql)
-
-
