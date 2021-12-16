@@ -9,8 +9,8 @@
 
 import ast
 
-from mo_dots import is_data, is_null, Data, from_data, exists, is_missing
-from mo_future import text, number_types, binary_type, is_text
+from mo_dots import is_data, is_null, Data, from_data
+from mo_future import text, number_types, binary_type
 from mo_imports import expect
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap

@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 
 from mo_dots import split_field
-from mo_future import first, is_text, long, string_types, text
+from mo_future import first, is_text, string_types, text
 from mo_parsing import listwrap
 
 from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
