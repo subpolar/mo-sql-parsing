@@ -376,7 +376,7 @@ class Formatter:
 
         acc = []
         acc.append(join_keyword.upper())
-        acc.append(self.dispatch(json[join_keyword]))
+        acc.append(self.dispatch(json[join_keyword], precedence["join"]))
 
         if json.get("on"):
             acc.append("ON")

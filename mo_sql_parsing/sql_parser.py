@@ -179,9 +179,7 @@ def parser(literal_string, ident, sqlserver=False):
         # ARRAY < STRING > [foo, bar],
         create_array = (
             keyword("array")("op")
-            + Optional(
-                LT.suppress() + column_type("type") + GT.suppress()
-            )
+            + Optional(LT.suppress() + column_type("type") + GT.suppress())
             + (
                 LB + delimited_list(Group(expr))("args") + RB
                 | (Literal("[") + delimited_list(Group(expr))("args") + Literal("]"))
@@ -209,9 +207,7 @@ def parser(literal_string, ident, sqlserver=False):
         create_struct = (
             keyword("struct")("op")
             + Optional(
-                LT.suppress()
-                + delimited_list(column_type)("types")
-                + GT.suppress()
+                LT.suppress() + delimited_list(column_type)("types") + GT.suppress()
             )
             + LB
             + delimited_list(Group((expr("value") + alias) / to_select_call))("args")
@@ -557,8 +553,11 @@ def parser(literal_string, ident, sqlserver=False):
         insert = (
             keyword("insert")("op")
             + (flag("overwrite") | keyword("into").suppress())
-            + keyword("table").suppress()
-            + var_name("params")
+            + (
+                Optional(keyword("table").suppress())
+                + var_name("params")
+                + Optional(LB + delimited_list(var_name)("columns") + RB)
+            )
             + Optional(flag("if exists"))
             + (values | query)("query")
         ) / to_json_call

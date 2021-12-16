@@ -654,3 +654,9 @@ class TestSimple(TestCase):
         result = format(parse("select now() + interval 2 week"))
         expected = "SELECT NOW() + INTERVAL 2 WEEK"
         self.assertEqual(result, expected)
+
+    def test_issue_65_parenthesis(self):
+        sql = """Select * from abc a inner join (select * from def) b on a.id = b.id"""
+        result = format(parse(sql))
+        expected = """SELECT * FROM abc AS a INNER JOIN (SELECT * FROM def) AS b ON a.id = b.id"""
+        self.assertEqual(result, expected)

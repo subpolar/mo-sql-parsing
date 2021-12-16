@@ -285,6 +285,7 @@ precedence = {
     "and": 10,
     "or": 11,
     "lambda": 12,
+    "join": 18,
     "select": 30,
     "from": 30,
     "window": 35,
