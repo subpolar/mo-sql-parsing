@@ -703,3 +703,13 @@ class TestCreateForBigQuery(TestCase):
             "using": "btree",
         }}
         self.assertEqual(result, expected)
+
+    def test_issue_64_table(self):
+        sql = """INSERT INTO tab (name) VALUES(42)"""
+        result = parse(sql)
+        expected = {
+            "columns": "name",
+            "insert": "tab",
+            "query": {"select": {"value": 42}},
+        }
+        self.assertEqual(result, expected)
