@@ -9,6 +9,8 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from mo_parsing.infix import delimited_list
+
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.utils import *
 

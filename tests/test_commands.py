@@ -704,6 +704,8 @@ class TestCreateForBigQuery(TestCase):
         }}
         self.assertEqual(result, expected)
 
+
+class TestInsert(TestCase):
     def test_issue_64_table(self):
         sql = """INSERT INTO tab (name) VALUES(42)"""
         result = parse(sql)
@@ -711,5 +713,55 @@ class TestCreateForBigQuery(TestCase):
             "columns": "name",
             "insert": "tab",
             "query": {"select": {"value": 42}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_64_insert_query(self):
+        sql = """insert into t (a, b, c) select x, y, z from f"""
+        result = parse(sql)
+        expected = {
+            "columns": ["a", "b", "c"],
+            "insert": "t",
+            "query": {
+                "from": "f",
+                "select": [{"value": "x"}, {"value": "y"}, {"value": "z"}],
+            },
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_64_more_values(self):
+        # FROM https://www.freecodecamp.org/news/sql-insert-and-insert-into-statements-with-example-syntax/
+        sql = """INSERT INTO Person(Id, Name, DateOfBirth, Gender)
+            VALUES (1, 'John Lennon', '1940-10-09', 'M'), (2, 'Paul McCartney', '1942-06-18', 'M'),
+            (3, 'George Harrison', '1943-02-25', 'M'), (4, 'Ringo Starr', '1940-07-07', 'M')"""
+        result = parse(sql)
+        expected = {
+            "insert": "Person",
+            "values": [
+                {
+                    "DateOfBirth": "1940-10-09",
+                    "Gender": "M",
+                    "Id": 1,
+                    "Name": "John Lennon",
+                },
+                {
+                    "DateOfBirth": "1942-06-18",
+                    "Gender": "M",
+                    "Id": 2,
+                    "Name": "Paul McCartney",
+                },
+                {
+                    "DateOfBirth": "1943-02-25",
+                    "Gender": "M",
+                    "Id": 3,
+                    "Name": "George Harrison",
+                },
+                {
+                    "DateOfBirth": "1940-07-07",
+                    "Gender": "M",
+                    "Id": 4,
+                    "Name": "Ringo Starr",
+                },
+            ],
         }
         self.assertEqual(result, expected)

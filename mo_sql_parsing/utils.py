@@ -9,8 +9,8 @@
 
 import ast
 
-from mo_dots import is_data, is_null, Data, from_data, exists, is_missing
-from mo_future import text, number_types, binary_type, is_text
+from mo_dots import is_data, is_null, Data, from_data
+from mo_future import text, number_types, binary_type, flatten
 from mo_imports import expect
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
@@ -421,9 +421,23 @@ def to_row(tokens):
         return {"select": {"value": columns[0]}}
 
 
+def get_literal(value):
+    if isinstance(value, (int, float)):
+        return value
+    elif isinstance(value, Call):
+        return
+    elif value is SQL_NULL:
+        return value
+    elif 'literal' in value:
+        return value['literal']
+
+
 def to_values(tokens):
     rows = list(tokens)
     if len(rows) > 1:
+        values = [[get_literal(s['value']) for s in listwrap(row['select'])] for row in rows]
+        if all(flatten(values)):
+            return {"from": {"literal": values}}
         return {"union_all": list(tokens)}
     else:
         return rows
@@ -500,6 +514,24 @@ def to_union_call(tokens):
     output["offset"] = tokens["offset"]
     output["limit"] = tokens["limit"]
     return output
+
+
+def to_insert_call(tokens):
+    options = {k:v for k,v in tokens.items() if k not in ["columns", "table",  "query"]}
+    query = tokens['query']
+    columns = tokens['columns']
+    try:
+        values = query['from']['literal']
+        if values:
+            if columns:
+                data = [dict(zip(columns, row)) for row in values]
+                return Call("insert", [tokens['table']], {"values": data, **options})
+            else:
+                return Call("insert", [tokens['table']], {"values": values, **options})
+    except Exception:
+        pass
+
+    return Call("insert", [tokens['table']], {"columns": columns, "query": query, **options})
 
 
 def to_query(tokens):

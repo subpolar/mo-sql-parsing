@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 
 from mo_dots import split_field
-from mo_future import first, is_text, long, string_types, text
+from mo_future import first, is_text, string_types, text
 from mo_parsing import listwrap
 
 from mo_sql_parsing.keywords import RESERVED, join_keywords, precedence
@@ -171,6 +171,8 @@ class Formatter:
                 return self.value(json, prec)
             elif "join" in json:
                 return self._join_on(json)
+            elif "insert" in json:
+                return self.insert(json)
             elif json.keys() & set(ordered_clauses):
                 return self.ordered_query(json, prec)
             elif json.keys() & set(unordered_clauses):
@@ -325,7 +327,7 @@ class Formatter:
         type = self.dispatch(json[1], precedence["and"])
         return f"INTERVAL {amount} {type.upper()}"
 
-    def _literal(self, json, prec):
+    def _literal(self, json, prec=0):
         if isinstance(json, list):
             return "({0})".format(", ".join(
                 self._literal(v, precedence["literal"]) for v in json
@@ -496,6 +498,41 @@ class Formatter:
     def offset(self, json, prec):
         return "OFFSET {0}".format(self.dispatch(json["offset"], precedence["order"]))
 
+
+    def insert(self, json, prec=precedence["from"]):
+        acc = ["INSERT"]
+        if 'overwrite' in json:
+            acc.append("OVERWRITE")
+        else:
+            acc.append("INTO")
+        acc.append(json['insert'])
+
+        if 'columns' in json:
+            acc.append(self.sql_list(json))
+        if 'values' in json:
+            values = json['values']
+            if all(isinstance(row, dict) for row in values):
+                columns = list(sorted(set(k for row in values for k in row.keys())))
+                acc.append(self.sql_list(columns))
+                if 'if exists' in json:
+                    acc.append("IF EXISTS")
+                acc.append("VALUES")
+                acc.append(",\n".join(
+                    "(" + ", ".join(self._literal(row[c]) for c in columns) + ")"
+                    for row in values
+                ))
+            else:
+                if 'if exists' in json:
+                    acc.append("IF EXISTS")
+                acc.append("VALUES")
+                for row in values:
+                    acc.append("("+", ".join(self._literal(row))+")")
+
+        else:
+            if json['if exists']:
+                acc.append("IF EXISTS")
+            acc.append(self.dispatch(json['query']))
+        return " ".join(acc)
 
 setattr(Formatter, "with", Formatter.with_)
 setattr(Formatter, "from", Formatter.from_)

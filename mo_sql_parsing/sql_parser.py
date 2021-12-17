@@ -9,6 +9,7 @@
 
 
 from mo_parsing.helpers import restOfLine
+from mo_parsing.infix import delimited_list
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing.keywords import *
@@ -551,16 +552,16 @@ def parser(literal_string, ident, sqlserver=False):
         )("drop")
 
         insert = (
-            keyword("insert")("op")
+            keyword("insert").suppress()
             + (flag("overwrite") | keyword("into").suppress())
             + (
                 Optional(keyword("table").suppress())
-                + var_name("params")
+                + var_name("table")
                 + Optional(LB + delimited_list(var_name)("columns") + RB)
             )
             + Optional(flag("if exists"))
             + (values | query)("query")
-        ) / to_json_call
+        ) / to_insert_call
 
         update = (
             keyword("update")("op")
