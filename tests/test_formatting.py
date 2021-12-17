@@ -660,3 +660,11 @@ class TestSimple(TestCase):
         result = format(parse(sql))
         expected = """SELECT * FROM abc AS a INNER JOIN (SELECT * FROM def) AS b ON a.id = b.id"""
         self.assertEqual(result, expected)
+
+    def test_issue_64_format_insert(self):
+        sql = """INSERT INTO Person(Id, Name, DateOfBirth, Gender)
+            VALUES (1, 'John Lennon', '1940-10-09', 'M'), (2, 'Paul McCartney', '1942-06-18', 'M'),
+            (3, 'George Harrison', '1943-02-25', 'M'), (4, 'Ringo Starr', '1940-07-07', 'M')"""
+        result = format(parse(sql))
+        expected = """INSERT INTO Person (DateOfBirth, Gender, Id, Name) VALUES ('1940-10-09', 'M', 1, 'John Lennon'),\n('1942-06-18', 'M', 2, 'Paul McCartney'),\n('1943-02-25', 'M', 3, 'George Harrison'),\n('1940-07-07', 'M', 4, 'Ringo Starr')"""
+        self.assertEqual(result, expected)

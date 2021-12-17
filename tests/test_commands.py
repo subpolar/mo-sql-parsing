@@ -716,6 +716,19 @@ class TestInsert(TestCase):
         }
         self.assertEqual(result, expected)
 
+    def test_issue_64_insert_query(self):
+        sql = """insert into t (a, b, c) select x, y, z from f"""
+        result = parse(sql)
+        expected = {
+            "columns": ["a", "b", "c"],
+            "insert": "t",
+            "query": {
+                "from": "f",
+                "select": [{"value": "x"}, {"value": "y"}, {"value": "z"}],
+            },
+        }
+        self.assertEqual(result, expected)
+
     def test_issue_64_more_values(self):
         # FROM https://www.freecodecamp.org/news/sql-insert-and-insert-into-statements-with-example-syntax/
         sql = """INSERT INTO Person(Id, Name, DateOfBirth, Gender)
@@ -723,33 +736,32 @@ class TestInsert(TestCase):
             (3, 'George Harrison', '1943-02-25', 'M'), (4, 'Ringo Starr', '1940-07-07', 'M')"""
         result = parse(sql)
         expected = {
-            "columns": ["Id", "Name", "DateOfBirth", "Gender"],
             "insert": "Person",
-            "query": {"union_all": [
-                {"select": [
-                    {"value": 1},
-                    {"value": {"literal": "John Lennon"}},
-                    {"value": {"literal": "1940-10-09"}},
-                    {"value": {"literal": "M"}},
-                ]},
-                {"select": [
-                    {"value": 2},
-                    {"value": {"literal": "Paul McCartney"}},
-                    {"value": {"literal": "1942-06-18"}},
-                    {"value": {"literal": "M"}},
-                ]},
-                {"select": [
-                    {"value": 3},
-                    {"value": {"literal": "George Harrison"}},
-                    {"value": {"literal": "1943-02-25"}},
-                    {"value": {"literal": "M"}},
-                ]},
-                {"select": [
-                    {"value": 4},
-                    {"value": {"literal": "Ringo Starr"}},
-                    {"value": {"literal": "1940-07-07"}},
-                    {"value": {"literal": "M"}},
-                ]},
-            ]},
+            "values": [
+                {
+                    "DateOfBirth": "1940-10-09",
+                    "Gender": "M",
+                    "Id": 1,
+                    "Name": "John Lennon",
+                },
+                {
+                    "DateOfBirth": "1942-06-18",
+                    "Gender": "M",
+                    "Id": 2,
+                    "Name": "Paul McCartney",
+                },
+                {
+                    "DateOfBirth": "1943-02-25",
+                    "Gender": "M",
+                    "Id": 3,
+                    "Name": "George Harrison",
+                },
+                {
+                    "DateOfBirth": "1940-07-07",
+                    "Gender": "M",
+                    "Id": 4,
+                    "Name": "Ringo Starr",
+                },
+            ],
         }
         self.assertEqual(result, expected)

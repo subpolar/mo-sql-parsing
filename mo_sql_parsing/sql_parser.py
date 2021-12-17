@@ -552,16 +552,16 @@ def parser(literal_string, ident, sqlserver=False):
         )("drop")
 
         insert = (
-            keyword("insert")("op")
+            keyword("insert").suppress()
             + (flag("overwrite") | keyword("into").suppress())
             + (
                 Optional(keyword("table").suppress())
-                + var_name("params")
+                + var_name("table")
                 + Optional(LB + delimited_list(var_name)("columns") + RB)
             )
             + Optional(flag("if exists"))
-            + (values("values") | query("query"))
-        ) / to_json_call
+            + (values | query)("query")
+        ) / to_insert_call
 
         update = (
             keyword("update")("op")

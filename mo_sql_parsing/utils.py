@@ -424,6 +424,8 @@ def to_row(tokens):
 def get_literal(value):
     if isinstance(value, (int, float)):
         return value
+    elif isinstance(value, Call):
+        return
     elif value is SQL_NULL:
         return value
     elif 'literal' in value:
@@ -437,7 +439,6 @@ def to_values(tokens):
         if all(flatten(values)):
             return {"from": {"literal": values}}
         return {"union_all": list(tokens)}
-
     else:
         return rows
 
@@ -513,6 +514,24 @@ def to_union_call(tokens):
     output["offset"] = tokens["offset"]
     output["limit"] = tokens["limit"]
     return output
+
+
+def to_insert_call(tokens):
+    options = {k:v for k,v in tokens.items() if k not in ["columns", "table",  "query"]}
+    query = tokens['query']
+    columns = tokens['columns']
+    try:
+        values = query['from']['literal']
+        if values:
+            if columns:
+                data = [dict(zip(columns, row)) for row in values]
+                return Call("insert", [tokens['table']], {"values": data, **options})
+            else:
+                return Call("insert", [tokens['table']], {"values": values, **options})
+    except Exception:
+        pass
+
+    return Call("insert", [tokens['table']], {"columns": columns, "query": query, **options})
 
 
 def to_query(tokens):
