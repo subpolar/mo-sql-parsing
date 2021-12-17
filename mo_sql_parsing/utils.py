@@ -10,7 +10,7 @@
 import ast
 
 from mo_dots import is_data, is_null, Data, from_data
-from mo_future import text, number_types, binary_type
+from mo_future import text, number_types, binary_type, flatten
 from mo_imports import expect
 from mo_parsing import *
 from mo_parsing.utils import is_number, listwrap
@@ -421,10 +421,23 @@ def to_row(tokens):
         return {"select": {"value": columns[0]}}
 
 
+def get_literal(value):
+    if isinstance(value, (int, float)):
+        return value
+    elif value is SQL_NULL:
+        return value
+    elif 'literal' in value:
+        return value['literal']
+
+
 def to_values(tokens):
     rows = list(tokens)
     if len(rows) > 1:
+        values = [[get_literal(s['value']) for s in listwrap(row['select'])] for row in rows]
+        if all(flatten(values)):
+            return {"from": {"literal": values}}
         return {"union_all": list(tokens)}
+
     else:
         return rows
 

@@ -704,6 +704,8 @@ class TestCreateForBigQuery(TestCase):
         }}
         self.assertEqual(result, expected)
 
+
+class TestInsert(TestCase):
     def test_issue_64_table(self):
         sql = """INSERT INTO tab (name) VALUES(42)"""
         result = parse(sql)
@@ -711,5 +713,43 @@ class TestCreateForBigQuery(TestCase):
             "columns": "name",
             "insert": "tab",
             "query": {"select": {"value": 42}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_64_more_values(self):
+        # FROM https://www.freecodecamp.org/news/sql-insert-and-insert-into-statements-with-example-syntax/
+        sql = """INSERT INTO Person(Id, Name, DateOfBirth, Gender)
+            VALUES (1, 'John Lennon', '1940-10-09', 'M'), (2, 'Paul McCartney', '1942-06-18', 'M'),
+            (3, 'George Harrison', '1943-02-25', 'M'), (4, 'Ringo Starr', '1940-07-07', 'M')"""
+        result = parse(sql)
+        expected = {
+            "columns": ["Id", "Name", "DateOfBirth", "Gender"],
+            "insert": "Person",
+            "query": {"union_all": [
+                {"select": [
+                    {"value": 1},
+                    {"value": {"literal": "John Lennon"}},
+                    {"value": {"literal": "1940-10-09"}},
+                    {"value": {"literal": "M"}},
+                ]},
+                {"select": [
+                    {"value": 2},
+                    {"value": {"literal": "Paul McCartney"}},
+                    {"value": {"literal": "1942-06-18"}},
+                    {"value": {"literal": "M"}},
+                ]},
+                {"select": [
+                    {"value": 3},
+                    {"value": {"literal": "George Harrison"}},
+                    {"value": {"literal": "1943-02-25"}},
+                    {"value": {"literal": "M"}},
+                ]},
+                {"select": [
+                    {"value": 4},
+                    {"value": {"literal": "Ringo Starr"}},
+                    {"value": {"literal": "1940-07-07"}},
+                    {"value": {"literal": "M"}},
+                ]},
+            ]},
         }
         self.assertEqual(result, expected)

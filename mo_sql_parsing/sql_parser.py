@@ -9,6 +9,7 @@
 
 
 from mo_parsing.helpers import restOfLine
+from mo_parsing.infix import delimited_list
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing.keywords import *
@@ -559,7 +560,7 @@ def parser(literal_string, ident, sqlserver=False):
                 + Optional(LB + delimited_list(var_name)("columns") + RB)
             )
             + Optional(flag("if exists"))
-            + (values | query)("query")
+            + (values("values") | query("query"))
         ) / to_json_call
 
         update = (
