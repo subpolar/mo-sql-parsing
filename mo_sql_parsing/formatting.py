@@ -138,8 +138,6 @@ class Formatter:
     _gte = Operator(">=")
     _lte = Operator("<=")
     _eq = Operator("=")
-    _in = Operator("in")
-    _nin = Operator("not in")
     _or = Operator("or")
     _and = Operator("and")
     _binary_and = Operator("&")
@@ -163,7 +161,7 @@ class Formatter:
 
     def dispatch(self, json, prec=100):
         if isinstance(json, list):
-            return self.sql_list(json)
+            return self.sql_list(json, prec)
         if isinstance(json, dict):
             if len(json) == 0:
                 return ""
@@ -296,6 +294,24 @@ class Formatter:
         return "{0} COLLATE {1}".format(
             self.dispatch(pair[0], precedence["collate"]), pair[1]
         )
+
+    def _in(self, json, prec):
+        member, set = json
+        if 'literal' in set:
+            set = {"literal": listwrap(set['literal'])}
+        sql = self.dispatch(member, precedence['in']) + " IN " + self.dispatch(set, precedence['in'])
+        if prec < precedence['in']:
+            sql = f"({sql})"
+        return sql
+
+    def _nin(self, json, prec):
+        member, set = json
+        if 'literal' in set:
+            set = {"literal": listwrap(set['literal'])}
+        sql = self.dispatch(member, precedence['in']) + " NOT IN " + self.dispatch(set, precedence['in'])
+        if prec < precedence['in']:
+            sql = f"({sql})"
+        return sql
 
     def _case(self, checks, prec):
         parts = ["CASE"]
