@@ -668,3 +668,21 @@ class TestSimple(TestCase):
         result = format(parse(sql))
         expected = """INSERT INTO Person (DateOfBirth, Gender, Id, Name) VALUES ('1940-10-09', 'M', 1, 'John Lennon'),\n('1942-06-18', 'M', 2, 'Paul McCartney'),\n('1943-02-25', 'M', 3, 'George Harrison'),\n('1940-07-07', 'M', 4, 'Ringo Starr')"""
         self.assertEqual(result, expected)
+
+    def test_issue_66_single_item_in_list1(self):
+        sql = """SELECT * FROM my_table WHERE outcome NOT IN ('COMPLETED')"""
+        result = format(parse(sql))
+        expected = """SELECT * FROM my_table WHERE outcome NOT IN ('COMPLETED')"""
+        self.assertEqual(result, expected)
+
+    def test_issue_66_single_item_in_list2(self):
+        sql = """SELECT * FROM my_table WHERE outcome IN ('COMPLETED')"""
+        result = format(parse(sql))
+        expected = """SELECT * FROM my_table WHERE outcome IN ('COMPLETED')"""
+        self.assertEqual(result, expected)
+
+    def test_issue_66_single_item_in_list3(self):
+        sql = """SELECT * FROM my_table WHERE outcome IN (SELECT a FROM b)"""
+        result = format(parse(sql))
+        expected = """SELECT * FROM my_table WHERE outcome IN (SELECT a FROM b)"""
+        self.assertEqual(result, expected)

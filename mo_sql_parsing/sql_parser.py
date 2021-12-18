@@ -553,12 +553,12 @@ def parser(literal_string, ident, sqlserver=False):
 
         insert = (
             keyword("insert").suppress()
-            + (flag("overwrite") | keyword("into").suppress())
             + (
-                Optional(keyword("table").suppress())
-                + var_name("table")
-                + Optional(LB + delimited_list(var_name)("columns") + RB)
+                flag("overwrite") + keyword("table").suppress()
+                | keyword("into").suppress() + Optional(keyword("table").suppress())
             )
+            + var_name("table")
+            + Optional(LB + delimited_list(var_name)("columns") + RB)
             + Optional(flag("if exists"))
             + (values | query)("query")
         ) / to_insert_call
