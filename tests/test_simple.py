@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import TestCase
+from unittest import TestCase, skip
 
 from mo_sql_parsing import parse, parse_mysql, format
 
@@ -1546,3 +1546,19 @@ class TestSimple(TestCase):
             },
         )
         self.assertEqual(s, """SELECT TRIM(\'.1\' FROM TRIM(column1)) FROM my_table""")
+
+    @skip("please fix")
+    def test_issue68_group_strings(self):
+        sql = """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))"""
+        p = parse(sql)
+        self.assertEqual(
+            p,
+            {
+                "from": "AirlineFlights",
+                "select": "*",
+                "where": {"in": [
+                    ["origin", "dest"],
+                    {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]},
+                ]},
+            },
+        )

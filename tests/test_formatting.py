@@ -684,3 +684,37 @@ class TestSimple(TestCase):
         result = format(parse(sql))
         expected = """SELECT * FROM my_table WHERE outcome IN (SELECT a FROM b)"""
         self.assertEqual(result, expected)
+
+    def test_issue68_grouping_numbers(self):
+        sql = "SELECT * FROM mytable WHERE (a, b) IN ((1, 2), (3,4))"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "mytable",
+                "select": "*",
+                "where": {"in": [["a", "b"], [[1, 2], [3, 4]]]},
+            },
+        )
+        self.assertEqual(s, "SELECT * FROM mytable WHERE (a, b) IN ((1, 2), (3, 4))")
+
+    def test_issue68_group_strings(self):
+        sql = """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))"""
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "AirlineFlights",
+                "select": "*",
+                "where": {"in": [
+                    ["origin", "dest"],
+                    [{"literal": ["ATL", "ABE"]}, {"literal": ["DFW", "ABI"]}],
+                ]},
+            },
+        )
+        self.assertEqual(
+            s,
+            """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))""",
+        )

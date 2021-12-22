@@ -161,7 +161,7 @@ class Formatter:
 
     def dispatch(self, json, prec=100):
         if isinstance(json, list):
-            return self.sql_list(json, prec)
+            return self.sql_list(json, prec=precedence['list'])
         if isinstance(json, dict):
             if len(json) == 0:
                 return ""
