@@ -177,6 +177,8 @@ class Formatter:
                 return self.unordered_query(json, prec)
             elif "null" in json:
                 return "NULL"
+            elif "trim" in json:
+                return self._trim(json, prec)
             else:
                 return self.op(json, prec)
         if isinstance(json, string_types):
@@ -359,6 +361,23 @@ class Formatter:
             self.dispatch(json[1], precedence["between"]),
             self.dispatch(json[2], precedence["between"]),
         )
+
+    def _trim(self, json, prec):
+        c = json.get('characters')
+        d = json.get('direction')
+        v = json['trim']
+        acc=["TRIM("]
+        if d:
+            acc.append(d.upper())
+            acc.append(" ")
+        if c:
+            acc.append(self.dispatch(c))
+            acc.append(" ")
+        if c or d:
+            acc.append("FROM ")
+        acc.append(self.dispatch(v))
+        acc.append(")")
+        return "".join(acc)
 
     def _not_between(self, json, prec):
         return "{0} NOT BETWEEN {1} AND {2}".format(

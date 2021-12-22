@@ -111,8 +111,15 @@ def parser(literal_string, ident, sqlserver=False):
             Group(
                 keyword("trim").suppress()
                 + LB
-                + expr("chars")
-                + Optional(FROM + expr("from"))
+                + Optional(
+                    (keyword("both") | keyword("trailing") | keyword("leading"))
+                    / (lambda t: t[0].lower())
+                )("direction")
+                + (
+                    assign("from", expr)
+                    | expr("chars")
+                    + Optional(assign("from", expr))
+                )
                 + RB
             ).set_parser_name("trim")
             / to_trim_call

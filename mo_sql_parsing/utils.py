@@ -196,7 +196,9 @@ def to_json_operator(tokens):
             while isinstance(operand, ParseResults) and isinstance(operand.type, Group):
                 # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
-                if isinstance(operand, ParseResults) and isinstance(operand.type, Forward):
+                if isinstance(operand, ParseResults) and isinstance(
+                    operand.type, Forward
+                ):
                     operand = operand[0]
 
             if isinstance(operand, Call) and operand.op == op:
@@ -291,8 +293,12 @@ is_set_op = ("union", "union_all", "except", "minus", "intersect")
 def to_trim_call(tokens):
     frum = tokens["from"]
     if not frum:
-        return Call("trim", [tokens["chars"]], {})
-    return Call("trim", [frum], {"characters": tokens["chars"]})
+        return Call("trim", [tokens["chars"]], {"direction": tokens["direction"]})
+    return Call(
+        "trim",
+        [frum],
+        {"characters": tokens["chars"], "direction": tokens["direction"]},
+    )
 
 
 def to_json_call(tokens):
@@ -301,7 +307,7 @@ def to_json_call(tokens):
     op = binary_ops.get(op, op)
     params = tokens["params"]
     if isinstance(params, (dict, str, int, Call)):
-        args=[params]
+        args = [params]
     else:
         args = list(params)
 
@@ -428,14 +434,16 @@ def get_literal(value):
         return
     elif value is SQL_NULL:
         return value
-    elif 'literal' in value:
-        return value['literal']
+    elif "literal" in value:
+        return value["literal"]
 
 
 def to_values(tokens):
     rows = list(tokens)
     if len(rows) > 1:
-        values = [[get_literal(s['value']) for s in listwrap(row['select'])] for row in rows]
+        values = [
+            [get_literal(s["value"]) for s in listwrap(row["select"])] for row in rows
+        ]
         if all(flatten(values)):
             return {"from": {"literal": values}}
         return {"union_all": list(tokens)}
@@ -466,7 +474,7 @@ def to_map(tokens):
 
 def to_struct(tokens):
     types = list(tokens["types"])
-    args = list(d for a in tokens["args"] for d in [a if a['name'] else a['value']])
+    args = list(d for a in tokens["args"] for d in [a if a["name"] else a["value"]])
 
     output = Call("create_struct", args, {})
     if types:
@@ -475,13 +483,13 @@ def to_struct(tokens):
 
 
 def to_select_call(tokens):
-    expr = tokens['value']
+    expr = tokens["value"]
     if expr == "*":
         return ["*"]
     try:
         call = expr[0][0]
         if call.op == "value":
-            return {"name": tokens['name'], "value": call.args, **call.kwargs}
+            return {"name": tokens["name"], "value": call.args, **call.kwargs}
     except:
         pass
 
@@ -517,21 +525,25 @@ def to_union_call(tokens):
 
 
 def to_insert_call(tokens):
-    options = {k:v for k,v in tokens.items() if k not in ["columns", "table",  "query"]}
-    query = tokens['query']
-    columns = tokens['columns']
+    options = {
+        k: v for k, v in tokens.items() if k not in ["columns", "table", "query"]
+    }
+    query = tokens["query"]
+    columns = tokens["columns"]
     try:
-        values = query['from']['literal']
+        values = query["from"]["literal"]
         if values:
             if columns:
                 data = [dict(zip(columns, row)) for row in values]
-                return Call("insert", [tokens['table']], {"values": data, **options})
+                return Call("insert", [tokens["table"]], {"values": data, **options})
             else:
-                return Call("insert", [tokens['table']], {"values": values, **options})
+                return Call("insert", [tokens["table"]], {"values": values, **options})
     except Exception:
         pass
 
-    return Call("insert", [tokens['table']], {"columns": columns, "query": query, **options})
+    return Call(
+        "insert", [tokens["table"]], {"columns": columns, "query": query, **options}
+    )
 
 
 def to_query(tokens):

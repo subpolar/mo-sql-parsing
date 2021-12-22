@@ -71,7 +71,7 @@ The default output for this parser is to emit a null function `{"null":{}}` wher
 this has been implemented with a post-parse rewriting of the parse tree.
 
 
-#### Normalized function call form (experimental)
+#### Normalized function call form
 
 The default behaviour of the parser is to output function calls in `simple_op` format: The operator being a key in the object; `{op: params}`.  This form can be difficult to work with because the object must be scanned for known operators, or possible optional arguments, or at least distinguished from a query object.
 

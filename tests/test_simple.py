@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_sql_parsing import parse, parse_mysql
+from mo_sql_parsing import parse, parse_mysql, format
 
 try:
     from tests.util import assertRaises
@@ -1133,8 +1133,7 @@ class TestSimple(TestCase):
         sql = "SELECT COUNT(DISTINCT Y) FROM A "
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"from": "A", "select": {"value": {"count": {"distinct": "Y"}}}},
+            result, {"from": "A", "select": {"value": {"count": {"distinct": "Y"}}}},
         )
 
     def test_issue2b_of_fork(self):
@@ -1433,4 +1432,117 @@ class TestSimple(TestCase):
         # bad spelling of distinct
         q = "select DISTICT col_a, col_b from table_test"
         parsed_query = parse_mysql(q)
-        self.assertEqual(parsed_query, {'select': [{'value': 'DISTICT', 'name': 'col_a'}, {'value': 'col_b'}], 'from': 'table_test'})
+        self.assertEqual(
+            parsed_query,
+            {
+                "select": [{"value": "DISTICT", "name": "col_a"}, {"value": "col_b"}],
+                "from": "table_test",
+            },
+        )
+
+    def test_issue_67_trim1(self):
+        sql = "SELECT TRIM(BOTH FROM column1) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {"direction": "both", "trim": "column1"}},
+            },
+        )
+        self.assertEqual(s, "SELECT TRIM(BOTH FROM column1) FROM my_table")
+
+    def test_issue_67_trim2(self):
+        sql = "SELECT TRIM(TRAILING FROM column1) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {"direction": "trailing", "trim": "column1"}},
+            },
+        )
+        self.assertEqual(s, "SELECT TRIM(TRAILING FROM column1) FROM my_table")
+
+    def test_issue_67_trim3(self):
+        sql = "SELECT TRIM(LEADING FROM column1) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {"direction": "leading", "trim": "column1"}},
+            },
+        )
+        self.assertEqual(s, "SELECT TRIM(LEADING FROM column1) FROM my_table")
+
+    def test_issue_67_trim4(self):
+        sql = "SELECT TRIM(TRAILING '.1' from column1) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {
+                    "direction": "trailing",
+                    "characters": {'literal': '.1'},
+                    "trim": "column1",
+                }},
+            },
+        )
+        self.assertEqual(s, "SELECT TRIM(TRAILING '.1' FROM column1) FROM my_table")
+
+    def test_issue_67_trim5(self):
+        sql = "SELECT TRIM(LEADING '.1' from column1) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {
+                    "direction": "leading",
+                    "characters": {'literal': '.1'},
+                    "trim": "column1",
+                }},
+            },
+        )
+        self.assertEqual(s, "SELECT TRIM(LEADING '.1' FROM column1) FROM my_table")
+
+    def test_issue_67_trim6(self):
+        sql = "SELECT TRIM(BOTH '.1' from column1) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {
+                    "direction": "both",
+                    "characters": {'literal': '.1'},
+                    "trim": "column1",
+                }},
+            },
+        )
+        self.assertEqual(s, "SELECT TRIM(BOTH '.1' FROM column1) FROM my_table")
+
+    def test_issue_67_trim7(self):
+        # With embedded trim function
+        sql = "SELECT TRIM('.1' from TRIM(column1)) FROM my_table"
+        p = parse(sql)
+        s = format(p)
+        self.assertEqual(
+            p,
+            {
+                "from": "my_table",
+                "select": {"value": {
+                    "characters": {"literal": ".1"},
+                    "trim": {"trim": "column1"},
+                }},
+            },
+        )
+        self.assertEqual(s, """SELECT TRIM(\'.1\' FROM TRIM(column1)) FROM my_table""")
