@@ -420,7 +420,7 @@ def parser(literal_string, ident, sqlserver=False):
             & Optional(
                 FETCH
                 + Optional(keyword("first") | keyword("next"))
-                + expr("limit")
+                + expr("fetch")
                 + rows
                 + Optional(keyword("only"))
             )

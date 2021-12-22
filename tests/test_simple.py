@@ -1571,7 +1571,7 @@ class TestSimple(TestCase):
         result = parse(sql)
         self.assertEqual(
             result,
-            {'from': 'mytable', 'limit': 20, 'select': '*'}
+            {'from': 'mytable', 'fetch': 20, 'select': '*'}
         )
 
     def test_issue_70_offset_fetch_next(self):
@@ -1580,5 +1580,5 @@ class TestSimple(TestCase):
         result = parse(sql)
         self.assertEqual(
             result,
-            {'from': 'mytable', 'offset': 2, 'limit': 10, 'select': '*'}
+            {'from': 'mytable', 'offset': 2, 'fetch': 10, 'select': '*'}
         )

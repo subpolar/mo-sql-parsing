@@ -519,8 +519,9 @@ def to_union_call(tokens):
             output = {"from": acc}
 
     output["orderby"] = tokens["orderby"]
-    output["offset"] = tokens["offset"]
     output["limit"] = tokens["limit"]
+    output["offset"] = tokens["offset"]
+    output["fetch"] = tokens["fetch"]
     return output
 
 
