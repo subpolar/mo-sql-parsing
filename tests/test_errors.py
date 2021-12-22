@@ -51,7 +51,7 @@ class TestErrors(FuzzyTestCase):
 
     def test_bad_order_by(self):
         with self.assertRaises(
-            'Expecting {offset} | {StringEnd}, found "INTERSECT " (at char 95),'
+            'Expecting {offset} | {fetch} | {StringEnd}, found "INTERSECT " (at char 95),'
             " (line:1, col:96)"
         ):
             parse(
