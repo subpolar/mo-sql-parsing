@@ -119,8 +119,8 @@ unordered_clauses = [
 
 ordered_clauses = [
     "orderby",
-    "limit",
     "offset",
+    "limit",
 ]
 
 
@@ -161,7 +161,7 @@ class Formatter:
 
     def dispatch(self, json, prec=100):
         if isinstance(json, list):
-            return self.sql_list(json, prec=precedence['list'])
+            return self.sql_list(json, prec=precedence["list"])
         if isinstance(json, dict):
             if len(json) == 0:
                 return ""
@@ -299,19 +299,27 @@ class Formatter:
 
     def _in(self, json, prec):
         member, set = json
-        if 'literal' in set:
-            set = {"literal": listwrap(set['literal'])}
-        sql = self.dispatch(member, precedence['in']) + " IN " + self.dispatch(set, precedence['in'])
-        if prec < precedence['in']:
+        if "literal" in set:
+            set = {"literal": listwrap(set["literal"])}
+        sql = (
+            self.dispatch(member, precedence["in"])
+            + " IN "
+            + self.dispatch(set, precedence["in"])
+        )
+        if prec < precedence["in"]:
             sql = f"({sql})"
         return sql
 
     def _nin(self, json, prec):
         member, set = json
-        if 'literal' in set:
-            set = {"literal": listwrap(set['literal'])}
-        sql = self.dispatch(member, precedence['in']) + " NOT IN " + self.dispatch(set, precedence['in'])
-        if prec < precedence['in']:
+        if "literal" in set:
+            set = {"literal": listwrap(set["literal"])}
+        sql = (
+            self.dispatch(member, precedence["in"])
+            + " NOT IN "
+            + self.dispatch(set, precedence["in"])
+        )
+        if prec < precedence["in"]:
             sql = f"({sql})"
         return sql
 
@@ -357,7 +365,7 @@ class Formatter:
 
     def _get(self, json, prec):
         v, i = json
-        v_sql = self.dispatch(v, prec=precedence['literal'])
+        v_sql = self.dispatch(v, prec=precedence["literal"])
         i_sql = self.dispatch(i)
         return f"{v_sql}[{i_sql}]"
 
@@ -369,10 +377,10 @@ class Formatter:
         )
 
     def _trim(self, json, prec):
-        c = json.get('characters')
-        d = json.get('direction')
-        v = json['trim']
-        acc=["TRIM("]
+        c = json.get("characters")
+        d = json.get("direction")
+        v = json["trim"]
+        acc = ["TRIM("]
         if d:
             acc.append(d.upper())
             acc.append(" ")
@@ -534,28 +542,29 @@ class Formatter:
         return f"ORDER BY {param}"
 
     def limit(self, json, prec):
-        return "LIMIT {0}".format(self.dispatch(json["limit"], precedence["order"]))
+        num = self.dispatch(json["limit"], precedence["order"])
+        return f"FETCH {num} ROWS ONLY"
 
     def offset(self, json, prec):
-        return "OFFSET {0}".format(self.dispatch(json["offset"], precedence["order"]))
-
+        num = self.dispatch(json["offset"], precedence["order"])
+        return f"OFFSET {num}"
 
     def insert(self, json, prec=precedence["from"]):
         acc = ["INSERT"]
-        if 'overwrite' in json:
+        if "overwrite" in json:
             acc.append("OVERWRITE")
         else:
             acc.append("INTO")
-        acc.append(json['insert'])
+        acc.append(json["insert"])
 
-        if 'columns' in json:
+        if "columns" in json:
             acc.append(self.sql_list(json))
-        if 'values' in json:
-            values = json['values']
+        if "values" in json:
+            values = json["values"]
             if all(isinstance(row, dict) for row in values):
                 columns = list(sorted(set(k for row in values for k in row.keys())))
                 acc.append(self.sql_list(columns))
-                if 'if exists' in json:
+                if "if exists" in json:
                     acc.append("IF EXISTS")
                 acc.append("VALUES")
                 acc.append(",\n".join(
@@ -563,17 +572,18 @@ class Formatter:
                     for row in values
                 ))
             else:
-                if 'if exists' in json:
+                if "if exists" in json:
                     acc.append("IF EXISTS")
                 acc.append("VALUES")
                 for row in values:
-                    acc.append("("+", ".join(self._literal(row))+")")
+                    acc.append("(" + ", ".join(self._literal(row)) + ")")
 
         else:
-            if json['if exists']:
+            if json["if exists"]:
                 acc.append("IF EXISTS")
-            acc.append(self.dispatch(json['query']))
+            acc.append(self.dispatch(json["query"]))
         return " ".join(acc)
+
 
 setattr(Formatter, "with", Formatter.with_)
 setattr(Formatter, "from", Formatter.from_)

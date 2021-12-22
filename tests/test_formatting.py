@@ -307,12 +307,12 @@ class TestSimple(TestCase):
 
     def test_limit(self):
         result = format({"select": "*", "from": "a", "limit": 10})
-        expected = "SELECT * FROM a LIMIT 10"
+        expected = "SELECT * FROM a FETCH 10 ROWS ONLY"
         self.assertEqual(result, expected)
 
     def test_offset(self):
         result = format({"select": "*", "from": "a", "limit": 10, "offset": 10})
-        expected = "SELECT * FROM a LIMIT 10 OFFSET 10"
+        expected = "SELECT * FROM a OFFSET 10 FETCH 10 ROWS ONLY"
         self.assertEqual(result, expected)
 
     def test_count_literal(self):
@@ -502,7 +502,7 @@ class TestSimple(TestCase):
         query = """SELECT river_name FROM river GROUP BY river_name ORDER BY COUNT(DISTINCT traverse) DESC LIMIT 1"""
         parse_result = parse(query)
         format_result = format(parse_result)
-        self.assertEqual(format_result, query)
+        self.assertEqual(format_result, """SELECT river_name FROM river GROUP BY river_name ORDER BY COUNT(DISTINCT traverse) DESC FETCH 1 ROWS ONLY""")
         query = """SELECT DISTINCT t1.paperid, COUNT(t3.citingpaperid) FROM paper AS t1 JOIN cite AS t3 ON t1.paperid = t3.citedpaperid JOIN venue AS t2 ON t2.venueid = t1.venueid WHERE t1.year = 2012 AND t2.venuename = 'ACL' GROUP BY t1.paperid HAVING COUNT(t3.citingpaperid) > 7"""
         parse_result = parse(query)
         format_result = format(parse_result)
@@ -516,7 +516,7 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-        query = """SELECT document_name FROM documents GROUP BY document_type_code INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
+        query = """SELECT document_name FROM documents GROUP BY document_type_code INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC FETCH 3 ROWS ONLY"""
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -607,12 +607,12 @@ class TestSimple(TestCase):
         re_format_query = format(result)
         self.assertEqual(
             re_format_query,
-            """SELECT node, datetime FROM e WHERE (900 - (CAST(p AS FLOAT) + CAST(p AS FLOAT))) / 900 < 0.9 ORDER BY datetime LIMIT 100""",
+            """SELECT node, datetime FROM e WHERE (900 - (CAST(p AS FLOAT) + CAST(p AS FLOAT))) / 900 < 0.9 ORDER BY datetime FETCH 100 ROWS ONLY""",
         )
 
     def test_issue_47_precedence(self):
         sql = """SELECT c1, c2 FROM t1 WHERE ((900 - (CAST(c3 AS FLOAT) + CAST(c4 AS FLOAT))) / 900) < 0.9 ORDER BY c2 LIMIT 100"""
-        expected_sql = """SELECT c1, c2 FROM t1 WHERE (900 - (CAST(c3 AS FLOAT) + CAST(c4 AS FLOAT))) / 900 < 0.9 ORDER BY c2 LIMIT 100"""
+        expected_sql = """SELECT c1, c2 FROM t1 WHERE (900 - (CAST(c3 AS FLOAT) + CAST(c4 AS FLOAT))) / 900 < 0.9 ORDER BY c2 FETCH 100 ROWS ONLY"""
 
         result = parse(sql)
         expected_result = {

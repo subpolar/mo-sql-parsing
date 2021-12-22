@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase, skip
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse, parse_mysql, format
 
 try:
@@ -1006,7 +1008,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue_141(self):
-        sql = "select name from table order by age limit 1 offset 3"
+        sql = "select name from table order by age offset 3 limit 1"
         result = parse(sql)
         expected = {
             "select": {"value": "name"},
@@ -1548,7 +1550,7 @@ class TestSimple(TestCase):
         self.assertEqual(s, """SELECT TRIM(\'.1\' FROM TRIM(column1)) FROM my_table""")
 
     @skip("please fix")
-    def test_issue68_group_strings(self):
+    def test_issue_68_group_strings(self):
         sql = """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))"""
         p = parse(sql)
         self.assertEqual(
@@ -1561,4 +1563,22 @@ class TestSimple(TestCase):
                     {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]},
                 ]},
             },
+        )
+
+    def test_issue_70_fetch_next(self):
+        # https://www.sqltutorial.org/sql-fetch/
+        sql ="""SELECT * FROM mytable FETCH NEXT 20 ROWS ONLY"""
+        result = parse(sql)
+        self.assertEqual(
+            result,
+            {'from': 'mytable', 'limit': 20, 'select': '*'}
+        )
+
+    def test_issue_70_offset_fetch_next(self):
+        # https://www.sqltutorial.org/sql-fetch/
+        sql = """SELECT * FROM mytable offset 2 FETCH 10"""
+        result = parse(sql)
+        self.assertEqual(
+            result,
+            {'from': 'mytable', 'offset': 2, 'limit': 10, 'select': '*'}
         )

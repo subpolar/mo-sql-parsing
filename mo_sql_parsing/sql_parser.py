@@ -117,8 +117,7 @@ def parser(literal_string, ident, sqlserver=False):
                 )("direction")
                 + (
                     assign("from", expr)
-                    | expr("chars")
-                    + Optional(assign("from", expr))
+                    | expr("chars") + Optional(assign("from", expr))
                 )
                 + RB
             ).set_parser_name("trim")
@@ -415,6 +414,19 @@ def parser(literal_string, ident, sqlserver=False):
             + alias
         ).set_parser_name("table_source") / to_table
 
+        rows = Optional(keyword("row") | keyword("rows"))
+        limit = (
+            Optional(assign("offset", expr) + rows)
+            & Optional(
+                FETCH
+                + Optional(keyword("first") | keyword("next"))
+                + expr("limit")
+                + rows
+                + Optional(keyword("only"))
+            )
+            & Optional(assign("limit", expr))
+        )
+
         ordered_sql = (
             (
                 (unordered_sql | (LB + query + RB))
@@ -426,8 +438,7 @@ def parser(literal_string, ident, sqlserver=False):
                 )
             )("union")
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
-            + Optional(LIMIT + expr("limit"))
-            + Optional(OFFSET + expr("offset"))
+            + limit
         ).set_parser_name("ordered sql") / to_union_call
 
         with_expr = delimited_list(Group(
