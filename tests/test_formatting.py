@@ -718,3 +718,8 @@ class TestSimple(TestCase):
             s,
             """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))""",
         )
+
+    def test_issue_69_format_array_access(self):
+        sql ="""SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols"""
+        s = format(parse(sql))
+        self.assertEqual(s, """SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols""")

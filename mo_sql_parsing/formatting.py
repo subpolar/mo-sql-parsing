@@ -355,6 +355,12 @@ class Formatter:
         else:
             return str(json)
 
+    def _get(self, json, prec):
+        v, i = json
+        v_sql = self.dispatch(v, prec=precedence['literal'])
+        i_sql = self.dispatch(i)
+        return f"{v_sql}[{i_sql}]"
+
     def _between(self, json, prec):
         return "{0} BETWEEN {1} AND {2}".format(
             self.dispatch(json[0], precedence["between"]),
