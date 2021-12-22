@@ -119,8 +119,9 @@ unordered_clauses = [
 
 ordered_clauses = [
     "orderby",
-    "offset",
     "limit",
+    "offset",
+    "fetch",
 ]
 
 
@@ -543,11 +544,15 @@ class Formatter:
 
     def limit(self, json, prec):
         num = self.dispatch(json["limit"], precedence["order"])
-        return f"FETCH {num} ROWS ONLY"
+        return f"LIMIT {num}"
 
     def offset(self, json, prec):
         num = self.dispatch(json["offset"], precedence["order"])
         return f"OFFSET {num}"
+
+    def fetch(self, json, prec):
+        num = self.dispatch(json["offset"], precedence["order"])
+        return f"FETCH {num} ROWS ONLY"
 
     def insert(self, json, prec=precedence["from"]):
         acc = ["INSERT"]
