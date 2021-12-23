@@ -180,6 +180,8 @@ class Formatter:
                 return "NULL"
             elif "trim" in json:
                 return self._trim(json, prec)
+            elif "extract" in json:
+                return self._extract(json, prec)
             else:
                 return self.op(json, prec)
         if isinstance(json, string_types):
@@ -348,6 +350,13 @@ class Formatter:
             type = {type_name.upper(): params}
 
         return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
+
+    def _extract(self, json, prec):
+        interval, value = json['extract']
+        i = self.dispatch(interval).upper()
+        v = self.dispatch(value)
+        return f"EXTRACT({i} FROM {v})"
+
 
     def _interval(self, json, prec):
         amount = self.dispatch(json[0], precedence["and"])

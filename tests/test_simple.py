@@ -1582,3 +1582,4 @@ class TestSimple(TestCase):
             result,
             {'from': 'mytable', 'offset': 2, 'fetch': 10, 'select': '*'}
         )
+
