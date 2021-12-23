@@ -723,3 +723,7 @@ class TestSimple(TestCase):
         sql ="""SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols"""
         s = format(parse(sql))
         self.assertEqual(s, """SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols""")
+
+    def test_issue_73_extract_formatting(self):
+        s = format(parse("""SELECT EXTRACT(DAY FROM DATE'2019-08-17')"""))
+        self.assertEqual(s, """SELECT EXTRACT(DAY FROM DATE('2019-08-17'))""")
