@@ -37,7 +37,6 @@ from mo_sql_parsing.utils import (
 _size = Optional(LB + int_num("params") + RB)
 _sizes = Optional(LB + delimited_list(int_num("params")) + RB)
 
-
 simple_types = Forward()
 
 BIGINT = Group(keyword("bigint")("op")) / to_json_call
@@ -155,7 +154,6 @@ unary_ops = {
 
 
 def get_column_type(expr, var_name, literal_string):
-
     column_definition = Forward()
     column_type = Forward().set_parser_name("column type")
 

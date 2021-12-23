@@ -1491,7 +1491,7 @@ class TestSimple(TestCase):
                 "from": "my_table",
                 "select": {"value": {
                     "direction": "trailing",
-                    "characters": {'literal': '.1'},
+                    "characters": {"literal": ".1"},
                     "trim": "column1",
                 }},
             },
@@ -1508,7 +1508,7 @@ class TestSimple(TestCase):
                 "from": "my_table",
                 "select": {"value": {
                     "direction": "leading",
-                    "characters": {'literal': '.1'},
+                    "characters": {"literal": ".1"},
                     "trim": "column1",
                 }},
             },
@@ -1525,7 +1525,7 @@ class TestSimple(TestCase):
                 "from": "my_table",
                 "select": {"value": {
                     "direction": "both",
-                    "characters": {'literal': '.1'},
+                    "characters": {"literal": ".1"},
                     "trim": "column1",
                 }},
             },
@@ -1567,7 +1567,7 @@ class TestSimple(TestCase):
 
     def test_issue_70_fetch_next(self):
         # https://www.sqltutorial.org/sql-fetch/
-        sql ="""SELECT * FROM mytable FETCH NEXT 20 ROWS ONLY"""
+        sql = """SELECT * FROM mytable FETCH NEXT 20 ROWS ONLY"""
         result = parse(sql)
         self.assertEqual(
             result,
@@ -1582,4 +1582,3 @@ class TestSimple(TestCase):
             result,
             {'from': 'mytable', 'offset': 2, 'fetch': 10, 'select': '*'}
         )
-

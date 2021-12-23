@@ -275,7 +275,7 @@ class Formatter:
             if prec >= op_prec:
                 return method(value, op_prec)
             else:
-                return f"({method(value, op_prec )})"
+                return f"({method(value, op_prec)})"
 
         # treat as regular function call
         if isinstance(value, dict) and len(value) == 0:
@@ -352,11 +352,10 @@ class Formatter:
         return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
 
     def _extract(self, json, prec):
-        interval, value = json['extract']
+        interval, value = json["extract"]
         i = self.dispatch(interval).upper()
         v = self.dispatch(value)
         return f"EXTRACT({i} FROM {v})"
-
 
     def _interval(self, json, prec):
         amount = self.dispatch(json[0], precedence["and"])

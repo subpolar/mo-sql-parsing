@@ -136,7 +136,6 @@ joins = (
     | LATERAL + VIEW + Optional(OUTER)
 ) / (lambda tokens: " ".join(tokens).lower())
 
-
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
 WITHIN_GROUP = Group(WITHIN + GROUP).set_parser_name("within_group")
 SELECT_DISTINCT = Group(SELECT + DISTINCT).set_parser_name("select distinct")
@@ -292,7 +291,6 @@ precedence = {
     "order": 50,
 }
 
-
 KNOWN_OPS = [
     COLLATE,
     CONCAT,
@@ -392,4 +390,3 @@ durations = {
     "mil": "millennium",
     "epoch": "epoch",
 }
-
