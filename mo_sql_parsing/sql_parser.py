@@ -73,6 +73,7 @@ def parser(literal_string, ident, sqlserver=False):
     with Whitespace() as engine:
         engine.add_ignore(Literal("--") + restOfLine)
         engine.add_ignore(Literal("#") + restOfLine)
+        engine.add_ignore(Literal("/*") + SkipTo("*/", include=True))
 
         var_name = ~RESERVED + ident
 

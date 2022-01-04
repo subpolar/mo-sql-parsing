@@ -1582,3 +1582,29 @@ class TestSimple(TestCase):
             result,
             {'from': 'mytable', 'offset': 2, 'fetch': 10, 'select': '*'}
         )
+
+    def test_issue_75_comments(self):
+        self.assertEqual(
+            parse('/* foo */ SELECT TRUE'),
+            {"select": {"value": True}}
+        )
+
+        self.assertEqual(
+            parse('SELECT /* foo */ TRUE'),
+            {"select": {"value": True}}
+        )
+
+        self.assertEqual(
+            parse('SELECT TRUE /* foo */'),
+            {"select": {"value": True}}
+        )
+
+        self.assertEqual(
+            parse('/* foo */\nSELECT TRUE'),
+            {"select": {"value": True}}
+        )
+
+        self.assertEqual(
+            parse('/* \nfoo\n\n */\nSELECT TRUE'),
+            {"select": {"value": True}}
+        )
