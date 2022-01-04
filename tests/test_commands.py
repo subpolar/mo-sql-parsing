@@ -765,3 +765,44 @@ class TestInsert(TestCase):
             ],
         }
         self.assertEqual(result, expected)
+
+    def test_issue_74_create_table(self):
+        sql = """
+        CREATE TABLE if not exists `1`  (
+            `id` bigint(20) unsigned NOT NULL,
+            `a` float NOT NULL DEFAULT '0',
+            `b` char(32) NOT NULL DEFAULT '',
+            `updated_at` datetime NOT NULL DEFAULT '2021-12-12 00:00:00',
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+        """
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": [
+                {"name": "id", "nullable": False, "type": {"bigint": 20, "unsigned": True}},
+                {
+                    "default": {"literal": "0"},
+                    "name": "a",
+                    "nullable": False,
+                    "type": {"float": {}},
+                },
+                {
+                    "default": {"literal": ""},
+                    "name": "b",
+                    "nullable": False,
+                    "type": {"char": 32},
+                },
+                {
+                    "default": {"literal": "2021-12-12 00:00:00"},
+                    "name": "updated_at",
+                    "nullable": False,
+                    "type": {"datetime": {}},
+                },
+            ],
+            "constraint": {"primary_key": {"columns": "id"}},
+            "default_charset": "utf8",
+            "engine": "InnoDB",
+            "name": "1",
+            "replace": False,
+        }}
+        self.assertEqual(result, expected)

@@ -509,6 +509,7 @@ def parser(literal_string, ident, sqlserver=False):
                 | assign("auto_increment", EQ + int_num)
                 | assign("comment", EQ + literal_string)
                 | assign("default character set", EQ + var_name)
+                | assign("default charset", EQ + var_name)
             )
             + Optional(AS.suppress() + infix_notation(query, [])("query"))
         )("create table")

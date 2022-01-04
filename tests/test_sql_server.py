@@ -115,3 +115,4 @@ class TestSqlServer(TestCase):
             ]},
         }
         self.assertEqual(result, expected)
+
