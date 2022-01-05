@@ -33,7 +33,7 @@ class TestSimple(FuzzyTestCase):
     @skip("too long")
     def test_files(self):
         count = 0
-        acc=[]
+        acc = []
         for file in File("tests/sql").leaves:
             for i, line in enumerate(file.read_lines()):
                 if line.startswith("#"):
@@ -44,9 +44,9 @@ class TestSimple(FuzzyTestCase):
                 try:
                     parse_result = parse(query)
                     format_result = format(parse_result)
-                    Log.note("OK: {{sql}}", sql= format_result)
+                    Log.note("OK: {{sql}}", sql=format_result)
                 except Exception:
                     acc.append(expand_template(test_template, {"sql":query, "num":count}))
-                    count+=1
+                    count += 1
 
         print("".join(acc))

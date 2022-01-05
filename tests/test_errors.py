@@ -51,8 +51,7 @@ class TestErrors(FuzzyTestCase):
 
     def test_bad_order_by(self):
         with self.assertRaises(
-            'Expecting {offset} | {fetch} | {StringEnd}, found "INTERSECT " (at char 95),'
-            " (line:1, col:96)"
+            """Expecting {offset} | {fetch} | {StringEnd}, found "INTERSECT " (at char 95), (line:1, col:96)"""
         ):
             parse(
                 """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
