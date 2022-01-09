@@ -357,18 +357,50 @@ class TestWithOption(TestCase):
                     `tinyint_col` tinyint unsigned NOT NULL
                 )"""
         )
-        expected = {'create table': {
-            'columns': [
-                {'name': 'bigint_col', 'type': {'unsigned': True, 'bigint': 20}, 'nullable': False},
-                {'name': 'double_col', 'type': {'unsigned': True, 'double': {}}, 'nullable': False},
-                {'name': 'float_col', 'type': {'unsigned': True, 'float': {}}, 'nullable': False},
-                {'name': 'integer_col', 'type': {'unsigned': True, 'integer': {}}, 'nullable': False},
-                {'name': 'int_col', 'type': {'unsigned': True, 'int': {}}, 'nullable': False},
-                {'name': 'real_col', 'type': {'unsigned': True, 'real': {}}, 'nullable': False},
-                {'name': 'smallint_col', 'type': {'unsigned': True, 'smallint': {}}, 'nullable': False},
-                {'name': 'tinyint_col', 'type': {'unsigned': True, 'tinyint': {}}, 'nullable': False}
+        expected = {"create table": {
+            "columns": [
+                {
+                    "name": "bigint_col",
+                    "type": {"unsigned": True, "bigint": 20},
+                    "nullable": False,
+                },
+                {
+                    "name": "double_col",
+                    "type": {"unsigned": True, "double": {}},
+                    "nullable": False,
+                },
+                {
+                    "name": "float_col",
+                    "type": {"unsigned": True, "float": {}},
+                    "nullable": False,
+                },
+                {
+                    "name": "integer_col",
+                    "type": {"unsigned": True, "integer": {}},
+                    "nullable": False,
+                },
+                {
+                    "name": "int_col",
+                    "type": {"unsigned": True, "int": {}},
+                    "nullable": False,
+                },
+                {
+                    "name": "real_col",
+                    "type": {"unsigned": True, "real": {}},
+                    "nullable": False,
+                },
+                {
+                    "name": "smallint_col",
+                    "type": {"unsigned": True, "smallint": {}},
+                    "nullable": False,
+                },
+                {
+                    "name": "tinyint_col",
+                    "type": {"unsigned": True, "tinyint": {}},
+                    "nullable": False,
+                },
             ],
-            'name': 'unsigned_columns',
+            "name": "unsigned_columns",
         }}
         self.assertEqual(result, expected)
 
@@ -807,7 +839,11 @@ class TestInsert(TestCase):
         result = parse(sql)
         expected = {"create table": {
             "columns": [
-                {"name": "id", "nullable": False, "type": {"bigint": 20, "unsigned": True}},
+                {
+                    "name": "id",
+                    "nullable": False,
+                    "type": {"bigint": 20, "unsigned": True},
+                },
                 {
                     "default": {"literal": "0"},
                     "name": "a",
