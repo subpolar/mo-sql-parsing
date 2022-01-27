@@ -116,3 +116,26 @@ class TestSqlServer(TestCase):
         }
         self.assertEqual(result, expected)
 
+    def test_issue_78_top(self):
+        sql = """
+            SELECT TOP 1000 *
+            FROM (
+                    SELECT result
+                    FROM dbo.b AS B
+                ) AS X
+            WHERE expected <> result
+        """
+        result = parse(sql)
+        expected = {
+            "from": {
+                "name": "X",
+                "value": {
+                    "from": {"name": "B", "value": "dbo.b"},
+                    "select": {"value": "result"},
+                },
+            },
+            "select": "*",
+            "top": 1000,
+            "where": {"neq": ["expected", "result"]},
+        }
+        self.assertEqual(result, expected)

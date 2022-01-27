@@ -1910,7 +1910,7 @@ order by number_sites desc"""
     def test_issue12b_dots_in_name(self):
         expected_sql = 'select a.x as "a.b.c.x" from a'
         expected_json = {
-            "select": {"value": "a.x", "name": "a\\.b\\.c\\.x"},
+            "select": {"value": "a.x", "name": "a.b.c.x"},
             "from": "a",
         }
         self.verify_formatting(expected_sql, expected_json)

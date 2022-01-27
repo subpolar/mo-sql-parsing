@@ -76,6 +76,7 @@ def parser(literal_string, ident, sqlserver=False):
         engine.add_ignore(Literal("/*") + SkipTo("*/", include=True))
 
         var_name = ~RESERVED + ident
+        func_name = ~FROM + ident
 
         # EXPRESSIONS
         expr = Forward()
@@ -229,7 +230,7 @@ def parser(literal_string, ident, sqlserver=False):
         query = Forward().set_parser_name("query")
 
         call_function = (
-            ident("op")
+            func_name("op")
             + LB
             + Optional(Group(query) | delimited_list(Group(expr)))("params")
             + Optional(
