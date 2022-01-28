@@ -8,6 +8,7 @@
 #
 
 import ast
+import sys
 
 from mo_dots import is_data, is_null, Data, from_data
 from mo_future import text, number_types, binary_type, flatten
@@ -566,26 +567,46 @@ def to_table(tokens):
         return output["value"]
 
 
-def unquote(tokens):
+def single_literal(tokens):
     val = tokens[0]
-    if val.startswith("'") and val.endswith("'"):
-        val = "'" + val[1:-1].replace("''", "\\'") + "'"
-    elif val.startswith('"') and val.endswith('"'):
-        val = '"' + val[1:-1].replace('""', '\\"') + '"'
-    elif val.startswith("`") and val.endswith("`"):
-        val = '"' + val[1:-1].replace("``", "`").replace('"', '\\"') + '"'
-    elif val.startswith("[") and val.endswith("]"):
-        val = '"' + val[1:-1].replace("]]", "]").replace('"', '\\"') + '"'
-    elif val.startswith("+"):
-        val = val[1:]
+    val = "'" + val[1:-1].replace("''", "\\'") + "'"
+    return {"literal": ast.literal_eval(val)}
+
+
+def double_literal(tokens):
+    val = tokens[0]
+    val = '"' + val[1:-1].replace('""', '\\"') + '"'
+    return {"literal": ast.literal_eval(val)}
+
+
+# TODO: SET TO TRUE TO ENABLE DOUBLE-QUOTE WARNING. NOT SURE IF True IS A GOOD DEFAULT
+emit_warning_for_double_quotes = False
+
+
+def double_column(tokens):
+    global emit_warning_for_double_quotes
+    if emit_warning_for_double_quotes:
+        emit_warning_for_double_quotes = False
+        sys.stderr.write("""Double quotes are used to quote column names, not literal strings.  To hide this message: mo_sql_parsing.utils.emit_warning_for_double_quotes = False""")
+
+    val = tokens[0]
+    val = '"' + val[1:-1].replace('""', '\\"') + '"'
     un = ast.literal_eval(val).replace(".", "\\.")
     return un
 
 
-def to_string(tokens):
+def backtick_column(tokens):
     val = tokens[0]
-    val = "'" + val[1:-1].replace("''", "\\'") + "'"
-    return {"literal": ast.literal_eval(val)}
+    val = '"' + val[1:-1].replace("``", "`").replace('"', '\\"') + '"'
+    un = ast.literal_eval(val).replace(".", "\\.")
+    return un
+
+
+def square_column(tokens):
+    val = tokens[0]
+    val = '"' + val[1:-1].replace("]]", "]").replace('"', '\\"') + '"'
+    un = ast.literal_eval(val).replace(".", "\\.")
+    return un
 
 
 # NUMBERS
@@ -608,10 +629,10 @@ hex_num = (
 )
 
 # STRINGS
-ansi_string = Regex(r"\'(\'\'|[^'])*\'") / to_string
-mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / to_string
+ansi_string = Regex(r"\'(\'\'|[^'])*\'") / single_literal
+mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
 
 # BASIC IDENTIFIERS
-ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / unquote
-mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / unquote
-sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / unquote
+ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / double_column
+mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / backtick_column
+sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / square_column
