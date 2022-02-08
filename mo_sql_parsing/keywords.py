@@ -112,6 +112,7 @@ NEQ = (Literal("!=") | Literal("<>")).set_parser_name("neq")
 LAMBDA = Literal("->").set_parser_name("lambda")
 
 AND = keyword("and")
+APPLY = keyword("apply")
 BETWEEN = keyword("between")
 CASE = keyword("case").suppress()
 COLLATE = keyword("collate")
@@ -134,6 +135,7 @@ joins = (
         + Optional(LATERAL)
     )
     | LATERAL + VIEW + Optional(OUTER)
+    | (CROSS | OUTER) + APPLY
 ) / (lambda tokens: " ".join(tokens).lower())
 
 UNION_ALL = (UNION + ALL).set_parser_name("union_all")
@@ -237,6 +239,8 @@ join_keywords = {
     "full outer join",
     "right outer join",
     "left outer join",
+    "cross apply",
+    "outer apply"
 }
 
 precedence = {

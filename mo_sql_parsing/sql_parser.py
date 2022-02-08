@@ -12,6 +12,7 @@ from mo_parsing.helpers import restOfLine
 from mo_parsing.infix import delimited_list
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
+from mo_sql_parsing import utils
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.types import get_column_type, time_functions
 from mo_sql_parsing.utils import *
@@ -46,6 +47,8 @@ def common_parser():
 
 
 def mysql_parser():
+    utils.emit_warning_for_double_quotes = False
+
     mysql_string = ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
         mysql_backtick_ident | sqlserver_ident | simple_ident,
@@ -412,6 +415,7 @@ def parser(literal_string, ident, sqlserver=False):
         table_source << Group(
             ((LB + query + RB) | stack | call_function | var_name)("value")
             + Optional(flag("with ordinality"))
+            + Optional(WITH + LB + keyword("nolock")("hint") + RB)
             + Optional(tablesample)
             + alias
         ).set_parser_name("table_source") / to_table
