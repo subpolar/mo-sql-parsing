@@ -415,6 +415,7 @@ def parser(literal_string, ident, sqlserver=False):
         table_source << Group(
             ((LB + query + RB) | stack | call_function | var_name)("value")
             + Optional(flag("with ordinality"))
+            + Optional(WITH + LB + keyword("nolock")("hint") + RB)
             + Optional(tablesample)
             + alias
         ).set_parser_name("table_source") / to_table

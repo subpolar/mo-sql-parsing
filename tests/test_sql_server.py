@@ -139,3 +139,15 @@ class TestSqlServer(TestCase):
             "where": {"neq": ["expected", "result"]},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_79a_no_lock(self):
+        sql = """
+        SELECT col1
+        FROM table1 WITH (NOLOCK)
+        """
+        result = parse(sql)
+        expected = {
+            "from": {"value": "table1", "hint": "nolock"},
+            "select": {"value": "col1"},
+        }
+        self.assertEqual(result, expected)

@@ -45,7 +45,7 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "select": [
                 {"name": "@*#&", "value": "a"},
-                {"name": "test.g\\.g.c", "value": "b"},
+                {"name": "test.g..g.c", "value": "b"},
             ],
             "from": "dual",
         }

@@ -10,7 +10,7 @@
 import ast
 import sys
 
-from mo_dots import is_data, is_null, Data, from_data
+from mo_dots import is_data, is_null, Data, from_data, literal_field
 from mo_future import text, number_types, binary_type, flatten
 from mo_imports import expect
 from mo_parsing import *
@@ -591,21 +591,21 @@ def double_column(tokens):
 
     val = tokens[0]
     val = '"' + val[1:-1].replace('""', '\\"') + '"'
-    un = ast.literal_eval(val).replace(".", "\\.")
+    un = literal_field(ast.literal_eval(val))
     return un
 
 
 def backtick_column(tokens):
     val = tokens[0]
     val = '"' + val[1:-1].replace("``", "`").replace('"', '\\"') + '"'
-    un = ast.literal_eval(val).replace(".", "\\.")
+    un = literal_field(ast.literal_eval(val))
     return un
 
 
 def square_column(tokens):
     val = tokens[0]
     val = '"' + val[1:-1].replace("]]", "]").replace('"', '\\"') + '"'
-    un = ast.literal_eval(val).replace(".", "\\.")
+    un = literal_field(ast.literal_eval(val))
     return un
 
 
