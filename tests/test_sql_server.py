@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse_sqlserver as parse
 
 
@@ -149,5 +151,39 @@ class TestSqlServer(TestCase):
         expected = {
             "from": {"value": "table1", "hint": "nolock"},
             "select": {"value": "col1"},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_79b_cross_apply(self):
+        sql = """
+        SELECT * FROM Department D 
+        CROSS APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID)
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "D", "value": "Department"},
+                {"cross apply": {
+                    "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
+                }},
+            ],
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_79b_outer_apply(self):
+        sql = """
+        SELECT * FROM Department D 
+        OUTER APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID) 
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "D", "value": "Department"},
+                {"outer apply": {
+                    "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
+                }},
+            ],
+            "select": "*",
         }
         self.assertEqual(result, expected)
