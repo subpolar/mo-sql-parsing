@@ -8,8 +8,8 @@ python:
 group: dev
 
 install:
-  - pip install .
   - pip install -r tests/requirements.txt
+  - pip install .
 
 env:
   - PYTHONPATH=.
