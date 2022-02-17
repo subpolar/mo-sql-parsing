@@ -127,7 +127,6 @@ ordered_clauses = [
 
 class Formatter:
     # infix operators
-    _concat = Operator("||")
     _mul = Operator("*")
     _div = Operator("/")
     _mod = Operator("%")
