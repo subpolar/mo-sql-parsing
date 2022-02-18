@@ -19,3 +19,4 @@ class TestMySql(TestCase):
         result = parse_mysql(sql)
         expected = {"select": {"value": {"literal": "fred"}}}
         self.assertEqual(result, expected)
+

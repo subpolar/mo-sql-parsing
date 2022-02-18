@@ -737,3 +737,8 @@ class TestSimple(TestCase):
 
         new_sql = format(parse("SELECT concat('str1', 'str2', my_int_field) from testtable"))
         self.assertEqual(new_sql, "SELECT CONCAT('str1', 'str2', my_int_field) FROM testtable")
+
+    def test_isssue_82_partition_list(self):
+        sql = '''SELECT FIELD1, RANK() OVER (PARTITION BY "FIELD2", "FIELD3" ORDER BY FIELD5, FIELD6) AS NEWFIELD from testtable'''
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, '''SELECT FIELD1, RANK() OVER (PARTITION BY FIELD2, FIELD3 ORDER BY FIELD5, FIELD6) AS NEWFIELD FROM testtable''')
