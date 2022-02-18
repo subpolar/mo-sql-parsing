@@ -204,8 +204,7 @@ class Formatter:
             parts.append("OVER")
             window = []
             if "partitionby" in over:
-                window.append("PARTITION BY")
-                window.append(self.dispatch(over["partitionby"]))
+                window.append(self.partitionby(over, precedence["window"]))
             if "orderby" in over:
                 window.append(self.orderby(over, precedence["window"]))
             if "range" in over:
@@ -548,6 +547,12 @@ class Formatter:
             for s in listwrap(json["orderby"])
         )
         return f"ORDER BY {param}"
+
+    def partitionby(self, json, prec):
+        param = ", ".join(
+            self.dispatch(s, precedence["order"]) for s in listwrap(json["partitionby"])
+        )
+        return f"PARTITION BY {param}"
 
     def limit(self, json, prec):
         num = self.dispatch(json["limit"], precedence["order"])

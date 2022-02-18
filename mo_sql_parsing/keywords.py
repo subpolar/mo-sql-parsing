@@ -91,7 +91,8 @@ LT = Literal("<").set_parser_name("lt")
 GT = Literal(">").set_parser_name("gt")
 EEQ = (
     # conservative equality  https://github.com/klahnakoski/jx-sqlite/blob/dev/docs/Logical%20Equality.md#definitions
-    Literal("==") | Literal("=")
+    Literal("==")
+    | Literal("=")
 ).set_parser_name("eq")
 DEQ = (
     # decisive equality
@@ -130,7 +131,9 @@ VIEW = keyword("view")
 
 joins = (
     (
-        Optional(CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER)))
+        Optional(
+            CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))
+        )
         + JOIN
         + Optional(LATERAL)
     )
@@ -240,7 +243,7 @@ join_keywords = {
     "right outer join",
     "left outer join",
     "cross apply",
-    "outer apply"
+    "outer apply",
 }
 
 precedence = {
