@@ -477,7 +477,10 @@ class TestSqlGlot(TestCase):
         result = parse(sql)
         expected = {
             "from": "x",
-            "select": {"value": {"get": [{"get": [{"create_array": {"create_array": 0}}, 0]}, 0]}},
+            "select": {"value": {"get": [
+                {"get": [{"create_array": {"create_array": 0}}, 0]},
+                0,
+            ]}},
         }
         self.assertEqual(result, expected)
 
@@ -487,7 +490,10 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": "x",
             "select": {"value": {"get": [
-                {"create_map": [{"create_array": {"literal": "x"}}, {"create_array": 0}]},
+                {"create_map": [
+                    {"create_array": {"literal": "x"}},
+                    {"create_array": 0},
+                ]},
                 {"literal": "x"},
             ]}},
         }

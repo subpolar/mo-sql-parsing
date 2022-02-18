@@ -587,7 +587,9 @@ def double_column(tokens):
     global emit_warning_for_double_quotes
     if emit_warning_for_double_quotes:
         emit_warning_for_double_quotes = False
-        sys.stderr.write("""Double quotes are used to quote column names, not literal strings.  To hide this message: mo_sql_parsing.utils.emit_warning_for_double_quotes = False""")
+        sys.stderr.write(
+            """Double quotes are used to quote column names, not literal strings.  To hide this message: mo_sql_parsing.utils.emit_warning_for_double_quotes = False"""
+        )
 
     val = tokens[0]
     val = '"' + val[1:-1].replace('""', '\\"') + '"'

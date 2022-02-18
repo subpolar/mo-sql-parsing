@@ -46,7 +46,9 @@ class TestSimple(FuzzyTestCase):
                     format_result = format(parse_result)
                     Log.note("OK: {{sql}}", sql=format_result)
                 except Exception:
-                    acc.append(expand_template(test_template, {"sql":query, "num":count}))
+                    acc.append(expand_template(
+                        test_template, {"sql": query, "num": count}
+                    ))
                     count += 1
 
         print("".join(acc))

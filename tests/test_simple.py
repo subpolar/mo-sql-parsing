@@ -1569,42 +1569,25 @@ class TestSimple(TestCase):
         # https://www.sqltutorial.org/sql-fetch/
         sql = """SELECT * FROM mytable FETCH NEXT 20 ROWS ONLY"""
         result = parse(sql)
-        self.assertEqual(
-            result,
-            {'from': 'mytable', 'fetch': 20, 'select': '*'}
-        )
+        self.assertEqual(result, {"from": "mytable", "fetch": 20, "select": "*"})
 
     def test_issue_70_offset_fetch_next(self):
         # https://www.sqltutorial.org/sql-fetch/
         sql = """SELECT * FROM mytable offset 2 FETCH 10"""
         result = parse(sql)
         self.assertEqual(
-            result,
-            {'from': 'mytable', 'offset': 2, 'fetch': 10, 'select': '*'}
+            result, {"from": "mytable", "offset": 2, "fetch": 10, "select": "*"}
         )
 
     def test_issue_75_comments(self):
-        self.assertEqual(
-            parse('/* foo */ SELECT TRUE'),
-            {"select": {"value": True}}
-        )
+        self.assertEqual(parse("/* foo */ SELECT TRUE"), {"select": {"value": True}})
+
+        self.assertEqual(parse("SELECT /* foo */ TRUE"), {"select": {"value": True}})
+
+        self.assertEqual(parse("SELECT TRUE /* foo */"), {"select": {"value": True}})
+
+        self.assertEqual(parse("/* foo */\nSELECT TRUE"), {"select": {"value": True}})
 
         self.assertEqual(
-            parse('SELECT /* foo */ TRUE'),
-            {"select": {"value": True}}
-        )
-
-        self.assertEqual(
-            parse('SELECT TRUE /* foo */'),
-            {"select": {"value": True}}
-        )
-
-        self.assertEqual(
-            parse('/* foo */\nSELECT TRUE'),
-            {"select": {"value": True}}
-        )
-
-        self.assertEqual(
-            parse('/* \nfoo\n\n */\nSELECT TRUE'),
-            {"select": {"value": True}}
+            parse("/* \nfoo\n\n */\nSELECT TRUE"), {"select": {"value": True}}
         )

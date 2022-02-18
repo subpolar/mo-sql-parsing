@@ -550,8 +550,7 @@ class Formatter:
 
     def partitionby(self, json, prec):
         param = ", ".join(
-            self.dispatch(s, precedence["order"])
-            for s in listwrap(json["partitionby"])
+            self.dispatch(s, precedence["order"]) for s in listwrap(json["partitionby"])
         )
         return f"PARTITION BY {param}"
 
