@@ -576,6 +576,8 @@ def parser(literal_string, ident, sqlserver=False):
             keyword("drop index") + Optional(flag("if exists")) + var_name("index")
         )("drop")
 
+        returning = Optional(delimited_list(select_column)("returning"))
+
         insert = (
             keyword("insert").suppress()
             + (
@@ -586,6 +588,7 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(LB + delimited_list(var_name)("columns") + RB)
             + Optional(flag("if exists"))
             + (values | query)("query")
+            + returning
         ) / to_insert_call
 
         update = (
@@ -593,6 +596,7 @@ def parser(literal_string, ident, sqlserver=False):
             + var_name("params")
             + assign("set", Dict(delimited_list(Group(var_name + EQ + expr))))
             + Optional(assign("where", expr))
+            + returning
         ) / to_json_call
 
         delete = (
@@ -600,6 +604,7 @@ def parser(literal_string, ident, sqlserver=False):
             + keyword("from").suppress()
             + var_name("params")
             + Optional(assign("where", expr))
+            + returning
         ) / to_json_call
 
         return (
