@@ -222,3 +222,17 @@ class TestPostgres(TestCase):
             "select": "*",
         }
         self.assertEqual(result, expected)
+
+    def test_issue_83_returning(self):
+        sql = """INSERT INTO "some_table" ("some_A", "some_B") VALUES ('Foo', 'Bar') RETURNING "some_table"."id" """
+        result = parse(sql)
+        expected = {
+            "insert": "some_table",
+            "columns": ["some_A", "some_B"],
+            "query": {"select": [
+                {"value": {"literal": "Foo"}},
+                {"value": {"literal": "Bar"}},
+            ]},
+            "returning": {"name": "some_table.id", "value": "RETURNING"},
+        }
+        self.assertEqual(result, expected)
