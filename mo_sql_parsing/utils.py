@@ -584,8 +584,7 @@ def bad_operator_on_ordered_sql(token, index, string):
         token.type,
         token.end,  # CHOOSE .end SO IT IS SELECTED ABOVE OTHER ERRORS
         string,
-        f"{string[token.start: token.end].upper()} can not follow any of ORDER BY, OFFSET, or"
-        " LIMIT",
+        f"""{string[token.start: token.end].upper()} can not follow any of ORDER BY, OFFSET, or LIMIT""",
     )
 
 

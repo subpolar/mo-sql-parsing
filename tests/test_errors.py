@@ -9,7 +9,6 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from mo_parsing import ParseException
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse, format
