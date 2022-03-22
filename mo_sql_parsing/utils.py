@@ -579,6 +579,15 @@ def double_literal(tokens):
     return {"literal": ast.literal_eval(val)}
 
 
+def bad_operator_on_ordered_sql(token, index, string):
+    raise ParseException(
+        token.type,
+        token.end,  # CHOOSE .end SO IT IS SELECTED ABOVE OTHER ERRORS
+        string,
+        f"""{string[token.start: token.end].upper()} can not follow any of ORDER BY, OFFSET, or LIMIT""",
+    )
+
+
 # TODO: SET TO TRUE TO ENABLE DOUBLE-QUOTE WARNING. NOT SURE IF True IS A GOOD DEFAULT
 emit_warning_for_double_quotes = False
 

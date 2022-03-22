@@ -115,3 +115,12 @@ class TestAthena(TestCase):
             {"array": {"array": {"varchar": {}}}},
         ]}}}
         self.assertEqual(result, expected)
+
+    def test_issue_85_json_type(self):
+        sql ='SELECT CAST(x AS JSON)'
+        result = parse(sql)
+        expected = {"select": {"value": {"cast": [
+            "x",
+            {"json":{}},
+        ]}}}
+        self.assertEqual(result, expected)

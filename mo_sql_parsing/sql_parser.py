@@ -445,6 +445,8 @@ def parser(literal_string, ident, sqlserver=False):
             )("union")
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + limit
+            #  def __init__(self, expr, start, string, msg="", cause=None):
+            + Optional((UNION | INTERSECT | EXCEPT | MINUS) / bad_operator_on_ordered_sql)
         ).set_parser_name("ordered sql") / to_union_call
 
         with_expr = delimited_list(Group(

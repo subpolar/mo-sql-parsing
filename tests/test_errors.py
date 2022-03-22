@@ -45,14 +45,11 @@ class TestErrors(FuzzyTestCase):
             format(bad_json)
 
     def test_order_by_must_follow_union(self):
-        with self.assertRaises(["limit", "offset", "(at char 27"]):
-            #      012345678901234567890123456789012345678901234567890123456789
+        with self.assertRaises("UNION can not follow any of"):
             parse("select a from b order by a union select 2")
 
     def test_bad_order_by(self):
-        with self.assertRaises(
-            """Expecting {offset} | {fetch} | {StringEnd}, found "INTERSECT " (at char 95), (line:1, col:96)"""
-        ):
+        with self.assertRaises("INTERSECT can not follow any of"):
             parse(
                 """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY COUNT(*) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
             )
@@ -70,4 +67,9 @@ class TestErrors(FuzzyTestCase):
     def test_issue_50_subtraction1(self):
         sql = """select col-0pu-usage from test-information"""
         with self.assertRaises("Use backticks (``) around identifiers"):
+            parse(sql)
+
+    def test_issue_84_intersect(self):
+        sql = """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY count ( * ) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY count ( * ) DESC LIMIT 3"""
+        with self.assertRaises("INTERSECT can not follow any of"):
             parse(sql)
