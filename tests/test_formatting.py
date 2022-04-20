@@ -754,3 +754,11 @@ class TestSimple(TestCase):
             new_sql,
             """SELECT FIELD1, RANK() OVER (PARTITION BY FIELD2, FIELD3 ORDER BY FIELD5, FIELD6) AS NEWFIELD FROM testtable""",
         )
+
+    def test_issue_87_loss_of_brackets(self):
+        sql="""SELECT (SELECT COUNT(result) FROM dbo.b AS B) as attr FROM dbo.table"""
+        new_sql = format(parse(sql))
+        self.assertEqual(
+            new_sql,
+            """SELECT (SELECT COUNT(result) FROM dbo.b AS B) AS attr FROM dbo.table"""
+        )

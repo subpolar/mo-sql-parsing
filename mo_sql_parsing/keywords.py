@@ -249,6 +249,7 @@ join_keywords = {
 precedence = {
     # https://www.sqlite.org/lang_expr.html
     "literal": -1,
+    "get": 0,
     "interval": 0,
     "cast": 0,
     "collate": 0,
@@ -287,6 +288,7 @@ precedence = {
     "lambda": 12,
     "join": 18,
     "list": 18,
+    "case": 19,
     "select": 30,
     "from": 30,
     "window": 35,

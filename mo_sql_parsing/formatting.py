@@ -473,7 +473,7 @@ class Formatter:
             for part in [getattr(self, clause)(json, precedence["from"])]
             if part
         )
-        if prec >= precedence["from"]:
+        if prec > precedence["from"]:
             return sql
         else:
             return f"({sql})"
@@ -490,7 +490,7 @@ class Formatter:
             return "WITH {0}".format(parts)
 
     def select(self, json, prec):
-        param = ", ".join(self.dispatch(s) for s in listwrap(json["select"]))
+        param = ", ".join(self.dispatch(s, precedence['select']) for s in listwrap(json["select"]))
         if "top" in json:
             top = self.dispatch(json["top"])
             return f"SELECT TOP ({top}) {param}"
