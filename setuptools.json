@@ -18,7 +18,7 @@
     "include_package_data": true,
     "install_requires": [
            "mo-dots==9.147.22086",    "mo-future==6.2.21303", "mo-imports==7.147.22086",
-        "mo-parsing==8.156.22110"
+        "mo-parsing==8.157.22117"
     ],
     "license": "MPL 2.0",
     "long_description": {
@@ -45,7 +45,7 @@
             "",
             "## Project Status",
             "",
-            "November 2021 - There are [over 800 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing). This parser is good enough for basic usage, including:",
+            "November 2021 - There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing). This parser is good enough for basic usage, including:",
             "  * inner queries, ",
             "  * with clauses, ",
             "  * window functions",
@@ -261,6 +261,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "8.156.22110",
+    "version": "8.157.22117",
     "zip_safe": true
 }
