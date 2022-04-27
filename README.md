@@ -20,7 +20,7 @@ The objective is to convert SQL queries to JSON-izable parse trees. This origina
 
 ## Project Status
 
-November 2021 - There are [over 800 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing). This parser is good enough for basic usage, including:
+November 2021 - There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing). This parser is good enough for basic usage, including:
   * inner queries, 
   * with clauses, 
   * window functions
