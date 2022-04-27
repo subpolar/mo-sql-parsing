@@ -73,3 +73,8 @@ class TestErrors(FuzzyTestCase):
         sql = """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY count ( * ) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY count ( * ) DESC LIMIT 3"""
         with self.assertRaises("INTERSECT can not follow any of"):
             parse(sql)
+
+    def test_issue_88_parse_error(self):
+        sql = """select c1, c as 't' from T"""
+        with self.assertRaises('Expecting identifier, found "\'t\''):
+            parse(sql)
