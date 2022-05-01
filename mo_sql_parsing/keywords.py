@@ -303,8 +303,8 @@ precedence = {
 KNOWN_OPS = [
     COLLATE,
     CONCAT,
-    MUL | DIV | MOD,
     NEG,
+    MUL | DIV | MOD,
     ADD | SUB,
     BINARY_NOT,
     BINARY_AND,
