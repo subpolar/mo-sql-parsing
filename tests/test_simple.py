@@ -1271,7 +1271,7 @@ class TestSimple(TestCase):
                                         3631000000,
                                         {"avg": {"power": [
                                             {"cast": [10, {"float": {}}]},
-                                            {"neg": {"mul": [0.4, "sky_r"]}},
+                                            {"mul": [-0.4, "sky_r"]},
                                         ]}},
                                     ]},
                                 },

@@ -1542,11 +1542,8 @@ class TestSimpleUsingOperators(TestCase):
                                                             "op": "cast",
                                                         },
                                                         {
-                                                            "args": [{
-                                                                "args": [0.4, "sky_r"],
-                                                                "op": "mul",
-                                                            }],
-                                                            "op": "neg",
+                                                            "args": [-0.4, "sky_r"],
+                                                            "op": "mul",
                                                         },
                                                     ],
                                                     "op": "power",
@@ -1733,10 +1730,7 @@ class TestSimpleUsingOperators(TestCase):
             "where": {
                 "op": "eq",
                 "args": [
-                    {
-                        "op": "mul",
-                        "args": [{"args": ["a"], "op": "abs"}, -1]
-                    },
+                    {"op": "mul", "args": [{"args": ["a"], "op": "abs"}, -1]},
                     -22,
                 ],
             },
