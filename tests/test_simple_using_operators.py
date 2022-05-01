@@ -10,8 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse as sql_parse
 from mo_sql_parsing.utils import normal_op
 from tests.util import assertRaises
@@ -1544,11 +1542,8 @@ class TestSimpleUsingOperators(TestCase):
                                                             "op": "cast",
                                                         },
                                                         {
-                                                            "args": [{
-                                                                "args": [0.4, "sky_r"],
-                                                                "op": "mul",
-                                                            }],
-                                                            "op": "neg",
+                                                            "args": [-0.4, "sky_r"],
+                                                            "op": "mul",
                                                         },
                                                     ],
                                                     "op": "power",
@@ -1724,4 +1719,20 @@ class TestSimpleUsingOperators(TestCase):
         sql = """select äce from motorhead"""
         result = parse(sql)
         expected = {"from": "motorhead", "select": {"value": "äce"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_89_negative_numbers(self):
+        sql = """SELECT * FROM dbo.a where ABS(a) * -1 = -22"""
+        result = parse(sql)
+        expected = {
+            "from": "dbo.a",
+            "select": "*",
+            "where": {
+                "op": "eq",
+                "args": [
+                    {"op": "mul", "args": [{"args": ["a"], "op": "abs"}, -1]},
+                    -22,
+                ],
+            },
+        }
         self.assertEqual(result, expected)
