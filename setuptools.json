@@ -7,6 +7,8 @@
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: SQL",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
     ],
     "description": "More SQL Parsing! Parse SQL into JSON parse tree",
@@ -260,6 +262,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "8.172.22121",
+    "version": "8.171.22121",
     "zip_safe": true
 }
