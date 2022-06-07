@@ -6,10 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
-from mo_parsing.helpers import restOfLine
-from mo_parsing.infix import delimited_list
+from mo_parsing import whitespaces
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -73,42 +70,47 @@ def sqlserver_parser():
 
 
 def parser(literal_string, ident, sqlserver=False):
+
     with Whitespace() as engine:
-        engine.add_ignore(Literal("--") + restOfLine)
-        engine.add_ignore(Literal("#") + restOfLine)
+        rest_of_line = Regex(r"[^\n]*")
+
+        engine.add_ignore(Literal("--") + rest_of_line)
+        engine.add_ignore(Literal("#") + rest_of_line)
         engine.add_ignore(Literal("/*") + SkipTo("*/", include=True))
 
-        var_name = ~RESERVED + ident
-        func_name = ~FROM + ident
+        identifier = ~RESERVED + ident
+        function_name = ~FROM + ident
 
         # EXPRESSIONS
-        expr = Forward()
+        expression = Forward()
         column_type, column_definition, column_def_references = get_column_type(
-            expr, var_name, literal_string
+            expression, identifier, literal_string
         )
 
         # CASE
         case = (
             CASE
             + Group(ZeroOrMore(
-                (WHEN + expr("when") + THEN + expr("then")) / to_when_call
+                (WHEN + expression("when") + THEN + expression("then")) / to_when_call
             ))("case")
-            + Optional(ELSE + expr("else"))
+            + Optional(ELSE + expression("else"))
             + END
         ) / to_case_call
 
         switch = (
             CASE
-            + expr("value")
+            + expression("value")
             + Group(ZeroOrMore(
-                (WHEN + expr("when") + THEN + expr("then")) / to_when_call
+                (WHEN + expression("when") + THEN + expression("then")) / to_when_call
             ))("case")
-            + Optional(ELSE + expr("else"))
+            + Optional(ELSE + expression("else"))
             + END
         ) / to_switch_call
 
         cast = (
-            Group(CAST("op") + LB + expr("params") + AS + column_type("params") + RB)
+            Group(
+                CAST("op") + LB + expression("params") + AS + column_type("params") + RB
+            )
             / to_json_call
         )
 
@@ -121,11 +123,11 @@ def parser(literal_string, ident, sqlserver=False):
                     / (lambda t: t[0].lower())
                 )("direction")
                 + (
-                    assign("from", expr)
-                    | expr("chars") + Optional(assign("from", expr))
+                    assign("from", expression)
+                    | expression("chars") + Optional(assign("from", expression))
                 )
                 + RB
-            ).set_parser_name("trim")
+            )
             / to_trim_call
         )
 
@@ -154,35 +156,38 @@ def parser(literal_string, ident, sqlserver=False):
         extract = (
             keyword("extract")("op")
             + LB
-            + (_standard_time_intervals | expr("params"))
+            + (_standard_time_intervals | expression("params"))
             + FROM
-            + expr("params")
+            + expression("params")
             + RB
         ) / to_json_call
 
         alias = Optional((
             (
                 AS
-                + (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                + (
+                    identifier("name")
+                    + Optional(LB + delimited_list(ident("col")) + RB)
+                )
                 | (
-                    var_name("name")
+                    identifier("name")
                     + Optional(
                         (LB + delimited_list(ident("col")) + RB)
-                        | (AS + delimited_list(var_name("col")))
+                        | (AS + delimited_list(identifier("col")))
                     )
                 )
             )
             / to_alias
         )("name"))
 
-        named_column = Group(Group(expr)("value") + alias)
+        named_column = Group(Group(expression)("value") + alias)
 
         stack = (
             keyword("stack")("op")
             + LB
             + int_num("width")
             + ","
-            + delimited_list(expr)("args")
+            + delimited_list(expression)("args")
             + RB
         ) / to_stack
 
@@ -193,15 +198,19 @@ def parser(literal_string, ident, sqlserver=False):
             keyword("array")("op")
             + Optional(LT.suppress() + column_type("type") + GT.suppress())
             + (
-                LB + delimited_list(Group(expr))("args") + RB
-                | (Literal("[") + delimited_list(Group(expr))("args") + Literal("]"))
+                LB + delimited_list(Group(expression))("args") + RB
+                | (
+                    Literal("[")
+                    + delimited_list(Group(expression))("args")
+                    + Literal("]")
+                )
             )
         )
 
         if not sqlserver:
             # SQL SERVER DOES NOT SUPPORT [] FOR ARRAY CONSTRUCTION (USED FOR IDENTIFIERS)
             create_array = (
-                Literal("[") + delimited_list(Group(expr))("args") + Literal("]")
+                Literal("[") + delimited_list(Group(expression))("args") + Literal("]")
                 | create_array
             )
 
@@ -210,9 +219,9 @@ def parser(literal_string, ident, sqlserver=False):
         create_map = (
             keyword("map")
             + Literal("[")
-            + expr("keys")
+            + expression("keys")
             + ","
-            + expr("values")
+            + expression("values")
             + Literal("]")
         ) / to_map
 
@@ -222,26 +231,28 @@ def parser(literal_string, ident, sqlserver=False):
                 LT.suppress() + delimited_list(column_type)("types") + GT.suppress()
             )
             + LB
-            + delimited_list(Group((expr("value") + alias) / to_select_call))("args")
+            + delimited_list(Group(
+                (expression("value") + alias) / to_select_call
+            ))("args")
             + RB
-        ).set_parser_name("create struct") / to_struct
+        ) / to_struct
 
         distinct = (
             DISTINCT("op") + delimited_list(named_column)("params")
         ) / to_json_call
 
-        query = Forward().set_parser_name("query")
+        query = Forward()
 
         call_function = (
-            func_name("op")
+            function_name("op")
             + LB
-            + Optional(Group(query) | delimited_list(Group(expr)))("params")
+            + Optional(Group(query) | delimited_list(Group(expression)))("params")
             + Optional(
                 (keyword("respect") | keyword("ignore"))("nulls")
                 + keyword("nulls").suppress()
             )
             + RB
-        ).set_parser_name("call function") / to_json_call
+        ) / to_json_call
 
         with NO_WHITESPACE:
 
@@ -269,7 +280,7 @@ def parser(literal_string, ident, sqlserver=False):
             | create_map
             | create_struct
             | (LB + Group(query) + RB)
-            | (LB + Group(delimited_list(expr)) / to_tuple_call + RB)
+            | (LB + Group(delimited_list(expression)) / to_tuple_call + RB)
             | literal_string.set_parser_name("string")
             | hex_num.set_parser_name("hex")
             | scale_function
@@ -277,25 +288,27 @@ def parser(literal_string, ident, sqlserver=False):
             | real_num.set_parser_name("float")
             | int_num.set_parser_name("int")
             | call_function
-            | Combine(var_name + Optional(".*"))
+            | Combine(identifier + Optional(".*"))
         )
 
         sort_column = (
-            expr("value").set_parser_name("sort1")
+            expression("value").set_parser_name("sort1")
             + Optional(DESC("sort") | ASC("sort"))
             + Optional(assign("nulls", keyword("first") | keyword("last")))
         )
 
-        window_clause, over_clause = window(expr, var_name, sort_column)
+        window_clause, over_clause = window(expression, identifier, sort_column)
 
-        expr << (
+        expression << (
             (
                 Literal("*")
                 | infix_notation(
                     compound,
                     [
                         (
-                            Literal("[").suppress() + expr + Literal("]").suppress(),
+                            Literal("[").suppress()
+                            + expression
+                            + Literal("]").suppress(),
                             1,
                             LEFT_ASSOC,
                             to_offset,
@@ -308,7 +321,7 @@ def parser(literal_string, ident, sqlserver=False):
                         ),
                         (window_clause, 1, LEFT_ASSOC, to_window_mod),
                         (
-                            assign("filter", LB + WHERE + expr + RB),
+                            assign("filter", LB + WHERE + expression + RB),
                             1,
                             LEFT_ASSOC,
                             to_window_mod,
@@ -328,10 +341,7 @@ def parser(literal_string, ident, sqlserver=False):
         )
 
         select_column = (
-            Group(
-                expr("value") + alias | Literal("*")("value")
-            ).set_parser_name("column")
-            / to_select_call
+            Group(expression("value") + alias | Literal("*")("value")) / to_select_call
         )
 
         table_source = Forward()
@@ -339,10 +349,10 @@ def parser(literal_string, ident, sqlserver=False):
         join = (
             Group(joins)("op")
             + table_source("join")
-            + Optional((ON + expr("on")) | (USING + expr("using")))
+            + Optional((ON + expression("on")) | (USING + expression("using")))
             | (
                 Group(WINDOW)("op")
-                + Group(var_name("name") + AS + over_clause("value"))("join")
+                + Group(identifier("name") + AS + over_clause("value"))("join")
             )
         ) / to_join_call
 
@@ -356,7 +366,7 @@ def parser(literal_string, ident, sqlserver=False):
                 SELECT
                 + Optional(
                     TOP
-                    + expr("value")
+                    + expression("value")
                     + Optional(keyword("percent"))("percent")
                     + Optional(WITH + keyword("ties"))("ties")
                 )("top")
@@ -365,7 +375,7 @@ def parser(literal_string, ident, sqlserver=False):
             )
         )
 
-        row = (LB + delimited_list(Group(expr)) + RB) / to_row
+        row = (LB + delimited_list(Group(expression)) + RB) / to_row
         values = VALUES + delimited_list(row) / to_values
 
         unordered_sql = Group(
@@ -373,11 +383,11 @@ def parser(literal_string, ident, sqlserver=False):
             | selection
             + Optional(
                 (FROM + delimited_list(table_source) + ZeroOrMore(join))("from")
-                + Optional(WHERE + expr("where"))
+                + Optional(WHERE + expression("where"))
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
-                + Optional(HAVING + expr("having"))
+                + Optional(HAVING + expression("having"))
             )
-        ).set_parser_name("unordered sql")
+        )
 
         with NO_WHITESPACE:
 
@@ -389,48 +399,59 @@ def parser(literal_string, ident, sqlserver=False):
                     * {"b": 1, "k": 1_000, "m": 1_000_000, "g": 1_000_000_000}[scale]
                 }
 
-            ts_bytes = (
+            bytes_constraint = (
                 (real_num | int_num)("bytes") + Char("bBkKmMgG")("scale")
             ) / mult
 
+        # https://wiki.postgresql.org/wiki/TABLESAMPLE_Implementation
+        # https://docs.snowflake.com/en/sql-reference/constructs/sample.html
         tablesample = assign(
             "tablesample",
-            LB
+            Optional((
+                keyword("bernoulli")
+                | keyword("row")
+                | keyword("system")
+                | keyword("block")
+            )("method"))
+            + LB
             + (
                 (
                     keyword("bucket")("op")
                     + int_num("params")
                     + keyword("out of")
                     + int_num("params")
-                    + Optional(ON + expr("on"))
+                    + Optional(ON + expression("on"))
                 )
                 / to_json_call
                 | (real_num | int_num)("percent") + keyword("percent")
                 | int_num("rows") + keyword("rows")
-                | ts_bytes
+                | bytes_constraint
+                | (real_num | int_num)("percent") / (lambda t: t[0] * 100)
             )
             + RB,
         )
 
         table_source << Group(
-            ((LB + query + RB) | stack | call_function | var_name)("value")
-            + Optional(flag("with ordinality"))
-            + Optional(WITH + LB + keyword("nolock")("hint") + RB)
-            + Optional(tablesample)
-            + alias
-        ).set_parser_name("table_source") / to_table
+            ((LB + query + RB) | stack | call_function | identifier)("value")
+            + MatchAll([
+                Optional(flag("with ordinality")),
+                Optional(WITH + LB + keyword("nolock")("hint") + RB),
+                Optional(tablesample),
+                alias,
+            ])
+        ) / to_table
 
         rows = Optional(keyword("row") | keyword("rows"))
         limit = (
-            Optional(assign("offset", expr) + rows)
+            Optional(assign("offset", expression) + rows)
             & Optional(
                 FETCH
                 + Optional(keyword("first") | keyword("next"))
-                + expr("fetch")
+                + expression("fetch")
                 + rows
                 + Optional(keyword("only"))
             )
-            & Optional(assign("limit", expr))
+            & Optional(assign("limit", expression))
         )
 
         ordered_sql = (
@@ -446,15 +467,17 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + limit
             #  def __init__(self, expr, start, string, msg="", cause=None):
-            + Optional((UNION | INTERSECT | EXCEPT | MINUS) / bad_operator_on_ordered_sql)
-        ).set_parser_name("ordered sql") / to_union_call
+            + Optional(
+                (UNION | INTERSECT | EXCEPT | MINUS) / bad_operator_on_ordered_sql
+            )
+        ) / to_union_call
 
         with_expr = delimited_list(Group(
             (
-                (var_name("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                (identifier("name") + Optional(LB + delimited_list(ident("col")) + RB))
                 / to_alias
             )("name")
-            + (AS + LB + (query | expr)("value") + RB)
+            + (AS + LB + (query | expression)("value") + RB)
         ))
 
         query << (
@@ -469,7 +492,7 @@ def parser(literal_string, ident, sqlserver=False):
         # MySQL's index_type := Using + ( "BTREE" | "HASH" )
         index_type = Optional(assign("using", ident("index_type")))
 
-        index_column_names = LB + delimited_list(var_name("columns")) + RB
+        index_column_names = LB + delimited_list(identifier("columns")) + RB
 
         column_def_delete = assign(
             "on delete",
@@ -477,25 +500,25 @@ def parser(literal_string, ident, sqlserver=False):
         )
 
         table_def_foreign_key = FOREIGN_KEY + Optional(
-            Optional(var_name("index_name"))
+            Optional(identifier("index_name"))
             + index_column_names
             + column_def_references
             + Optional(column_def_delete)
         )
 
-        index_options = ZeroOrMore(var_name)("table_constraint_options")
+        index_options = ZeroOrMore(identifier)("table_constraint_options")
 
-        table_constraint_definition = Optional(CONSTRAINT + var_name("name")) + (
+        table_constraint_definition = Optional(CONSTRAINT + identifier("name")) + (
             assign("primary key", index_type + index_column_names + index_options)
             | (
                 Optional(flag("unique"))
                 + Optional(INDEX | KEY)
-                + Optional(var_name("name"))
+                + Optional(identifier("name"))
                 + index_type
                 + index_column_names
                 + index_options
             )("index")
-            | assign("check", LB + expr + RB)
+            | assign("check", LB + expression + RB)
             | table_def_foreign_key("foreign_key")
         )
 
@@ -509,15 +532,15 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(flag("temporary"))
             + TABLE
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
-            + var_name("name")
+            + identifier("name")
             + Optional(LB + delimited_list(table_element) + RB)
             + ZeroOrMore(
-                assign("engine", EQ + var_name)
-                | assign("collate", EQ + var_name)
+                assign("engine", EQ + identifier)
+                | assign("collate", EQ + identifier)
                 | assign("auto_increment", EQ + int_num)
                 | assign("comment", EQ + literal_string)
-                | assign("default character set", EQ + var_name)
-                | assign("default charset", EQ + var_name)
+                | assign("default character set", EQ + identifier)
+                | assign("default charset", EQ + identifier)
             )
             + Optional(AS.suppress() + infix_notation(query, [])("query"))
         )("create table")
@@ -528,7 +551,7 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(flag("temporary"))
             + VIEW.suppress()
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
-            + var_name("name")
+            + identifier("name")
             + AS
             + query("query")
         )("create view")
@@ -538,9 +561,9 @@ def parser(literal_string, ident, sqlserver=False):
             keyword("create index")
             + Optional(keyword("or") + flag("replace"))(INDEX | KEY)
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
-            + var_name("name")
+            + identifier("name")
             + ON
-            + var_name("table")
+            + identifier("table")
             + index_type
             + index_column_names
             + index_options
@@ -552,7 +575,7 @@ def parser(literal_string, ident, sqlserver=False):
             + Dict(delimited_list(Group(
                 literal_string / (lambda tokens: tokens[0]["literal"])
                 + Optional(EQ)
-                + var_name
+                + identifier
             )))
             + RB
         )("options"))
@@ -561,21 +584,21 @@ def parser(literal_string, ident, sqlserver=False):
             keyword("cache").suppress()
             + Optional(flag("lazy"))
             + TABLE
-            + var_name("name")
+            + identifier("name")
             + cache_options
             + Optional(AS + query("query"))
         )("cache")
 
         drop_table = (
-            keyword("drop table") + Optional(flag("if exists")) + var_name("table")
+            keyword("drop table") + Optional(flag("if exists")) + identifier("table")
         )("drop")
 
         drop_view = (
-            keyword("drop view") + Optional(flag("if exists")) + var_name("view")
+            keyword("drop view") + Optional(flag("if exists")) + identifier("view")
         )("drop")
 
         drop_index = (
-            keyword("drop index") + Optional(flag("if exists")) + var_name("index")
+            keyword("drop index") + Optional(flag("if exists")) + identifier("index")
         )("drop")
 
         returning = Optional(delimited_list(select_column)("returning"))
@@ -586,8 +609,8 @@ def parser(literal_string, ident, sqlserver=False):
                 flag("overwrite") + keyword("table").suppress()
                 | keyword("into").suppress() + Optional(keyword("table").suppress())
             )
-            + var_name("table")
-            + Optional(LB + delimited_list(var_name)("columns") + RB)
+            + identifier("table")
+            + Optional(LB + delimited_list(identifier)("columns") + RB)
             + Optional(flag("if exists"))
             + (values | query)("query")
             + returning
@@ -595,19 +618,21 @@ def parser(literal_string, ident, sqlserver=False):
 
         update = (
             keyword("update")("op")
-            + var_name("params")
-            + assign("set", Dict(delimited_list(Group(var_name + EQ + expr))))
-            + Optional(assign("where", expr))
+            + identifier("params")
+            + assign("set", Dict(delimited_list(Group(identifier + EQ + expression))))
+            + Optional(assign("where", expression))
             + returning
         ) / to_json_call
 
         delete = (
             keyword("delete")("op")
             + keyword("from").suppress()
-            + var_name("params")
-            + Optional(assign("where", expr))
+            + identifier("params")
+            + Optional(assign("where", expression))
             + returning
         ) / to_json_call
+
+        set_parser_names()
 
         return (
             query

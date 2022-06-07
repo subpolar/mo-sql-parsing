@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse, format
@@ -77,4 +78,14 @@ class TestErrors(FuzzyTestCase):
     def test_issue_88_parse_error(self):
         sql = """select c1, c as 't' from T"""
         with self.assertRaises('Expecting identifier, found "\'t\''):
+            parse(sql)
+
+    def test_issue_90_tablesample_error1(self):
+        sql = "SELECT * FROM foo TABLESAMPLE(bernoulli) WHERE a < 42"
+        with self.assertRaises("Expecting {bytes_constraint} | {bucket} | {int}, found \"bernoulli"):
+            parse(sql)
+
+    def test_issue_90_tablesample_error2(self):
+        sql = "SELECT * FROM foo f TABLESAMPLE(bernoulli) WHERE f.a < 42"
+        with self.assertRaises("Expecting {bytes_constraint} | {bucket} | {int}, found \"bernoulli"):
             parse(sql)

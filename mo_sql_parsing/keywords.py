@@ -52,6 +52,7 @@ RIGHT = keyword("right")
 RLIKE = keyword("rlike")
 SELECT = keyword("select").suppress()
 TABLE = keyword("table").suppress()
+TABLESAMPLE = keyword("tablesample").suppress()
 THEN = keyword("then").suppress()
 TOP = keyword("top").suppress()
 UNION = keyword("union")
@@ -216,6 +217,7 @@ RESERVED = MatchFirst([
     RIGHT,
     RLIKE,
     SELECT,
+    TABLESAMPLE,
     THEN,
     TRUE,
     UNION,
