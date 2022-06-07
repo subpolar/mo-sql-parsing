@@ -499,7 +499,7 @@ def to_union_call(tokens):
     unions = tokens["union"]
     if isinstance(unions, dict):
         return unions
-    elif unions.type.parser_name == "unordered sql":
+    elif unions.type.parser_name == "unordered_sql":
         output = {k: v for k, v in unions.items()}  # REMOVE THE Group()
     else:
         unions = list(unions)

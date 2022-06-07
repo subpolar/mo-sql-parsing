@@ -10,8 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse_sqlserver as parse
 
 
@@ -185,5 +183,32 @@ class TestSqlServer(TestCase):
                 }},
             ],
             "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_90_tablesample1(self):
+        sql = "SELECT * FROM foo TABLESAMPLE bernoulli (1) WHERE a < 42"
+        result = parse(sql)
+        expected = {
+            "from": {
+                "tablesample": {"method": "bernoulli", "percent": 100},
+                "value": "foo",
+            },
+            "select": "*",
+            "where": {"lt": ["a", 42]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_90_tablesample2(self):
+        sql = "SELECT * FROM foo f TABLESAMPLE bernoulli (1) WHERE f.a < 42"
+        result = parse(sql)
+        expected = {
+            "from": {
+                "name": "f",
+                "tablesample": {"method": "bernoulli", "percent": 100},
+                "value": "foo",
+            },
+            "select": "*",
+            "where": {"lt": ["f.a", 42]},
         }
         self.assertEqual(result, expected)

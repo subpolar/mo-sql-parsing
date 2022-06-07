@@ -9,7 +9,7 @@
 
 
 # KNOWN TYPES
-from mo_parsing import Forward, Group, Optional, MatchFirst, Literal, ZeroOrMore, export
+from mo_parsing import Forward, Group, Optional, MatchFirst, Literal, ZeroOrMore, export, set_parser_names
 from mo_parsing.infix import delimited_list, RIGHT_ASSOC, LEFT_ASSOC
 
 from mo_sql_parsing.keywords import (
@@ -158,9 +158,9 @@ unary_ops = {
 }
 
 
-def get_column_type(expr, var_name, literal_string):
+def get_column_type(expr, identifier, literal_string):
     column_definition = Forward()
-    column_type = Forward().set_parser_name("column type")
+    column_type = Forward()
 
     struct_type = (
         keyword("struct")("op")
@@ -201,7 +201,7 @@ def get_column_type(expr, var_name, literal_string):
     )
 
     column_def_references = assign(
-        "references", var_name("table") + LB + delimited_list(var_name)("columns") + RB,
+        "references", identifier("table") + LB + delimited_list(identifier)("columns") + RB,
     )
 
     column_options = ZeroOrMore(
@@ -210,17 +210,19 @@ def get_column_type(expr, var_name, literal_string):
         | flag("unique")
         | flag("auto_increment")
         | assign("comment", literal_string)
-        | assign("collate", Optional(EQ) + var_name)
+        | assign("collate", Optional(EQ) + identifier)
         | flag("primary key")
         | column_def_identity("identity")
         | column_def_references
         | assign("check", LB + expr + RB)
         | assign("default", expr)
-    ).set_parser_name("column_options")
+    )
 
     column_definition << Group(
-        var_name("name") + (column_type | var_name)("type") + column_options
-    ).set_parser_name("column_definition")
+        identifier("name") + (column_type | identifier)("type") + column_options
+    )
+
+    set_parser_names()
 
     return column_type, column_definition, column_def_references
 
