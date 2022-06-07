@@ -165,7 +165,10 @@ def parser(literal_string, ident, sqlserver=False):
         alias = Optional((
             (
                 AS
-                + (identifier("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                + (
+                    identifier("name")
+                    + Optional(LB + delimited_list(ident("col")) + RB)
+                )
                 | (
                     identifier("name")
                     + Optional(
@@ -404,7 +407,12 @@ def parser(literal_string, ident, sqlserver=False):
         # https://docs.snowflake.com/en/sql-reference/constructs/sample.html
         tablesample = assign(
             "tablesample",
-            Optional((keyword("bernoulli") | keyword("row") | keyword("system") | keyword("block"))("method"))
+            Optional((
+                keyword("bernoulli")
+                | keyword("row")
+                | keyword("system")
+                | keyword("block")
+            )("method"))
             + LB
             + (
                 (
@@ -418,19 +426,10 @@ def parser(literal_string, ident, sqlserver=False):
                 | (real_num | int_num)("percent") + keyword("percent")
                 | int_num("rows") + keyword("rows")
                 | bytes_constraint
-                | (real_num | int_num)("percent")/(lambda t: t[0]*100)
+                | (real_num | int_num)("percent") / (lambda t: t[0] * 100)
             )
             + RB,
         )
-        # <table reference> ::= <table factor> | <joined table>
-        # <table factor> ::= <table primary> [ <sample clause> ]
-        # <table primary> ::= <table or query name> [ [ AS ] <correlation name> ]
-        # <sample clause> ::= TABLESAMPLE <sample method> <left paren>
-        #                     <sample percentage> <right paren> [ <repeatable clause> ]
-        # <sample method> ::= BERNOULLI | SYSTEM
-        # <repeatable clause> ::= REPEATABLE <left paren> <repeat argument> <right paren>
-        # <sample percentage> ::= <numeric value expression>
-        # <repeat argument> ::= <numeric value expression>
 
         table_source << Group(
             ((LB + query + RB) | stack | call_function | identifier)("value")
@@ -438,7 +437,7 @@ def parser(literal_string, ident, sqlserver=False):
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),
                 Optional(tablesample),
-                alias
+                alias,
             ])
         ) / to_table
 
