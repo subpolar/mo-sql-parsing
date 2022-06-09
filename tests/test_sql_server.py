@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse_sqlserver as parse
 
 
@@ -191,7 +193,7 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {
             "from": {
-                "tablesample": {"method": "bernoulli", "percent": 100},
+                "tablesample": {"method": "bernoulli", "percent": 1},
                 "value": "foo",
             },
             "select": "*",
@@ -205,10 +207,35 @@ class TestSqlServer(TestCase):
         expected = {
             "from": {
                 "name": "f",
-                "tablesample": {"method": "bernoulli", "percent": 100},
+                "tablesample": {"method": "bernoulli", "percent": 1},
                 "value": "foo",
             },
             "select": "*",
             "where": {"lt": ["f.a", 42]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_pivot_table(self):
+        # FROM https://docs.microsoft.com/en-us/sql/t-sql/queries/from-using-pivot-and-unpivot?view=sql-server-ver16
+        sql = """
+        SELECT * FROM p  
+        PIVOT  
+        (  
+        COUNT (id)  
+        FOR E IN ( 250, 251, 256, 257, 260 )  
+        ) AS pvt  
+        """
+        result = parse(sql)
+        expected = {
+            "select": "*",
+            "from": {
+                "name": "pvt",
+                "pivot": {
+                    "expr": {"count": "id"},
+                    "for": "E",
+                    "in": [250, 251, 256, 257, 260],
+                },
+                "value": "p",
+            },
         }
         self.assertEqual(result, expected)

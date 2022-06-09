@@ -281,12 +281,12 @@ def parser(literal_string, ident, sqlserver=False):
             | create_struct
             | (LB + Group(query) + RB)
             | (LB + Group(delimited_list(expression)) / to_tuple_call + RB)
-            | literal_string.set_parser_name("string")
-            | hex_num.set_parser_name("hex")
+            | literal_string
+            | hex_num
             | scale_function
             | scale_ident
-            | real_num.set_parser_name("float")
-            | int_num.set_parser_name("int")
+            | real_num
+            | int_num
             | call_function
             | Combine(identifier + Optional(".*"))
         )
@@ -405,14 +405,15 @@ def parser(literal_string, ident, sqlserver=False):
 
         # https://wiki.postgresql.org/wiki/TABLESAMPLE_Implementation
         # https://docs.snowflake.com/en/sql-reference/constructs/sample.html
-        tablesample = assign(
-            "tablesample",
+        # https://docs.microsoft.com/en-us/sql/t-sql/queries/from-transact-sql?view=sql-server-ver16
+        tablesample = (TABLESAMPLE | SAMPLE) + (
             Optional((
                 keyword("bernoulli")
                 | keyword("row")
                 | keyword("system")
                 | keyword("block")
-            )("method"))
+            ))("method")
+            # / (lambda t: t if t else "bernoulli")
             + LB
             + (
                 (
@@ -426,17 +427,49 @@ def parser(literal_string, ident, sqlserver=False):
                 | (real_num | int_num)("percent") + keyword("percent")
                 | int_num("rows") + keyword("rows")
                 | bytes_constraint
-                | (real_num | int_num)("percent") / (lambda t: t[0] * 100)
+                | (real_num | int_num)("percent")
             )
-            + RB,
+            + RB
+            + Optional(assign("repeatable", LB + int_num + RB))
+        )("tablesample")
+
+        value_column = (
+            TRUE | FALSE | timestamp | literal_string | hex_num | real_num | int_num
         )
 
+        pivot_table = assign(
+            "pivot",
+            LB
+            + expression("expr")
+            + assign("for", identifier)
+            + IN
+            + LB
+            + delimited_list(value_column)("in")
+            + RB
+            + RB
+        )
+
+        # <pivoted_table> ::=
+        #     table_source PIVOT <pivot_clause> [ [ AS ] table_alias ]
+        #
+        # <pivot_clause> ::=
+        #         ( aggregate_function ( value_column [ [ , ]...n ])
+        #         FOR pivot_column
+        #         IN ( <column_list> )
+        #     )
+        #
+        # <unpivoted_table> ::=
+        #     table_source UNPIVOT <unpivot_clause> [ [ AS ] table_alias ]
+        #
+        # <unpivot_clause> ::=
+        #     ( value_column FOR pivot_column IN ( <column_list> ) )
         table_source << Group(
             ((LB + query + RB) | stack | call_function | identifier)("value")
             + MatchAll([
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),
                 Optional(tablesample),
+                Optional(pivot_table),
                 alias,
             ])
         ) / to_table

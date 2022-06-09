@@ -20,7 +20,8 @@ The objective is to convert SQL queries to JSON-izable parse trees. This origina
 
 ## Project Status
 
-June 2022 - There has been some work on improving the error reporting alongside resolving any bug reports.  There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that covers most SQL for most databases, with limited DML support:
+June 2022 - There has been some work on improving the error reporting alongside resolving any bug reports.  There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that covers most SQL for most databases, with limited DML support, including:
+
   * inner queries, 
   * with clauses, 
   * window functions
