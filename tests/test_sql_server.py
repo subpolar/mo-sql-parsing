@@ -231,7 +231,7 @@ class TestSqlServer(TestCase):
             "from": {
                 "name": "pvt",
                 "pivot": {
-                    "expr": {"count": "id"},
+                    "aggregate": {"count": "id"},
                     "for": "E",
                     "in": [250, 251, 256, 257, 260],
                 },
