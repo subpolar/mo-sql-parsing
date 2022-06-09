@@ -440,7 +440,7 @@ def parser(literal_string, ident, sqlserver=False):
         pivot_table = assign(
             "pivot",
             LB
-            + expression("expr")
+            + expression("aggregate")
             + assign("for", identifier)
             + IN
             + LB
