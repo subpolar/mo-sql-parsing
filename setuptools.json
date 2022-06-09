@@ -46,7 +46,8 @@
             "",
             "## Project Status",
             "",
-            "November 2021 - There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing). This parser is good enough for basic usage, including:",
+            "June 2022 - There has been some work on improving the error reporting alongside resolving any bug reports.  There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that covers most SQL for most databases, with limited DML support, including:",
+            "",
             "  * inner queries, ",
             "  * with clauses, ",
             "  * window functions",
@@ -262,6 +263,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "8.183.22158",
+    "version": "8.184.22160",
     "zip_safe": true
 }
