@@ -165,7 +165,6 @@ NOT_SIMILAR_TO = Group(NOT + _SIMILAR + _TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS
-    ALL,
     AND,
     AS,
     ASC,
