@@ -1589,3 +1589,8 @@ class TestSimple(TestCase):
         self.assertEqual(
             parse("/* \nfoo\n\n */\nSELECT TRUE"), {"select": {"value": True}}
         )
+
+    def test_issue_91_all(self):
+        result = parse('select count(*) from all')
+        expected = {'select': {'value': {'count': '*'}}, 'from': 'all'}
+        self.assertEqual(result, expected)
