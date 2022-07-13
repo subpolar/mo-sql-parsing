@@ -395,7 +395,7 @@ class TestBigQuery(TestCase):
     
     def testV(self):
         sql = """SELECT * FROM `a.b.c` a1
-                JOIN `a.b.d` t2
+                JOIN `a.b.d` a2
                     ON cast(a1.field AS BIGDECIMAL) = cast(a2.field AS BIGNUMERIC)"""
         result = parse(sql)
         expected = {
@@ -403,7 +403,7 @@ class TestBigQuery(TestCase):
             'from': [
                 {'value': 'a..b..c', 'name': 'a1'},
                 {
-                    'join': {'value': 'a..b..d', 'name': 't2'},
+                    'join': {'value': 'a..b..d', 'name': 'a2'},
                     'on': {
                         'eq': [{
                             'cast': ['a1.field', {
@@ -422,7 +422,7 @@ class TestBigQuery(TestCase):
     
     def testW(self):
         sql = """SELECT * FROM `a.b.c` a1
-                JOIN `a.b.d` t2
+                JOIN `a.b.d` a2
                     ON cast(a1.field AS INT64) = cast(a2.field AS BYTEINT)"""
         result = parse(sql)
         expected = {
@@ -430,7 +430,7 @@ class TestBigQuery(TestCase):
             'from': [
                 {'value': 'a..b..c', 'name': 'a1'},
                 {
-                'join': {'value': 'a..b..d', 'name': 't2'},
+                'join': {'value': 'a..b..d', 'name': 'a2'},
                 'on': {
                     'eq': [{
                         'cast': ['a1.field', {
