@@ -47,12 +47,15 @@ BOOL = Group(keyword("bool")("op")) / to_json_call
 BOOLEAN = Group(keyword("boolean")("op")) / to_json_call
 DOUBLE = Group(keyword("double")("op") + Optional(flag("unsigned"))) / to_json_call
 FLOAT64 = Group(keyword("float64")("op")) / to_json_call
+BIGNUMERIC = Group(keyword("bignumeric")("op")) / to_json_call
+BIGDECIMAL = Group(keyword("bigdecimal")("op")) / to_json_call
 FLOAT = Group(keyword("float")("op") + Optional(flag("unsigned"))) / to_json_call
 GEOMETRY = Group(keyword("geometry")("op")) / to_json_call
 INTEGER = Group(keyword("integer")("op") + Optional(flag("unsigned"))) / to_json_call
 INT = (keyword("int")("op") + _size + Optional(flag("unsigned"))) / to_json_call
 INT32 = Group(keyword("int32")("op")) / to_json_call
 INT64 = Group(keyword("int64")("op")) / to_json_call
+BYTEINT = Group(keyword("byteint")("op")) / to_json_call
 REAL = Group(keyword("real")("op") + Optional(flag("unsigned"))) / to_json_call
 TEXT = Group(keyword("text")("op")) / to_json_call
 SMALLINT = Group(keyword("smallint")("op") + Optional(flag("unsigned"))) / to_json_call
@@ -120,6 +123,8 @@ simple_types << MatchFirst([
     DOUBLE_PRECISION,
     DOUBLE,
     FLOAT64,
+    BIGNUMERIC,
+    BIGDECIMAL,
     FLOAT,
     GEOMETRY,
     MAP_TYPE,
@@ -127,6 +132,7 @@ simple_types << MatchFirst([
     INT,
     INT32,
     INT64,
+    BYTEINT,
     JSON,
     NCHAR,
     NUMBER,
