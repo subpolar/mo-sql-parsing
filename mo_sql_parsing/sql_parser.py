@@ -113,6 +113,14 @@ def parser(literal_string, ident, sqlserver=False):
             / to_json_call
         )
 
+        # TODO: CAN THIS BE MERGED WITH cast?  DOES THE REGEX OPTIMIZATION BREAK?
+        safe_cast = (
+            Group(
+                SAFE_CAST("op") + LB + expression("params") + AS + column_type("params") + RB
+            )
+            / to_json_call
+        )
+
         trim = (
             Group(
                 keyword("trim").suppress()
@@ -272,6 +280,7 @@ def parser(literal_string, ident, sqlserver=False):
             | case
             | switch
             | cast
+            | safe_cast
             | distinct
             | trim
             | stack

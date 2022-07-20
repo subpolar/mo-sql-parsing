@@ -425,3 +425,8 @@ class TestBigQuery2(FuzzyTestCase):
             ]
         }
         self.assertEqual(result, expected)
+
+    def test_issue_97_safe_cast(self):
+        result = parse("SELECT SAFE_CAST(x AS STRING) from `a.b.c`")
+        expected={}
+        self.assertEqual(result, expected)
