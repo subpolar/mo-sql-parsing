@@ -142,12 +142,12 @@ def parser(literal_string, ident, sqlserver=False):
             keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
-        duration = (
-            real_num | int_num | literal_string
-        )("params") + _standard_time_intervals
+        duration = expression("params") + _standard_time_intervals
+
+        literal_duration = (real_num | int_num)("params") + _standard_time_intervals
 
         interval = (
-            INTERVAL + ("'" + delimited_list(duration) + "'" | duration)
+            INTERVAL + ("'" + delimited_list(literal_duration) + "'" | duration)
         ) / to_interval_call
 
         timestamp = (

@@ -329,7 +329,7 @@ def to_interval_call(tokens):
     if not params:
         params = {}
     if params.length() == 2:
-        return Call("interval", params, {})
+        return Call("interval", list(params), {})
 
     return Call("add", [Call("interval", p, {}) for p in _chunk(params, size=2)], {})
 

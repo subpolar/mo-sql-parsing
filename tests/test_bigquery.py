@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import TestCase
+from unittest import TestCase, skip
 
 from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -410,8 +410,8 @@ class TestBigQuery2(FuzzyTestCase):
             "from": "a..b..c",
             "select": [
                 {"value": {"regex_extract": ["x", {"regex": "[a-z]"}]}},
-                {"value": "value"}
-            ]
+                {"value": "value"},
+            ],
         }
         self.assertEqual(result, expected)
 
@@ -421,12 +421,30 @@ class TestBigQuery2(FuzzyTestCase):
             "from": "a..b..c",
             "select": [
                 {"value": {"regex_extract": ["x", {"regex": "[a-z]"}]}},
-                {"value": "value"}
-            ]
+                {"value": "value"},
+            ],
         }
         self.assertEqual(result, expected)
 
     def test_issue_97_safe_cast(self):
         result = parse("SELECT SAFE_CAST(x AS STRING) from `a.b.c`")
-        expected={}
+        expected = {}
+        self.assertEqual(result, expected)
+
+    def test_issue_98_interval1(self):
+        result = parse(
+            """SELECT timestamp_add('2022-07-14T12:42:11Z', INTERVAL x MINUTE)"""
+        )
+        expected = {"select": {"value": {"timestamp_add": [
+            {"literal": "2022-07-14T12:42:11Z"},
+            {"interval": ["x", "minute"]},
+        ]}}}
+        self.assertEqual(result, expected)
+
+    @skip
+    def test_issue_98_interval2(self):
+        result = parse(
+            """SELECT timestamp_add('2022-07-14T12:42:11Z', INTERVAL x MINUTE) UNNEST(GENERATE_ARRAY(1, 10)) as x"""
+        )
+        expected = {}
         self.assertEqual(result, expected)
