@@ -6,7 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import whitespaces
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -40,13 +39,13 @@ def common_parser():
         ansi_ident | mysql_backtick_ident | simple_ident, separator=".", combine=True,
     )).set_parser_name("identifier")
 
-    return parser(ansi_string, combined_ident)
+    return parser(regex_string | ansi_string, combined_ident)
 
 
 def mysql_parser():
     utils.emit_warning_for_double_quotes = False
 
-    mysql_string = ansi_string | mysql_doublequote_string
+    mysql_string = regex_string | ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
         mysql_backtick_ident | sqlserver_ident | simple_ident,
         separator=".",
@@ -66,7 +65,7 @@ def sqlserver_parser():
         combine=True,
     )).set_parser_name("identifier")
 
-    return parser(ansi_string, combined_ident, sqlserver=True)
+    return parser(regex_string | ansi_string, combined_ident, sqlserver=True)
 
 
 def parser(literal_string, ident, sqlserver=False):

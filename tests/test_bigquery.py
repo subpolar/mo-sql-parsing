@@ -403,3 +403,25 @@ class TestBigQuery2(FuzzyTestCase):
             """'a'.b.`c`" (at char 27), (line:2, col:27)"""
         ):
             parse(sql)
+
+    def test_issue_96_r_expressions1(self):
+        result = parse("SELECT regex_extract(x, r'[a-z]'), value FROM `a.b.c`")
+        expected = {
+            "from": "a..b..c",
+            "select": [
+                {"value": {"regex_extract": ["x", {"regex": "[a-z]"}]}},
+                {"value": "value"}
+            ]
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_96_r_expressions2(self):
+        result = parse('SELECT regex_extract(x, r"[a-z]"), value FROM `a.b.c`')
+        expected = {
+            "from": "a..b..c",
+            "select": [
+                {"value": {"regex_extract": ["x", {"regex": "[a-z]"}]}},
+                {"value": "value"}
+            ]
+        }
+        self.assertEqual(result, expected)
