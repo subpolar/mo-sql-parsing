@@ -12,7 +12,7 @@ from unittest import TestCase
 
 from mo_parsing.debug import Debugger
 
-from mo_sql_parsing import parse
+from mo_sql_parsing import parse, normal_op
 
 
 class TestAthena(TestCase):
@@ -117,16 +117,29 @@ class TestAthena(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue_85_json_type(self):
-        sql ='SELECT CAST(x AS JSON)'
+        sql = "SELECT CAST(x AS JSON)"
         result = parse(sql)
-        expected = {"select": {"value": {"cast": [
-            "x",
-            {"json":{}},
-        ]}}}
+        expected = {"select": {"value": {"cast": ["x", {"json": {}},]}}}
         self.assertEqual(result, expected)
 
     def test_issue_92_empty_array(self):
         sql = "SELECT ARRAY[]"
         result = parse(sql)
-        expected = {'select': {'value': {'create_array': {}}}}
+        expected = {"select": {"value": {"create_array": {}}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_93_order_by_parameter1(self):
+        sql = "SELECT FOO(a ORDER BY b)"
+        result = parse(sql)
+        expected = {"select": {"value": {"foo": "a", "orderby": {"value": "b"}}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_93_order_by_parameter2(self):
+        sql = "SELECT FOO(a ORDER BY b)"
+        result = parse(sql, calls=normal_op)  # normal_op FOR BETTER OUTPUT CLARITY
+        expected = {"select": {"value": {
+            "op": "foo",
+            "args": ["a"],
+            "kwargs": {"orderby": {"value": "b"}},
+        }}}
         self.assertEqual(result, expected)

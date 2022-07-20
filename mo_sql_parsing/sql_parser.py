@@ -255,6 +255,12 @@ def parser(literal_string, ident, sqlserver=False):
 
         query = Forward()
 
+        sort_column = (
+            expression("value").set_parser_name("sort1")
+            + Optional(DESC("sort") | ASC("sort"))
+            + Optional(assign("nulls", keyword("first") | keyword("last")))
+        )
+
         call_function = (
             function_name("op")
             + LB
@@ -263,6 +269,7 @@ def parser(literal_string, ident, sqlserver=False):
                 (keyword("respect") | keyword("ignore"))("nulls")
                 + keyword("nulls").suppress()
             )
+            + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + RB
         ) / to_json_call
 
@@ -302,12 +309,6 @@ def parser(literal_string, ident, sqlserver=False):
             | int_num
             | call_function
             | Combine(identifier + Optional(".*"))
-        )
-
-        sort_column = (
-            expression("value").set_parser_name("sort1")
-            + Optional(DESC("sort") | ASC("sort"))
-            + Optional(assign("nulls", keyword("first") | keyword("last")))
         )
 
         window_clause, over_clause = window(expression, identifier, sort_column)

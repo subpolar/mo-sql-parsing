@@ -393,8 +393,6 @@ class TestBigQuery(TestCase):
         expected = {"from": "a.b.c", "select": "*"}
         self.assertEqual(result, expected)
 
-
-class TestBigQuery2(FuzzyTestCase):
     def testS(self):
         sql = """
             SELECT * FROM 'a'.b.`c`
@@ -428,7 +426,10 @@ class TestBigQuery2(FuzzyTestCase):
 
     def test_issue_97_safe_cast(self):
         result = parse("SELECT SAFE_CAST(x AS STRING) from `a.b.c`")
-        expected = {}
+        expected = {
+            "from": "a..b..c",
+            "select": {"value": {"safe_cast": ["x", {"string": {}}]}},
+        }
         self.assertEqual(result, expected)
 
     def test_issue_98_interval1(self):
@@ -453,4 +454,3 @@ class TestBigQuery2(FuzzyTestCase):
         result = parse("SELECT * EXCEPT(x) FROM `a.b.c`")
         expected = {"from": "a..b..c", "select_except": {"value": "x"}}
         self.assertEqual(result, expected)
-        self.assertEqual(expected, result)
