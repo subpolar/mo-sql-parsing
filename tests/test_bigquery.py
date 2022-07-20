@@ -448,3 +448,9 @@ class TestBigQuery2(FuzzyTestCase):
         )
         expected = {}
         self.assertEqual(result, expected)
+
+    def test_issue_99_select_except(self):
+        result = parse("SELECT * EXCEPT(x) FROM `a.b.c`")
+        expected = {"from": "a..b..c", "select_except": {"value": "x"}}
+        self.assertEqual(result, expected)
+        self.assertEqual(expected, result)

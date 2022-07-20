@@ -116,7 +116,12 @@ def parser(literal_string, ident, sqlserver=False):
         # TODO: CAN THIS BE MERGED WITH cast?  DOES THE REGEX OPTIMIZATION BREAK?
         safe_cast = (
             Group(
-                SAFE_CAST("op") + LB + expression("params") + AS + column_type("params") + RB
+                SAFE_CAST("op")
+                + LB
+                + expression("params")
+                + AS
+                + column_type("params")
+                + RB
             )
             / to_json_call
         )
@@ -365,9 +370,12 @@ def parser(literal_string, ident, sqlserver=False):
         ) / to_join_call
 
         selection = (
-            (SELECT + DISTINCT + ON + LB)
-            + delimited_list(select_column)("distinct_on")
-            + RB
+            (
+                (SELECT + "*" + EXCEPT.suppress())
+                + (LB + delimited_list(select_column)("select_except") + RB)
+            )
+            | (SELECT + DISTINCT + ON)
+            + (LB + delimited_list(select_column)("distinct_on") + RB)
             + delimited_list(select_column)("select")
             | SELECT + DISTINCT + delimited_list(select_column)("select_distinct")
             | (
@@ -454,7 +462,7 @@ def parser(literal_string, ident, sqlserver=False):
             + LB
             + delimited_list(value_column)("in")
             + RB
-            + RB
+            + RB,
         )
 
         # <pivoted_table> ::=
