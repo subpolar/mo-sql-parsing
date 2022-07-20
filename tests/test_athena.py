@@ -124,3 +124,9 @@ class TestAthena(TestCase):
             {"json":{}},
         ]}}}
         self.assertEqual(result, expected)
+
+    def test_issue_92_empty_array(self):
+        sql = "SELECT ARRAY[]"
+        result = parse(sql)
+        expected = {'select': {'value': {'create_array': {}}}}
+        self.assertEqual(result, expected)

@@ -201,7 +201,7 @@ def parser(literal_string, ident, sqlserver=False):
                 LB + delimited_list(Group(expression))("args") + RB
                 | (
                     Literal("[")
-                    + delimited_list(Group(expression))("args")
+                    + Optional(delimited_list(Group(expression))("args"))
                     + Literal("]")
                 )
             )
