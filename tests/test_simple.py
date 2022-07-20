@@ -1594,3 +1594,8 @@ class TestSimple(TestCase):
         result = parse('select count(*) from all')
         expected = {'select': {'value': {'count': '*'}}, 'from': 'all'}
         self.assertEqual(result, expected)
+
+    def test_issue_95_key_as_column_name(self):
+        result = parse("SELECT key, value FROM `a.b.c`")
+        expected = {'from': 'a..b..c', 'select': [{'value': 'key'}, {'value': 'value'}]}
+        self.assertEqual(result, expected)

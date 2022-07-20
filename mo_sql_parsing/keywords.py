@@ -196,7 +196,6 @@ RESERVED = MatchFirst([
     IS_NOT,
     IS,
     JOIN,
-    KEY,
     LATERAL,
     LEFT,
     LIKE,
