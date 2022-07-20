@@ -6,7 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import whitespaces
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -40,13 +39,13 @@ def common_parser():
         ansi_ident | mysql_backtick_ident | simple_ident, separator=".", combine=True,
     )).set_parser_name("identifier")
 
-    return parser(ansi_string, combined_ident)
+    return parser(regex_string | ansi_string, combined_ident)
 
 
 def mysql_parser():
     utils.emit_warning_for_double_quotes = False
 
-    mysql_string = ansi_string | mysql_doublequote_string
+    mysql_string = regex_string | ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
         mysql_backtick_ident | sqlserver_ident | simple_ident,
         separator=".",
@@ -66,7 +65,7 @@ def sqlserver_parser():
         combine=True,
     )).set_parser_name("identifier")
 
-    return parser(ansi_string, combined_ident, sqlserver=True)
+    return parser(regex_string | ansi_string, combined_ident, sqlserver=True)
 
 
 def parser(literal_string, ident, sqlserver=False):
@@ -114,6 +113,19 @@ def parser(literal_string, ident, sqlserver=False):
             / to_json_call
         )
 
+        # TODO: CAN THIS BE MERGED WITH cast?  DOES THE REGEX OPTIMIZATION BREAK?
+        safe_cast = (
+            Group(
+                SAFE_CAST("op")
+                + LB
+                + expression("params")
+                + AS
+                + column_type("params")
+                + RB
+            )
+            / to_json_call
+        )
+
         trim = (
             Group(
                 keyword("trim").suppress()
@@ -135,12 +147,12 @@ def parser(literal_string, ident, sqlserver=False):
             keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
         ]).set_parser_name("duration")("params")
 
-        duration = (
-            real_num | int_num | literal_string
-        )("params") + _standard_time_intervals
+        duration = expression("params") + _standard_time_intervals
+
+        literal_duration = (real_num | int_num)("params") + _standard_time_intervals
 
         interval = (
-            INTERVAL + ("'" + delimited_list(duration) + "'" | duration)
+            INTERVAL + ("'" + delimited_list(literal_duration) + "'" | duration)
         ) / to_interval_call
 
         timestamp = (
@@ -201,7 +213,7 @@ def parser(literal_string, ident, sqlserver=False):
                 LB + delimited_list(Group(expression))("args") + RB
                 | (
                     Literal("[")
-                    + delimited_list(Group(expression))("args")
+                    + Optional(delimited_list(Group(expression))("args"))
                     + Literal("]")
                 )
             )
@@ -243,6 +255,12 @@ def parser(literal_string, ident, sqlserver=False):
 
         query = Forward()
 
+        sort_column = (
+            expression("value").set_parser_name("sort1")
+            + Optional(DESC("sort") | ASC("sort"))
+            + Optional(assign("nulls", keyword("first") | keyword("last")))
+        )
+
         call_function = (
             function_name("op")
             + LB
@@ -251,6 +269,7 @@ def parser(literal_string, ident, sqlserver=False):
                 (keyword("respect") | keyword("ignore"))("nulls")
                 + keyword("nulls").suppress()
             )
+            + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + RB
         ) / to_json_call
 
@@ -273,6 +292,7 @@ def parser(literal_string, ident, sqlserver=False):
             | case
             | switch
             | cast
+            | safe_cast
             | distinct
             | trim
             | stack
@@ -289,12 +309,6 @@ def parser(literal_string, ident, sqlserver=False):
             | int_num
             | call_function
             | Combine(identifier + Optional(".*"))
-        )
-
-        sort_column = (
-            expression("value").set_parser_name("sort1")
-            + Optional(DESC("sort") | ASC("sort"))
-            + Optional(assign("nulls", keyword("first") | keyword("last")))
         )
 
         window_clause, over_clause = window(expression, identifier, sort_column)
@@ -357,9 +371,12 @@ def parser(literal_string, ident, sqlserver=False):
         ) / to_join_call
 
         selection = (
-            (SELECT + DISTINCT + ON + LB)
-            + delimited_list(select_column)("distinct_on")
-            + RB
+            (
+                (SELECT + "*" + EXCEPT.suppress())
+                + (LB + delimited_list(select_column)("select_except") + RB)
+            )
+            | (SELECT + DISTINCT + ON)
+            + (LB + delimited_list(select_column)("distinct_on") + RB)
             + delimited_list(select_column)("select")
             | SELECT + DISTINCT + delimited_list(select_column)("select_distinct")
             | (
@@ -446,7 +463,7 @@ def parser(literal_string, ident, sqlserver=False):
             + LB
             + delimited_list(value_column)("in")
             + RB
-            + RB
+            + RB,
         )
 
         # <pivoted_table> ::=

@@ -329,7 +329,7 @@ def to_interval_call(tokens):
     if not params:
         params = {}
     if params.length() == 2:
-        return Call("interval", params, {})
+        return Call("interval", list(params), {})
 
     return Call("add", [Call("interval", p, {}) for p in _chunk(params, size=2)], {})
 
@@ -579,6 +579,16 @@ def double_literal(tokens):
     return {"literal": ast.literal_eval(val)}
 
 
+def single_regex(tokens):
+    val = tokens[0]
+    return {"regex": ast.literal_eval(val)}
+
+
+def literal_regex(tokens):
+    val = tokens[0]
+    return {"regex": ast.literal_eval(val)}
+
+
 def bad_operator_on_ordered_sql(token, index, string):
     raise ParseException(
         token.type,
@@ -641,6 +651,7 @@ hex_num = (
 
 # STRINGS
 ansi_string = Regex(r"\'(\'\'|[^'])*\'") / single_literal
+regex_string = (Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")) / literal_regex
 mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
 
 # BASIC IDENTIFIERS

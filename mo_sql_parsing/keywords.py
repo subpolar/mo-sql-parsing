@@ -50,6 +50,7 @@ PARTITION = keyword("partition").suppress()
 # PERCENT = keyword("percent").suppress()
 RIGHT = keyword("right")
 RLIKE = keyword("rlike")
+SAFE_CAST = keyword("safe_cast")
 SAMPLE = keyword("sample").suppress()
 SELECT = keyword("select").suppress()
 TABLE = keyword("table").suppress()
@@ -196,7 +197,6 @@ RESERVED = MatchFirst([
     IS_NOT,
     IS,
     JOIN,
-    KEY,
     LATERAL,
     LEFT,
     LIKE,
