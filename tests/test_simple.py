@@ -1591,11 +1591,23 @@ class TestSimple(TestCase):
         )
 
     def test_issue_91_all(self):
-        result = parse('select count(*) from all')
-        expected = {'select': {'value': {'count': '*'}}, 'from': 'all'}
+        result = parse("select count(*) from all")
+        expected = {"select": {"value": {"count": "*"}}, "from": "all"}
         self.assertEqual(result, expected)
 
     def test_issue_95_key_as_column_name(self):
         result = parse("SELECT key, value FROM `a.b.c`")
-        expected = {'from': 'a..b..c', 'select': [{'value': 'key'}, {'value': 'value'}]}
+        expected = {"from": "a..b..c", "select": [{"value": "key"}, {"value": "value"}]}
+        self.assertEqual(result, expected)
+
+    def test_issue_100_sign_operator(self):
+        sql = """SELECT CASE WHEN 1=1 THEN + 1 ELSE - 1 END AS x FROM `a.b.c`"""
+        result = parse(sql)
+        expected = {
+            "from": "a..b..c",
+            "select": {
+                "name": "x",
+                "value": {"case": [{"when": {"eq": [1, 1]}, "then": 1}, -1]},
+            },
+        }
         self.assertEqual(result, expected)

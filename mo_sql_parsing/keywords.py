@@ -58,6 +58,7 @@ TABLESAMPLE = keyword("tablesample").suppress()
 THEN = keyword("then").suppress()
 TOP = keyword("top").suppress()
 UNION = keyword("union")
+UNNEST = keyword("unnest")
 INTERSECT = keyword("intersect")
 USING = keyword("using").suppress()
 WHEN = keyword("when").suppress()
@@ -82,6 +83,7 @@ CONCAT = Literal("||").set_parser_name("concat")
 MUL = Literal("*").set_parser_name("mul")
 DIV = Literal("/").set_parser_name("div")
 MOD = Literal("%").set_parser_name("mod")
+POS = Literal("+").set_parser_name("pos")
 NEG = Literal("-").set_parser_name("neg")
 ADD = Literal("+").set_parser_name("add")
 SUB = Literal("-").set_parser_name("sub")
@@ -222,6 +224,7 @@ RESERVED = MatchFirst([
     TRUE,
     UNION,
     UNIQUE,
+    UNNEST,
     USING,
     WHEN,
     WHERE,
@@ -305,6 +308,7 @@ precedence = {
 KNOWN_OPS = [
     COLLATE,
     CONCAT,
+    POS,
     NEG,
     MUL | DIV | MOD,
     ADD | SUB,

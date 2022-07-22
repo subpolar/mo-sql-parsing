@@ -457,14 +457,12 @@ def parser(literal_string, ident, sqlserver=False):
         pivot_table = assign(
             "pivot",
             LB
-            + expression("aggregate")
-            + assign("for", identifier)
-            + IN
-            + LB
-            + delimited_list(value_column)("in")
-            + RB
+            + (expression("aggregate") + assign("for", identifier) + IN)
+            + (LB + delimited_list(value_column)("in") + RB)
             + RB,
         )
+
+        unnest = (UNNEST("op") + LB + expression("params") + RB)/to_json_call
 
         # <pivoted_table> ::=
         #     table_source PIVOT <pivot_clause> [ [ AS ] table_alias ]
@@ -481,10 +479,11 @@ def parser(literal_string, ident, sqlserver=False):
         # <unpivot_clause> ::=
         #     ( value_column FOR pivot_column IN ( <column_list> ) )
         table_source << Group(
-            ((LB + query + RB) | stack | call_function | identifier)("value")
+            ((LB + query + RB) | unnest | stack | call_function | identifier)("value")
             + MatchAll([
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),
+                Optional(WITH + OFFSET + Optional(AS) + identifier("with_offset")),
                 Optional(tablesample),
                 Optional(pivot_table),
                 alias,
