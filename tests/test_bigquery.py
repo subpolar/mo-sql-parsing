@@ -392,58 +392,44 @@ class TestBigQuery(TestCase):
         result = parse(sql)
         expected = {"from": "a.b.c", "select": "*"}
         self.assertEqual(result, expected)
-    
+
     def testV(self):
         sql = """SELECT * FROM `a.b.c` a1
                 JOIN `a.b.d` a2
                     ON cast(a1.field AS BIGDECIMAL) = cast(a2.field AS BIGNUMERIC)"""
         result = parse(sql)
         expected = {
-            'select': '*',
-            'from': [
-                {'value': 'a..b..c', 'name': 'a1'},
+            "select": "*",
+            "from": [
+                {"value": "a..b..c", "name": "a1"},
                 {
-                    'join': {'value': 'a..b..d', 'name': 'a2'},
-                    'on': {
-                        'eq': [{
-                            'cast': ['a1.field', {
-                                'bigdecimal': {}
-                            }]
-                        }, {
-                            'cast': ['a2.field', {
-                                'bignumeric': {}
-                            }]
-                        }]
-                    }
-                }
-            ]
+                    "join": {"value": "a..b..d", "name": "a2"},
+                    "on": {"eq": [
+                        {"cast": ["a1.field", {"bigdecimal": {}}]},
+                        {"cast": ["a2.field", {"bignumeric": {}}]},
+                    ]},
+                },
+            ],
         }
         self.assertEqual(result, expected)
-    
+
     def testW(self):
         sql = """SELECT * FROM `a.b.c` a1
                 JOIN `a.b.d` a2
                     ON cast(a1.field AS INT64) = cast(a2.field AS BYTEINT)"""
         result = parse(sql)
         expected = {
-            'select': '*',
-            'from': [
-                {'value': 'a..b..c', 'name': 'a1'},
+            "select": "*",
+            "from": [
+                {"value": "a..b..c", "name": "a1"},
                 {
-                'join': {'value': 'a..b..d', 'name': 'a2'},
-                'on': {
-                    'eq': [{
-                        'cast': ['a1.field', {
-                            'int64': {}
-                        }]
-                    }, {
-                        'cast': ['a2.field', {
-                            'byteint': {}
-                        }]
-                    }]
-                }
-                }
-            ]
+                    "join": {"value": "a..b..d", "name": "a2"},
+                    "on": {"eq": [
+                        {"cast": ["a1.field", {"int64": {}}]},
+                        {"cast": ["a2.field", {"byteint": {}}]},
+                    ]},
+                },
+            ],
         }
         self.assertEqual(result, expected)
 
