@@ -15,6 +15,7 @@ from mo_parsing.infix import delimited_list, RIGHT_ASSOC, LEFT_ASSOC
 from mo_sql_parsing.keywords import (
     RB,
     LB,
+    POS,
     NEG,
     NOT,
     BINARY_NOT,
@@ -157,6 +158,7 @@ CASTING = (Literal("::").suppress() + simple_types("params")).set_parser_name("c
 KNOWN_OPS.insert(0, CASTING)
 
 unary_ops = {
+    POS: RIGHT_ASSOC,
     NEG: RIGHT_ASSOC,
     NOT: RIGHT_ASSOC,
     BINARY_NOT: RIGHT_ASSOC,

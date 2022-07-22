@@ -143,8 +143,11 @@ def to_json_operator(tokens):
             return Call("cast", list(tokens), {})
         # UNARY OPERATOR
         op = tokens.tokens[0].type.parser_name
-        if op == "neg" and is_number(tokens[1]):
-            return -tokens[1]
+        if is_number(tokens[1]):
+            if op == "neg":
+                return -tokens[1]
+            elif op == "pos":
+                return tokens[1]
         return Call(op, [tokens[1]], {})
     elif length == 5:
         # TRINARY OPERATOR
