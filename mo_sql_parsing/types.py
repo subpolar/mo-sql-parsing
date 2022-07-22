@@ -9,8 +9,19 @@
 
 
 # KNOWN TYPES
-from mo_parsing import Forward, Group, Optional, MatchFirst, Literal, ZeroOrMore, export, set_parser_names
-from mo_parsing.infix import delimited_list, RIGHT_ASSOC, LEFT_ASSOC
+from mo_imports import export
+from mo_parsing import (
+    Forward,
+    Group,
+    Optional,
+    MatchFirst,
+    Literal,
+    ZeroOrMore,
+    set_parser_names,
+    delimited_list,
+    RIGHT_ASSOC,
+    LEFT_ASSOC,
+)
 
 from mo_sql_parsing.keywords import (
     RB,
@@ -209,7 +220,8 @@ def get_column_type(expr, identifier, literal_string):
     )
 
     column_def_references = assign(
-        "references", identifier("table") + LB + delimited_list(identifier)("columns") + RB,
+        "references",
+        identifier("table") + LB + delimited_list(identifier)("columns") + RB,
     )
 
     column_options = ZeroOrMore(
