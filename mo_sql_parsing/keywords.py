@@ -58,6 +58,7 @@ TABLESAMPLE = keyword("tablesample").suppress()
 THEN = keyword("then").suppress()
 TOP = keyword("top").suppress()
 UNION = keyword("union")
+UNNEST = keyword("unnest")
 INTERSECT = keyword("intersect")
 USING = keyword("using").suppress()
 WHEN = keyword("when").suppress()
@@ -222,6 +223,7 @@ RESERVED = MatchFirst([
     TRUE,
     UNION,
     UNIQUE,
+    UNNEST,
     USING,
     WHEN,
     WHERE,

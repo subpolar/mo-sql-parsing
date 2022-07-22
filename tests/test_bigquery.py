@@ -442,7 +442,7 @@ class TestBigQuery(TestCase):
         ]}}}
         self.assertEqual(result, expected)
 
-    @skip
+    @skip("missing FROM?")
     def test_issue_98_interval2(self):
         result = parse(
             """SELECT timestamp_add('2022-07-14T12:42:11Z', INTERVAL x MINUTE) UNNEST(GENERATE_ARRAY(1, 10)) as x"""
@@ -453,4 +453,18 @@ class TestBigQuery(TestCase):
     def test_issue_99_select_except(self):
         result = parse("SELECT * EXCEPT(x) FROM `a.b.c`")
         expected = {"from": "a..b..c", "select_except": {"value": "x"}}
+        self.assertEqual(result, expected)
+
+    def test_unnest(self):
+        result = parse(
+            """SELECT * FROM UNNEST([1, 2, 2, 5, NULL]) AS unnest_column WITH OFFSET AS `offset`"""
+        )
+        expected = {
+            "select": "*",
+            "from": {
+                "name": "unnest_column",
+                "value": {"unnest": {"create_array": [1, 2, 2, 5, {"null": {}}]}},
+                "with_offset": "offset",
+            },
+        }
         self.assertEqual(result, expected)
