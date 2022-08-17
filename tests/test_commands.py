@@ -11,8 +11,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
@@ -764,8 +762,6 @@ class TestCreateForBigQuery(TestCase):
         }}
         self.assertEqual(result, expected)
 
-
-class TestInsert(TestCase):
     def test_issue_64_table(self):
         sql = """INSERT INTO tab (name) VALUES(42)"""
         result = parse(sql)
@@ -868,5 +864,26 @@ class TestInsert(TestCase):
             "engine": "InnoDB",
             "name": "1",
             "replace": False,
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_101_create_temp_table(self):
+        sql = """CREATE TEMP TABLE foo(a varchar(10))"""
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": {"name": "a", "type": {"varchar": 10}},
+            "name": "foo",
+            "temporary": True,
+        }}
+        self.assertEqual(result, expected)
+
+
+    def test_issue_101_create_transient_table(self):
+        sql = """CREATE TRANSIENT TABLE foo(a varchar(10))"""
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": {"name": "a", "type": {"varchar": 10}},
+            "name": "foo",
+            "temporary": True,
         }}
         self.assertEqual(result, expected)
