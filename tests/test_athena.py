@@ -130,8 +130,7 @@ class TestAthena(TestCase):
 
     def test_issue_93_order_by_parameter1(self):
         sql = "SELECT FOO(a ORDER BY b)"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {"select": {"value": {"foo": "a", "orderby": {"value": "b"}}}}
         self.assertEqual(result, expected)
 

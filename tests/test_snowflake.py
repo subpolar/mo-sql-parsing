@@ -33,7 +33,7 @@ class TestSnowflake(TestCase):
         expected = {"create table": {
             "columns": {"name": "a", "type": {"varchar": 10}},
             "name": "foo",
-            "temporary": True,
+            "transient": True,
         }}
         self.assertEqual(result, expected)
 

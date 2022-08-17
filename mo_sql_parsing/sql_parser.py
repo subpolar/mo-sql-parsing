@@ -579,10 +579,9 @@ def parser(literal_string, ident, sqlserver=False):
             (
                 Keyword("temporary", caseless=True)
                 | Keyword("temp", caseless=True)
-                | Keyword("transient", caseless=True)
             )("temporary")
             / (lambda: True)
-        )
+        ) + Optional(flag("transient"))
 
         create_table = (
             keyword("create")
