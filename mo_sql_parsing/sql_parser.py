@@ -6,6 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+from mo_parsing import whitespaces
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -27,11 +28,12 @@ def no_dashes(tokens, start, string):
 
 
 digit = Char("0123456789")
-simple_ident = (
-    Char(FIRST_IDENT_CHAR)
-    + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
-)
-simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
+with whitespaces.NO_WHITESPACE:
+    simple_ident = (
+        Char(FIRST_IDENT_CHAR)
+        + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
+    )
+    simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
 
 
 def common_parser():
@@ -70,14 +72,15 @@ def sqlserver_parser():
 
 def parser(literal_string, ident, sqlserver=False):
 
-    with Whitespace() as engine:
+    with Whitespace() as white:
         rest_of_line = Regex(r"[^\n]*")
 
-        engine.add_ignore(Literal("--") + rest_of_line)
-        engine.add_ignore(Literal("#") + rest_of_line)
-        engine.add_ignore(Literal("/*") + SkipTo("*/", include=True))
+        white.add_ignore(Literal("--") + rest_of_line)
+        white.add_ignore(Literal("#") + rest_of_line)
+        white.add_ignore(Literal("/*") + SkipTo("*/", include=True))
 
-        identifier = ~RESERVED + ident
+        with whitespaces.NO_WHITESPACE:
+            identifier = ~RESERVED + ident
         function_name = ~FROM + ident
 
         # EXPRESSIONS

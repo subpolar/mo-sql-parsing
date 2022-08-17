@@ -41,7 +41,6 @@ class TestFormatAndParse(TestCase):
         new_json = ""
         try:
             new_sql = format(expected_json)
-            # with Debugger():
             new_json = parse(new_sql)
             self.assertEqual(new_json, expected_json)
         except Exception as cause:

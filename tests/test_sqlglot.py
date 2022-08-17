@@ -501,7 +501,6 @@ class TestSqlGlot(TestCase):
 
     def test_issue_46_sqlglot_46(self):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score"""
-        # with Debugger():
         result = parse(sql)
         expected = {
             "from": [

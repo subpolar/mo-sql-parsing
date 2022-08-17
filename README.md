@@ -8,12 +8,7 @@ Parse SQL into JSON so we can translate it for other datastores!
 
 [See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)
 
-
-## Problem Statement
-
-SQL is a familiar language used to access databases. Although, each database vendor has its quirky implementation, there is enough standardization that the average developer does not need to know of those quirks. This familiar core SQL (lowest common denominator, if you will) is useful enough to explore data in primitive ways. It is hoped that, once programmers have reviewed a datastore with basic SQL queries, and they see the value of that data, and they will be motivated to use the datastore's native query format.
-
-## Objectives
+## Objective
 
 The objective is to convert SQL queries to JSON-izable parse trees. This originally targeted MySQL, but has grown to include other database engines. *Please [paste some SQL into a new issue](https://github.com/klahnakoski/mo-sql-parsing/issues) if it does not work for you*
 
@@ -164,8 +159,6 @@ for select in listwrap(parsed_result.get('select')):
 
 ## Version Changes
 
-
-
 ### Version 8
  
 *November 2021*
@@ -224,8 +217,3 @@ for select in listwrap(parsed_result.get('select')):
 
 * changed parse result of `SELECT DISTINCT`
 * simpler `ORDER BY` clause in window functions
-
-
-
-
-
