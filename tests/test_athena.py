@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse, normal_op
 
 
@@ -128,7 +130,8 @@ class TestAthena(TestCase):
 
     def test_issue_93_order_by_parameter1(self):
         sql = "SELECT FOO(a ORDER BY b)"
-        result = parse(sql)
+        with Debugger():
+            result = parse(sql)
         expected = {"select": {"value": {"foo": "a", "orderby": {"value": "b"}}}}
         self.assertEqual(result, expected)
 

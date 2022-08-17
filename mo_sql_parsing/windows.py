@@ -102,6 +102,7 @@ def window(expr, var_name, sort_column):
         + LB
         + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
         + RB
-    )("within")) + ((OVER + (over_clause | var_name) / to_over)("over"))
+    )("within")) + Optional(OVER + (over_clause | var_name)("over") / to_over)
 
+    set_parser_names()
     return window_clause, over_clause

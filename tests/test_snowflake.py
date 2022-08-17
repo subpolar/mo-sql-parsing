@@ -80,3 +80,19 @@ class TestSnowflake(TestCase):
             "select": [{"value": "t.index"}, {"value": "t.value"}],
         }
         self.assertEqual(result, expected)
+
+    def test_issue_102_within_group(self):
+        sql = """
+        SELECT listagg(name, ', ' ) WITHIN GROUP (ORDER BY name) AS names
+        FROM names_table
+        """
+        result = parse(sql)
+        expected = {
+            "from": "names_table",
+            "select": {
+                "name": "names",
+                "value": {"listagg": ["name", {"literal": ", "}]},
+                "within": {"orderby": {"value": "name"}},
+            },
+        }
+        self.assertEqual(result, expected)
