@@ -866,24 +866,3 @@ class TestCreateForBigQuery(TestCase):
             "replace": False,
         }}
         self.assertEqual(result, expected)
-
-    def test_issue_101_create_temp_table(self):
-        sql = """CREATE TEMP TABLE foo(a varchar(10))"""
-        result = parse(sql)
-        expected = {"create table": {
-            "columns": {"name": "a", "type": {"varchar": 10}},
-            "name": "foo",
-            "temporary": True,
-        }}
-        self.assertEqual(result, expected)
-
-
-    def test_issue_101_create_transient_table(self):
-        sql = """CREATE TRANSIENT TABLE foo(a varchar(10))"""
-        result = parse(sql)
-        expected = {"create table": {
-            "columns": {"name": "a", "type": {"varchar": 10}},
-            "name": "foo",
-            "temporary": True,
-        }}
-        self.assertEqual(result, expected)
