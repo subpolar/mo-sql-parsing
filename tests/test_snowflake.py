@@ -68,8 +68,14 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql, calls=normal_op)
         expected = {
-            "from": {"table": {"generator": {}, "rowcount": 10}},
-            "select": {"value": {"seq4": {}}},
+            "from": {
+                "op": "table",
+                "args": [{
+                    "op": "generator",
+                    "kwargs": {"rowcount": 10},
+                }],
+            },
+            "select": {"value": {"op": "seq4"}},
         }
         self.assertEqual(result, expected)
 
@@ -92,7 +98,7 @@ class TestSnowflake(TestCase):
 
         self.assertEqual(result, expected)
 
-    def test_issue_102_table_functions3(self):
+    def test_issue_102_table_functions5(self):
         sql = """
         SELECT t.index, t.value
         FROM TABLE(split_to_table('a.b.z.d', '.')) as t
