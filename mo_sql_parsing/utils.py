@@ -305,6 +305,10 @@ def to_trim_call(tokens):
     )
 
 
+def to_kwarg(tokens):
+    return {k: v for k,v in [tuple(tokens)]}
+
+
 def to_json_call(tokens):
     # ARRANGE INTO {op: params} FORMAT
     op = tokens["op"].lower()
@@ -315,7 +319,11 @@ def to_json_call(tokens):
     else:
         args = list(params)
 
-    kwargs = {k: v for k, v in tokens.items() if k not in ("op", "params")}
+    kwargs = {k: v for k, v in tokens.items() if k not in ("op", "params", "kwargs")}
+    more_kwargs = tokens["kwargs"]
+    if more_kwargs:
+        for kv in list(more_kwargs):
+            kwargs.update(kv)
 
     return ParseResults(
         tokens.type,
