@@ -9,8 +9,6 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from mo_parsing.infix import delimited_list
-
 from mo_sql_parsing.keywords import *
 from mo_sql_parsing.utils import *
 
@@ -97,11 +95,15 @@ def window(expr, var_name, sort_column):
         + RB
     )
 
-    window_clause = Optional((
+    within = (
         WITHIN_GROUP
         + LB
         + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
         + RB
-    )("within")) + ((OVER + (over_clause | var_name) / to_over)("over"))
+    )("within")
+    over = OVER + (over_clause | var_name)("over") / to_over
 
+    window_clause = within + Optional(over) | over
+
+    set_parser_names()
     return window_clause, over_clause

@@ -6,7 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import whitespaces
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -71,7 +70,6 @@ def sqlserver_parser():
 
 
 def parser(literal_string, ident, sqlserver=False):
-
     with Whitespace() as white:
         rest_of_line = Regex(r"[^\n]*")
 
@@ -465,7 +463,7 @@ def parser(literal_string, ident, sqlserver=False):
             + RB,
         )
 
-        unnest = (UNNEST("op") + LB + expression("params") + RB)/to_json_call
+        unnest = (UNNEST("op") + LB + expression("params") + RB) / to_json_call
 
         # <pivoted_table> ::=
         #     table_source PIVOT <pivot_clause> [ [ AS ] table_alias ]
@@ -577,11 +575,18 @@ def parser(literal_string, ident, sqlserver=False):
         table_element = (
             column_definition("columns") | table_constraint_definition("constraint")
         )
+        temporary = Optional(
+            (
+                Keyword("temporary", caseless=True)
+                | Keyword("temp", caseless=True)
+            )("temporary")
+            / (lambda: True)
+        ) + Optional(flag("transient"))
 
         create_table = (
             keyword("create")
             + Optional(keyword("or") + flag("replace"))
-            + Optional(flag("temporary"))
+            + temporary
             + TABLE
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + identifier("name")
@@ -600,7 +605,7 @@ def parser(literal_string, ident, sqlserver=False):
         create_view = (
             keyword("create")
             + Optional(keyword("or") + flag("replace"))
-            + Optional(flag("temporary"))
+            + temporary
             + VIEW.suppress()
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + identifier("name")
@@ -608,7 +613,7 @@ def parser(literal_string, ident, sqlserver=False):
             + query("query")
         )("create view")
 
-        #  CREATE INDEX a ON u USING btree (e);
+        # CREATE INDEX a ON u USING btree (e);
         create_index = (
             keyword("create index")
             + Optional(keyword("or") + flag("replace"))(INDEX | KEY)
