@@ -21,6 +21,8 @@ from mo_parsing import (
     delimited_list,
     RIGHT_ASSOC,
     LEFT_ASSOC,
+    Keyword,
+    Combine,
 )
 
 from mo_sql_parsing.keywords import (
@@ -72,16 +74,26 @@ REAL = Group(keyword("real")("op") + Optional(flag("unsigned"))) / to_json_call
 TEXT = Group(keyword("text")("op")) / to_json_call
 SMALLINT = Group(keyword("smallint")("op") + Optional(flag("unsigned"))) / to_json_call
 STRING = Group(keyword("string")("op")) / to_json_call
+VARYING = Group(keyword("varying")("op")) / to_json_call
 
 BLOB = (keyword("blob")("op") + _size) / to_json_call
 BYTES = (keyword("bytes")("op") + _size) / to_json_call
-CHAR = (keyword("char")("op") + _size) / to_json_call
+
+CHAR = (
+    Combine(
+        (Keyword("char", caseless=True) | Keyword("character", caseless=True))
+        + Optional(Keyword("varying", caseless=True) / (lambda: "_varying"))
+    )("op")
+    + _size
+) / to_json_call
+
 NCHAR = (keyword("nchar")("op") + _size) / to_json_call
 VARCHAR = (keyword("varchar")("op") + _size) / to_json_call
 VARCHAR2 = (keyword("varchar2")("op") + _size) / to_json_call
 VARBINARY = (keyword("varbinary")("op") + _size) / to_json_call
 TINYINT = (keyword("tinyint")("op") + _size + Optional(flag("unsigned"))) / to_json_call
 UUID = Group(keyword("uuid")("op")) / to_json_call
+
 
 DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
 DOUBLE_PRECISION = (
