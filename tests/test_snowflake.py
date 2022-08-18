@@ -96,3 +96,31 @@ class TestSnowflake(TestCase):
             },
         }
         self.assertEqual(result, expected)
+
+    def test_issue_105_multiline_strings(self):
+        sql = """SELECT 'one
+            two
+            three'
+            FROM my_table"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": {"value": {"literal": "one\n            two\n            three"}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_104_character_varying1(self):
+        sql = """CREATE TABLE foo(a CHARACTER(5))"""
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": {"name": "a", "type": {"character": 5}},
+            "name": "foo",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_104_character_varying2(self):
+        sql = """CREATE TABLE foo(a CHARACTER VARYING(5))"""
+        result = parse(sql)
+        expected = {'create table': {'columns': {'name': 'a', 'type': {'character_varying': 5}},
+                  'name': 'foo'}}
+        self.assertEqual(result, expected)
