@@ -14,7 +14,6 @@ from mo_dots import is_data, is_null, Data, from_data, literal_field
 from mo_future import text, number_types, binary_type, flatten
 from mo_imports import expect
 from mo_parsing import *
-from mo_parsing import whitespaces
 from mo_parsing.utils import is_number, listwrap
 
 unary_ops = expect("unary_ops")
@@ -573,13 +572,13 @@ def to_table(tokens):
 
 def single_literal(tokens):
     val = tokens[0]
-    val = "'" + val[1:-1].replace("''", "\\'") + "'"
+    val = '"""' + val[1:-1].replace("''", "\\'") + '"""'
     return {"literal": ast.literal_eval(val)}
 
 
 def double_literal(tokens):
     val = tokens[0]
-    val = '"' + val[1:-1].replace('""', '\\"') + '"'
+    val = '"""' + val[1:-1].replace('""', '\\"') + '"""'
     return {"literal": ast.literal_eval(val)}
 
 
@@ -655,7 +654,9 @@ hex_num = (
 
 # STRINGS
 ansi_string = Regex(r"\'(\'\'|[^'])*\'") / single_literal
-regex_string = (Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")) / literal_regex
+regex_string = (
+    Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")
+) / literal_regex
 mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
 
 # BASIC IDENTIFIERS

@@ -96,3 +96,15 @@ class TestSnowflake(TestCase):
             },
         }
         self.assertEqual(result, expected)
+
+    def test_issue_105_multiline_strings(self):
+        sql = """SELECT 'one
+            two
+            three'
+            FROM my_table"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": {"value": {"literal": "one\n            two\n            three"}},
+        }
+        self.assertEqual(result, expected)
