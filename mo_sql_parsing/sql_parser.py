@@ -263,10 +263,11 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(assign("nulls", keyword("first") | keyword("last")))
         )
 
+        one_param = Group(ident + Literal("=>").suppress() + Group(expression))("kwargs") / to_kwarg | Group(expression)("params")
         call_function = (
             function_name("op")
             + LB
-            + Optional(Group(query) | delimited_list(Group(expression)))("params")
+            + Optional(Group(query)("params") | delimited_list(one_param))
             + Optional(
                 (keyword("respect") | keyword("ignore"))("nulls")
                 + keyword("nulls").suppress()

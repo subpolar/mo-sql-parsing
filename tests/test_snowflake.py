@@ -13,7 +13,7 @@ from unittest import TestCase
 
 from mo_parsing.debug import Debugger
 
-from mo_sql_parsing import parse
+from mo_sql_parsing import parse, normal_op
 
 
 class TestSnowflake(TestCase):
@@ -44,7 +44,7 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": {"table": {"generator": {"=>": ["rowcount", 10]}}},
+            "from": {"table": {"generator": {}, "rowcount": 10}},
             "select": {"value": {"seq4": {}}},
         }
         self.assertEqual(result, expected)
@@ -56,9 +56,40 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": {"table": {"generator": {"=>": ["rowcount", 5]}}},
+            "from": {"table": {"generator": {}, "rowcount": 5}},
             "select": {"value": {"uniform": [1, 10, {"random": {}}]}},
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_102_table_functions3(self):
+        sql = """
+        SELECT seq4()
+        FROM TABLE(generator(rowcount => 10))
+        """
+        result = parse(sql, calls=normal_op)
+        expected = {
+            "from": {"table": {"generator": {}, "rowcount": 10}},
+            "select": {"value": {"seq4": {}}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_102_table_functions4(self):
+        sql = """
+        SELECT uniform(1, 10, random())
+        FROM TABLE(generator(rowcount => 5));
+        """
+        result = parse(sql, calls=normal_op)
+        expected = {
+            "from": {
+                "op": "table",
+                "args": [{
+                    "op": "generator",
+                    "kwargs": {"rowcount": 5},
+                }],
+            },
+            "select": {"value": {"op": "uniform", "args": [1, 10, {"op": "random"}]}},
+        }
+
         self.assertEqual(result, expected)
 
     def test_issue_102_table_functions3(self):
@@ -121,6 +152,8 @@ class TestSnowflake(TestCase):
     def test_issue_104_character_varying2(self):
         sql = """CREATE TABLE foo(a CHARACTER VARYING(5))"""
         result = parse(sql)
-        expected = {'create table': {'columns': {'name': 'a', 'type': {'character_varying': 5}},
-                  'name': 'foo'}}
+        expected = {"create table": {
+            "columns": {"name": "a", "type": {"character_varying": 5}},
+            "name": "foo",
+        }}
         self.assertEqual(result, expected)
