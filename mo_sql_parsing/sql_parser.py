@@ -487,8 +487,10 @@ def parser(literal_string, ident, sqlserver=False):
         #
         # <unpivot_clause> ::=
         #     ( value_column FOR pivot_column IN ( <column_list> ) )
+        lateral_source = (LATERAL("op")+table_source("params"))/to_json_call
+
         table_source << Group(
-            ((LB + query + RB) | unnest | stack | call_function | identifier)("value")
+            (lateral_source | (LB + query + RB) | unnest | stack | call_function | identifier)("value")
             + MatchAll([
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),

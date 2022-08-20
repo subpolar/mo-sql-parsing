@@ -171,5 +171,26 @@ class TestSnowflake(TestCase):
             "columns": {"name": "index", "type": {"integer": {}}},
             "name": "my_table",
         }}
+        self.assertEqual(result, expected)
 
+    def test_issue_107_lateral_function(self):
+        sql = """SELECT emp.employee_id, emp.last_name, value AS project_name
+        FROM employees AS emp, LATERAL flatten(input => emp.project_names) AS proj_names
+        ORDER BY employee_id;"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "emp", "value": "employees"},
+                {"lateral": {
+                    "name": "proj_names",
+                    "value": {"flatten": {}, "input": "emp.project_names"},
+                }},
+            ],
+            "orderby": {"value": "employee_id"},
+            "select": [
+                {"value": "emp.employee_id"},
+                {"value": "emp.last_name"},
+                {"name": "project_name", "value": "value"},
+            ],
+        }
         self.assertEqual(result, expected)

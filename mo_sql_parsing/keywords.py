@@ -142,7 +142,7 @@ joins = (
         + JOIN
         + Optional(LATERAL)
     )
-    | LATERAL + VIEW + Optional(OUTER)
+    | LATERAL + Optional(VIEW + Optional(OUTER))
     | (CROSS | OUTER) + APPLY
 ) / (lambda tokens: " ".join(tokens).lower())
 
