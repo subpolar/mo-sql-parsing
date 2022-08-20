@@ -190,10 +190,10 @@ class TestPostgres(TestCase):
         expected = {
             "from": [
                 {"name": "d", "value": "departments"},
-                {
+                {"lateral": {
                     "name": "iv2",
-                    "value": {"lateral": {"from": "employees", "select": "*"}},
-                },
+                    "value": {"from": "employees", "select": "*"},
+                }},
             ],
             "select": "*",
         }
