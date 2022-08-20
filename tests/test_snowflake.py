@@ -70,10 +70,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "op": "table",
-                "args": [{
-                    "op": "generator",
-                    "kwargs": {"rowcount": 10},
-                }],
+                "args": [{"op": "generator", "kwargs": {"rowcount": 10},}],
             },
             "select": {"value": {"op": "seq4"}},
         }
@@ -88,10 +85,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "op": "table",
-                "args": [{
-                    "op": "generator",
-                    "kwargs": {"rowcount": 5},
-                }],
+                "args": [{"op": "generator", "kwargs": {"rowcount": 5},}],
             },
             "select": {"value": {"op": "uniform", "args": [1, 10, {"op": "random"}]}},
         }
@@ -162,4 +156,20 @@ class TestSnowflake(TestCase):
             "columns": {"name": "a", "type": {"character_varying": 5}},
             "name": "foo",
         }}
+        self.assertEqual(result, expected)
+
+    def test_issue_106_index_column_name1(self):
+        sql = """SELECT index FROM my_table;"""
+        result = parse(sql)
+        expected = {"from": "my_table", "select": {"value": "index"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_106_index_column_name2(self):
+        sql = """CREATE TABLE my_table(index INTEGER);"""
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": {"name": "index", "type": {"integer": {}}},
+            "name": "my_table",
+        }}
+
         self.assertEqual(result, expected)

@@ -192,7 +192,6 @@ RESERVED = MatchFirst([
     GROUP,
     HAVING,
     IN,
-    INDEX,
     INNER,
     INTERSECT,
     INTERVAL,

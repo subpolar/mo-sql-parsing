@@ -263,7 +263,13 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(assign("nulls", keyword("first") | keyword("last")))
         )
 
-        one_param = Group(ident + Literal("=>").suppress() + Group(expression))("kwargs") / to_kwarg | Group(expression)("params")
+        one_param = (
+            # KEYWORD PARAMETERS?
+            # https://docs.snowflake.com/en/sql-reference/functions/generator.html
+            Group(ident + Literal("=>").suppress() + Group(expression))("kwargs")
+            / to_kwarg
+        ) | Group(expression)("params")
+
         call_function = (
             function_name("op")
             + LB
@@ -579,8 +585,7 @@ def parser(literal_string, ident, sqlserver=False):
         )
         temporary = Optional(
             (
-                Keyword("temporary", caseless=True)
-                | Keyword("temp", caseless=True)
+                Keyword("temporary", caseless=True) | Keyword("temp", caseless=True)
             )("temporary")
             / (lambda: True)
         ) + Optional(flag("transient"))
