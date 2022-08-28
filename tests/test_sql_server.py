@@ -228,14 +228,14 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {
             "select": "*",
-            "from": {
-                "name": "pvt",
-                "pivot": {
+            "from": [
+                "p",
+                {"pivot": {
+                    "name": "pvt",
                     "aggregate": {"count": "id"},
                     "for": "E",
                     "in": [250, 251, 256, 257, 260],
-                },
-                "value": "p",
-            },
+                }},
+            ],
         }
         self.assertEqual(result, expected)

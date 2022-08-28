@@ -131,6 +131,7 @@ IS = keyword("is")
 NOT = keyword("not")
 OR = keyword("or")
 LATERAL = keyword("lateral")
+PIVOT = keyword("pivot")
 VIEW = keyword("view")
 
 # COMPOUND KEYWORDS
@@ -216,6 +217,7 @@ RESERVED = MatchFirst([
     OUTER,
     OVER,
     PARTITION,
+    PIVOT,
     PRIMARY,
     QUALIFY,
     REFERENCES,

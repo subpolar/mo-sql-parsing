@@ -390,6 +390,11 @@ def to_join_call(tokens):
     return output
 
 
+def to_pivot_call(tokens):
+    output = {"pivot": dict(tokens["kwargs"])}
+    return output
+
+
 def to_expression_call(tokens):
     if set(tokens.keys()) & {"over", "within", "filter"}:
         return

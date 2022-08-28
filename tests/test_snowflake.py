@@ -325,3 +325,33 @@ class TestSnowflake(TestCase):
         }
         self.assertEqual(result, expected)
 
+    def test_issue_114_pivot(self):
+        sql = """SELECT *
+          FROM (SELECT * FROM monthly_sales_table) monthly_sales
+            PIVOT(SUM(amount) FOR month IN ('JAN', 'FEB', 'MAR', 'APR')) AS p
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {
+                    "name": "monthly_sales",
+                    "value": {"select": "*", "from": "monthly_sales_table"},
+                },
+                {
+                    "pivot": {
+                        "name": "p",
+                        "aggregate": {"sum": "amount"},
+                        "for": "month",
+                        "in": [
+                            {"literal": "JAN"},
+                            {"literal": "FEB"},
+                            {"literal": "MAR"},
+                            {"literal": "APR"},
+                        ],
+                    },
+                },
+            ],
+            "select": "*",
+        }
+
+        self.assertEqual(result, expected)
