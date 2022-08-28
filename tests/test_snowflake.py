@@ -277,3 +277,28 @@ class TestSnowflake(TestCase):
             "select": [{"value": "id"}, {"value": "names"}],
         }
         self.assertEqual(result, expected)
+
+    def test_issue_112_qualify(self):
+        sql = """SELECT 
+            a
+        FROM 
+            a
+        QUALIFY
+            ROW_NUMBER() OVER
+            (PARTITION BY ssmu.cak, ssmu.rsd  ORDER BY created_at DESC) = 1"""
+        result = parse(sql)
+        expected = {
+            "from": "a",
+            "qualify": {"eq": [
+                {
+                    "over": {
+                        "orderby": {"sort": "desc", "value": "created_at"},
+                        "partitionby": ["ssmu.cak", "ssmu.rsd"],
+                    },
+                    "value": {"row_number": {}},
+                },
+                1,
+            ]},
+            "select": {"value": "a"},
+        }
+        self.assertEqual(result, expected)
