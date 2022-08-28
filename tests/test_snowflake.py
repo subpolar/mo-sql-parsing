@@ -302,3 +302,15 @@ class TestSnowflake(TestCase):
             "select": {"value": "a"},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_101_ilike(self):
+        sql = """SELECT * 
+        FROM my_table 
+        WHERE subject ILIKE '%j%do%'"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": "*",
+            "where": {"ilike": ["subject", {"literal": "%j%do%"}]},
+        }
+        self.assertEqual(result, expected)

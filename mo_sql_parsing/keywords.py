@@ -34,6 +34,7 @@ FROM = keyword("from").suppress()
 FULL = keyword("full")
 GROUP = keyword("group").suppress()
 HAVING = keyword("having").suppress()
+ILIKE = keyword("ilike")
 INNER = keyword("inner")
 INTERVAL = keyword("interval")
 JOIN = keyword("join")
@@ -157,6 +158,7 @@ ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
 # COMPOUND OPERATORS
 AT_TIME_ZONE = Group(keyword("at") + keyword("time") + keyword("zone"))
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
+NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
 NOT_RLIKE = Group(NOT + RLIKE).set_parser_name("not_rlike")
 NOT_IN = Group(NOT + IN).set_parser_name("nin")
@@ -325,8 +327,8 @@ KNOWN_OPS = [
     NOT_IN,
     IS_NOT,
     IS,
-    LIKE,
-    NOT_LIKE,
+    LIKE, ILIKE,
+    NOT_LIKE, NOT_ILIKE,
     RLIKE,
     NOT_RLIKE,
     SIMILAR_TO,
