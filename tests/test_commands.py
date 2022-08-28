@@ -866,3 +866,17 @@ class TestCreateForBigQuery(TestCase):
             "replace": False,
         }}
         self.assertEqual(result, expected)
+
+    def test_issue_115_insert_w_from(self):
+        sql = """UPDATE target_table
+        SET score = src.score
+        FROM src_table src
+        WHERE target_table.id = src.id"""
+        result = parse(sql)
+        expected = {
+            "from": {"name": "src", "value": "src_table"},
+            "set": {"score": "src.score"},
+            "update": "target_table",
+            "where": {"eq": ["target_table.id", "src.id"]},
+        }
+        self.assertEqual(result, expected)

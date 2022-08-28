@@ -695,7 +695,8 @@ def parser(literal_string, ident, sqlserver=False):
             keyword("update")("op")
             + identifier("params")
             + assign("set", Dict(delimited_list(Group(identifier + EQ + expression))))
-            + Optional(assign("where", expression))
+            + Optional((FROM + delimited_list(table_source) + ZeroOrMore(join))("from"))
+            + Optional(WHERE + expression("where"))
             + returning
         ) / to_json_call
 
