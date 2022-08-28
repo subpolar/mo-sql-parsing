@@ -314,3 +314,14 @@ class TestSnowflake(TestCase):
             "where": {"ilike": ["subject", {"literal": "%j%do%"}]},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_113_dash_in_identifier(self):
+        sql = """SELECT SUM(a-b) AS diff
+        FROM my_table"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": {"name": "diff", "value": {"sum": {"sub": ["a", "b"]}}},
+        }
+        self.assertEqual(result, expected)
+

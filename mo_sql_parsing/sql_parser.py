@@ -29,11 +29,13 @@ def no_dashes(tokens, start, string):
 
 digit = Char("0123456789")
 with whitespaces.NO_WHITESPACE:
-    simple_ident = (
+    ident_w_dash = (
         Char(FIRST_IDENT_CHAR)
         + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
     )
-    simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
+    ident_w_dash = Regex(ident_w_dash.__regex__()[1]) / no_dashes
+
+simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR)
 
 
 def common_parser():
@@ -49,7 +51,7 @@ def mysql_parser():
 
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | simple_ident,
+        mysql_backtick_ident | sqlserver_ident | ident_w_dash,
         separator=".",
         combine=True,
     )).set_parser_name("mysql identifier")
@@ -62,7 +64,7 @@ def sqlserver_parser():
         ansi_ident
         | mysql_backtick_ident
         | sqlserver_ident
-        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        | simple_ident,
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
