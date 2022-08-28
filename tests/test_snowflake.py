@@ -239,3 +239,41 @@ class TestSnowflake(TestCase):
             },
         }
         self.assertEqual(result, expected)
+
+    def test_issue_109_qualify1(self):
+        sql = """SELECT id, row_number() OVER (PARTITION BY id ORDER BY id) AS row_num
+        FROM my_table
+        QUALIFY row_num = 1"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "qualify": {"eq": ["row_num", 1]},
+            "select": [
+                {"value": "id"},
+                {
+                    "name": "row_num",
+                    "over": {"orderby": {"value": "id"}, "partitionby": "id"},
+                    "value": {"row_number": {}},
+                },
+            ],
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_issue_109_qualify2(self):
+        sql = """SELECT id, names
+        FROM my_table
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY id ORDER BY id) = 1"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "qualify": {"eq": [
+                {
+                    "over": {"orderby": {"value": "id"}, "partitionby": "id"},
+                    "value": {"row_number": {}},
+                },
+                1,
+            ]},
+            "select": [{"value": "id"}, {"value": "names"}],
+        }
+        self.assertEqual(result, expected)

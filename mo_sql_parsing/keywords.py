@@ -48,6 +48,7 @@ OUTER = keyword("outer")
 OVER = keyword("over").suppress()
 PARTITION = keyword("partition").suppress()
 # PERCENT = keyword("percent").suppress()
+QUALIFY = keyword("qualify").suppress()
 RIGHT = keyword("right")
 RLIKE = keyword("rlike")
 SAFE_CAST = keyword("safe_cast")
@@ -214,6 +215,7 @@ RESERVED = MatchFirst([
     OVER,
     PARTITION,
     PRIMARY,
+    QUALIFY,
     REFERENCES,
     RIGHT,
     RLIKE,

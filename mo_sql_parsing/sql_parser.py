@@ -411,6 +411,7 @@ def parser(literal_string, ident, sqlserver=False):
                 + Optional(WHERE + expression("where"))
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expression("having"))
+                + Optional(QUALIFY + expression("qualify"))
             )
         )
 
