@@ -11,8 +11,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse, normal_op
 
 
@@ -193,4 +191,167 @@ class TestSnowflake(TestCase):
                 {"name": "project_name", "value": "value"},
             ],
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_108_colon1(self):
+        sql = """SELECT src:dealership FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": ["src", {"literal": "dealership"}]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_108_colon2(self):
+        sql = """SELECT src:salesperson.name FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "salesperson"},
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_108_colon3(self):
+        sql = """SELECT src:['salesperson']['name'] FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "salesperson"},
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_110_double_quote(self):
+        sql = """SELECT REPLACE(foo, '"', '') AS bar FROM my_table"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": {
+                "name": "bar",
+                "value": {"replace": ["foo", {"literal": '"'}, {"literal": ""}]},
+            },
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_109_qualify1(self):
+        sql = """SELECT id, row_number() OVER (PARTITION BY id ORDER BY id) AS row_num
+        FROM my_table
+        QUALIFY row_num = 1"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "qualify": {"eq": ["row_num", 1]},
+            "select": [
+                {"value": "id"},
+                {
+                    "name": "row_num",
+                    "over": {"orderby": {"value": "id"}, "partitionby": "id"},
+                    "value": {"row_number": {}},
+                },
+            ],
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_issue_109_qualify2(self):
+        sql = """SELECT id, names
+        FROM my_table
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY id ORDER BY id) = 1"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "qualify": {"eq": [
+                {
+                    "over": {"orderby": {"value": "id"}, "partitionby": "id"},
+                    "value": {"row_number": {}},
+                },
+                1,
+            ]},
+            "select": [{"value": "id"}, {"value": "names"}],
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_112_qualify(self):
+        sql = """SELECT 
+            a
+        FROM 
+            a
+        QUALIFY
+            ROW_NUMBER() OVER
+            (PARTITION BY ssmu.cak, ssmu.rsd  ORDER BY created_at DESC) = 1"""
+        result = parse(sql)
+        expected = {
+            "from": "a",
+            "qualify": {"eq": [
+                {
+                    "over": {
+                        "orderby": {"sort": "desc", "value": "created_at"},
+                        "partitionby": ["ssmu.cak", "ssmu.rsd"],
+                    },
+                    "value": {"row_number": {}},
+                },
+                1,
+            ]},
+            "select": {"value": "a"},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_101_ilike(self):
+        sql = """SELECT * 
+        FROM my_table 
+        WHERE subject ILIKE '%j%do%'"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": "*",
+            "where": {"ilike": ["subject", {"literal": "%j%do%"}]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_113_dash_in_identifier(self):
+        sql = """SELECT SUM(a-b) AS diff
+        FROM my_table"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": {"name": "diff", "value": {"sum": {"sub": ["a", "b"]}}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_114_pivot(self):
+        sql = """SELECT *
+          FROM (SELECT * FROM monthly_sales_table) monthly_sales
+            PIVOT(SUM(amount) FOR month IN ('JAN', 'FEB', 'MAR', 'APR')) AS p
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                {
+                    "name": "monthly_sales",
+                    "value": {"select": "*", "from": "monthly_sales_table"},
+                },
+                {
+                    "pivot": {
+                        "name": "p",
+                        "aggregate": {"sum": "amount"},
+                        "for": "month",
+                        "in": [
+                            {"literal": "JAN"},
+                            {"literal": "FEB"},
+                            {"literal": "MAR"},
+                            {"literal": "APR"},
+                        ],
+                    },
+                },
+            ],
+            "select": "*",
+        }
+
         self.assertEqual(result, expected)

@@ -219,7 +219,7 @@ def to_json_operator(tokens):
 
 def to_offset(tokens):
     expr, offset = tokens.tokens
-    return Call("get", [expr, offset], {})
+    return Call("get", [expr, *offset], {})
 
 
 def to_window_mod(tokens):
@@ -247,6 +247,7 @@ def to_tuple_call(tokens):
 binary_ops = {
     "::": "cast",
     "COLLATE": "collate",
+    ":": "get",
     "||": "concat",
     "*": "mul",
     "/": "div",
@@ -307,6 +308,10 @@ def to_trim_call(tokens):
 
 def to_kwarg(tokens):
     return {k: v for k,v in [tuple(tokens)]}
+
+
+def to_literal(t):
+    return {"literal": t[0]}
 
 
 def to_json_call(tokens):
@@ -382,6 +387,11 @@ def to_join_call(tokens):
 
     output["on"] = tokens["on"]
     output["using"] = tokens["using"]
+    return output
+
+
+def to_pivot_call(tokens):
+    output = {"pivot": dict(tokens["kwargs"])}
     return output
 
 
@@ -580,7 +590,7 @@ def to_table(tokens):
 
 def single_literal(tokens):
     val = tokens[0]
-    val = '"""' + val[1:-1].replace("''", "\\'") + '"""'
+    val = '"""' + val[1:-1].replace("''", "\\'").replace("\"", "\\\"") + '"""'
     return {"literal": ast.literal_eval(val)}
 
 

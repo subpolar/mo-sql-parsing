@@ -12,14 +12,14 @@ from __future__ import absolute_import, division, unicode_literals
 from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_sql_parsing import parse, format
+from mo_sql_parsing import parse, format, parse_mysql
 
 
 class TestErrors(FuzzyTestCase):
     def test_dash_in_tablename(self):
         #          012345678901234567890123456789012345678901234567890123456789
         try:
-            parse("select * from coverage-summary.source.file.covered limit 20")
+            parse_mysql("select * from coverage-summary.source.file.covered limit 20")
             self.assertTrue(False)
         except Exception as cause:
             self.assertIn("Use backticks (``) around identifiers", cause.message)
@@ -63,12 +63,12 @@ class TestErrors(FuzzyTestCase):
     def test_issue_50_dashes_in_name(self):
         sql = """select col-cpu-usage from test-information"""
         with self.assertRaises("Use backticks (``) around identifiers"):
-            parse(sql)
+            parse_mysql(sql)
 
     def test_issue_50_subtraction1(self):
         sql = """select col-0pu-usage from test-information"""
         with self.assertRaises("Use backticks (``) around identifiers"):
-            parse(sql)
+            parse_mysql(sql)
 
     def test_issue_84_intersect(self):
         sql = """SELECT document_name FROM documents GROUP BY document_type_code ORDER BY count ( * ) DESC LIMIT 3 INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY count ( * ) DESC LIMIT 3"""

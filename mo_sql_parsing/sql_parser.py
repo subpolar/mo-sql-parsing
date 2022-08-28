@@ -29,11 +29,13 @@ def no_dashes(tokens, start, string):
 
 digit = Char("0123456789")
 with whitespaces.NO_WHITESPACE:
-    simple_ident = (
+    ident_w_dash = (
         Char(FIRST_IDENT_CHAR)
         + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
     )
-    simple_ident = Regex(simple_ident.__regex__()[1]) / no_dashes
+    ident_w_dash = Regex(ident_w_dash.__regex__()[1]) / no_dashes
+
+simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR)
 
 
 def common_parser():
@@ -49,7 +51,7 @@ def mysql_parser():
 
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
     mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | simple_ident,
+        mysql_backtick_ident | sqlserver_ident | ident_w_dash,
         separator=".",
         combine=True,
     )).set_parser_name("mysql identifier")
@@ -59,10 +61,7 @@ def mysql_parser():
 
 def sqlserver_parser():
     combined_ident = Combine(delimited_list(
-        ansi_ident
-        | mysql_backtick_ident
-        | sqlserver_ident
-        | Word(FIRST_IDENT_CHAR, IDENT_CHAR),
+        ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident,
         separator=".",
         combine=True,
     )).set_parser_name("identifier")
@@ -282,6 +281,16 @@ def parser(literal_string, ident, sqlserver=False):
             + RB
         ) / to_json_call
 
+        dynamic_accessor = (
+            Literal("[").suppress() + expression + Literal("]").suppress()
+        )
+        simple_accessor = Literal(".").suppress() + simple_ident / to_literal
+        accessor = (
+            Literal(":").suppress()
+            + Group(simple_ident / to_literal | dynamic_accessor)
+            + ZeroOrMore(Group(simple_accessor | dynamic_accessor))
+        )
+
         with NO_WHITESPACE:
 
             def scale(tokens):
@@ -328,20 +337,9 @@ def parser(literal_string, ident, sqlserver=False):
                 | infix_notation(
                     compound,
                     [
-                        (
-                            Literal("[").suppress()
-                            + expression
-                            + Literal("]").suppress(),
-                            1,
-                            LEFT_ASSOC,
-                            to_offset,
-                        ),
-                        (
-                            Literal(".").suppress() + simple_ident,
-                            1,
-                            LEFT_ASSOC,
-                            to_offset,
-                        ),
+                        (dynamic_accessor, 1, LEFT_ASSOC, to_offset,),
+                        (simple_accessor, 1, LEFT_ASSOC, to_offset,),
+                        (accessor, 1, LEFT_ASSOC, to_offset),
                         (window_clause, 1, LEFT_ASSOC, to_window_mod),
                         (
                             assign("filter", LB + WHERE + expression + RB),
@@ -369,15 +367,34 @@ def parser(literal_string, ident, sqlserver=False):
 
         table_source = Forward()
 
+        value_column = (
+            TRUE | FALSE | timestamp | literal_string | hex_num | real_num | int_num
+        )
+
+        pivot_join = (
+            PIVOT("op")
+            + (
+                LB
+                + (expression("aggregate") + assign("for", identifier) + IN)
+                + (LB + delimited_list(value_column)("in") + RB)
+                + RB
+                + alias
+            )("kwargs")
+        ) / to_pivot_call
+
         join = (
-            Group(joins)("op")
-            + table_source("join")
-            + Optional((ON + expression("on")) | (USING + expression("using")))
+            pivot_join
             | (
-                Group(WINDOW)("op")
-                + Group(identifier("name") + AS + over_clause("value"))("join")
+                Group(joins)("op")
+                + table_source("join")
+                + Optional((ON + expression("on")) | (USING + expression("using")))
+                | (
+                    Group(WINDOW)("op")
+                    + Group(identifier("name") + AS + over_clause("value"))("join")
+                )
             )
-        ) / to_join_call
+            / to_join_call
+        )
 
         selection = (
             (
@@ -412,6 +429,7 @@ def parser(literal_string, ident, sqlserver=False):
                 + Optional(WHERE + expression("where"))
                 + Optional(GROUP_BY + delimited_list(Group(named_column))("groupby"))
                 + Optional(HAVING + expression("having"))
+                + Optional(QUALIFY + expression("qualify"))
             )
         )
 
@@ -459,44 +477,23 @@ def parser(literal_string, ident, sqlserver=False):
             + Optional(assign("repeatable", LB + int_num + RB))
         )("tablesample")
 
-        value_column = (
-            TRUE | FALSE | timestamp | literal_string | hex_num | real_num | int_num
-        )
-
-        pivot_table = assign(
-            "pivot",
-            LB
-            + (expression("aggregate") + assign("for", identifier) + IN)
-            + (LB + delimited_list(value_column)("in") + RB)
-            + RB,
-        )
-
         unnest = (UNNEST("op") + LB + expression("params") + RB) / to_json_call
-
-        # <pivoted_table> ::=
-        #     table_source PIVOT <pivot_clause> [ [ AS ] table_alias ]
-        #
-        # <pivot_clause> ::=
-        #         ( aggregate_function ( value_column [ [ , ]...n ])
-        #         FOR pivot_column
-        #         IN ( <column_list> )
-        #     )
-        #
-        # <unpivoted_table> ::=
-        #     table_source UNPIVOT <unpivot_clause> [ [ AS ] table_alias ]
-        #
-        # <unpivot_clause> ::=
-        #     ( value_column FOR pivot_column IN ( <column_list> ) )
-        lateral_source = (LATERAL("op")+table_source("params"))/to_json_call
+        lateral_source = (LATERAL("op") + table_source("params")) / to_json_call
 
         table_source << Group(
-            (lateral_source | (LB + query + RB) | unnest | stack | call_function | identifier)("value")
+            (
+                lateral_source
+                | (LB + query + RB)
+                | unnest
+                | stack
+                | call_function
+                | identifier
+            )("value")
             + MatchAll([
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),
                 Optional(WITH + OFFSET + Optional(AS) + identifier("with_offset")),
                 Optional(tablesample),
-                Optional(pivot_table),
                 alias,
             ])
         ) / to_table
@@ -686,7 +683,8 @@ def parser(literal_string, ident, sqlserver=False):
             keyword("update")("op")
             + identifier("params")
             + assign("set", Dict(delimited_list(Group(identifier + EQ + expression))))
-            + Optional(assign("where", expression))
+            + Optional((FROM + delimited_list(table_source) + ZeroOrMore(join))("from"))
+            + Optional(WHERE + expression("where"))
             + returning
         ) / to_json_call
 

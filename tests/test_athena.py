@@ -72,7 +72,7 @@ class TestAthena(TestCase):
         result = parse(sql)
         expected = {"select": {"value": {"get": [
             {"get": ["b", {"literal": "c"}]},
-            "d",
+            {"literal": "d"},
         ]}}}
         self.assertEqual(result, expected)
 
