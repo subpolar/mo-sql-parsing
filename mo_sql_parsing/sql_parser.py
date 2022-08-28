@@ -282,6 +282,16 @@ def parser(literal_string, ident, sqlserver=False):
             + RB
         ) / to_json_call
 
+        dynamic_accessor = (
+            Literal("[").suppress() + expression + Literal("]").suppress()
+        )
+        simple_accessor = Literal(".").suppress() + simple_ident/to_literal
+        accessor = (
+            Literal(":").suppress()
+            + Group(simple_ident/to_literal | dynamic_accessor)
+            + ZeroOrMore(Group(simple_accessor | dynamic_accessor))
+        )
+
         with NO_WHITESPACE:
 
             def scale(tokens):
@@ -328,20 +338,9 @@ def parser(literal_string, ident, sqlserver=False):
                 | infix_notation(
                     compound,
                     [
-                        (
-                            Literal("[").suppress()
-                            + expression
-                            + Literal("]").suppress(),
-                            1,
-                            LEFT_ASSOC,
-                            to_offset,
-                        ),
-                        (
-                            Literal(".").suppress() + simple_ident,
-                            1,
-                            LEFT_ASSOC,
-                            to_offset,
-                        ),
+                        (dynamic_accessor, 1, LEFT_ASSOC, to_offset,),
+                        (simple_accessor, 1, LEFT_ASSOC, to_offset,),
+                        (accessor, 1, LEFT_ASSOC, to_offset),
                         (window_clause, 1, LEFT_ASSOC, to_window_mod),
                         (
                             assign("filter", LB + WHERE + expression + RB),
@@ -487,10 +486,17 @@ def parser(literal_string, ident, sqlserver=False):
         #
         # <unpivot_clause> ::=
         #     ( value_column FOR pivot_column IN ( <column_list> ) )
-        lateral_source = (LATERAL("op")+table_source("params"))/to_json_call
+        lateral_source = (LATERAL("op") + table_source("params")) / to_json_call
 
         table_source << Group(
-            (lateral_source | (LB + query + RB) | unnest | stack | call_function | identifier)("value")
+            (
+                lateral_source
+                | (LB + query + RB)
+                | unnest
+                | stack
+                | call_function
+                | identifier
+            )("value")
             + MatchAll([
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),

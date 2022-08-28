@@ -11,8 +11,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse, normal_op
 
 
@@ -192,5 +190,40 @@ class TestSnowflake(TestCase):
                 {"value": "emp.last_name"},
                 {"name": "project_name", "value": "value"},
             ],
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_108_colon1(self):
+        sql = """SELECT src:dealership FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": ["src", {"literal": "dealership"}]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_108_colon2(self):
+        sql = """SELECT src:salesperson.name FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "salesperson"},
+                {"literal": "name"}
+            ]}}
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_108_colon3(self):
+        sql = """SELECT src:['salesperson']['name'] FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "salesperson"},
+                {"literal": "name"}
+            ]}}
         }
         self.assertEqual(result, expected)
