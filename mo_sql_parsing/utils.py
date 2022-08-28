@@ -585,7 +585,7 @@ def to_table(tokens):
 
 def single_literal(tokens):
     val = tokens[0]
-    val = '"""' + val[1:-1].replace("''", "\\'") + '"""'
+    val = '"""' + val[1:-1].replace("''", "\\'").replace("\"", "\\\"") + '"""'
     return {"literal": ast.literal_eval(val)}
 
 

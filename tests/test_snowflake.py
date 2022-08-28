@@ -210,8 +210,8 @@ class TestSnowflake(TestCase):
             "select": {"value": {"get": [
                 "src",
                 {"literal": "salesperson"},
-                {"literal": "name"}
-            ]}}
+                {"literal": "name"},
+            ]}},
         }
         self.assertEqual(result, expected)
 
@@ -223,7 +223,19 @@ class TestSnowflake(TestCase):
             "select": {"value": {"get": [
                 "src",
                 {"literal": "salesperson"},
-                {"literal": "name"}
-            ]}}
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_110_double_quote(self):
+        sql = """SELECT REPLACE(foo, '"', '') AS bar FROM my_table"""
+        result = parse(sql)
+        expected = {
+            "from": "my_table",
+            "select": {
+                "name": "bar",
+                "value": {"replace": ["foo", {"literal": '"'}, {"literal": ""}]},
+            },
         }
         self.assertEqual(result, expected)
