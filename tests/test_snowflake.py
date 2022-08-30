@@ -399,3 +399,21 @@ class TestSnowflake(TestCase):
             ]}},
         }
         self.assertEqual(result, expected)
+
+    def test_issue_118_set1(self):
+        sql = """ALTER SESSION SET TIMESTAMP_TYPE_MAPPING = TIMESTAMP_NTZ"""
+        result = parse(sql)
+        expected = {"set": {"TIMESTAMP_TYPE_MAPPING": "TIMESTAMP_NTZ"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_118_set2(self):
+        sql = """ALTER SESSION SET LOCK_TIMEOUT = 3600*2"""
+        result = parse(sql)
+        expected = {"set": {"LOCK_TIMEOUT": {"mul": [3600, 2]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_118_unset(self):
+        sql = """ALTER SESSION UNSET LOCK_TIMEOUT"""
+        result = parse(sql)
+        expected = {"unset": "LOCK_TIMEOUT"}
+        self.assertEqual(result, expected)

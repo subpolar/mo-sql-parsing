@@ -360,7 +360,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
             PIVOT("op")
             + (
                 LB
-                + expression("aggregate") + assign("for", identifier)
+                + expression("aggregate")
+                + assign("for", identifier)
                 + (IN + expression("in"))
                 + RB
                 + alias
@@ -693,6 +694,13 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + returning
         ) / to_json_call
 
+        set = (
+            keyword("set")("op")
+            + (identifier + EQ + expression)("params") / (lambda t: {t[0]: t[1]})
+        ) / to_json_call
+
+        unset = (keyword("unset")("op") + identifier("params")) / to_json_call
+
         set_parser_names()
 
         return (
@@ -700,4 +708,5 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | (insert | update | delete)
             | (create_table | create_view | create_cache | create_index)
             | (drop_table | drop_view | drop_index)
+            | (Optional(keyword("alter session")).suppress() + (set | unset))
         ).finalize()
