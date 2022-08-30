@@ -367,23 +367,31 @@ def parser(literal_string, ident, sqlserver=False):
 
         table_source = Forward()
 
-        value_column = (
-            TRUE | FALSE | timestamp | literal_string | hex_num | real_num | int_num
-        )
-
         pivot_join = (
             PIVOT("op")
             + (
                 LB
-                + (expression("aggregate") + assign("for", identifier) + IN)
-                + (LB + delimited_list(value_column)("in") + RB)
+                + expression("aggregate") + assign("for", identifier)
+                + (IN + expression("in"))
                 + RB
                 + alias
             )("kwargs")
         ) / to_pivot_call
 
+        unpivot_join = (
+            UNPIVOT("op")
+            + (
+                LB
+                + (expression("value") + assign("for", identifier) + IN)
+                + (LB + delimited_list(expression)("in") + RB)
+                + RB
+                + alias
+            )("kwargs")
+        ) / to_unpivot_call
+
         join = (
             pivot_join
+            | unpivot_join
             | (
                 Group(joins)("op")
                 + table_source("join")

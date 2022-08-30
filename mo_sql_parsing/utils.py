@@ -391,8 +391,11 @@ def to_join_call(tokens):
 
 
 def to_pivot_call(tokens):
-    output = {"pivot": dict(tokens["kwargs"])}
-    return output
+    return {"pivot": dict(tokens["kwargs"])}
+
+
+def to_unpivot_call(tokens):
+    return {"unpivot": dict(tokens["kwargs"])}
 
 
 def to_expression_call(tokens):

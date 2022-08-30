@@ -355,3 +355,25 @@ class TestSnowflake(TestCase):
         }
 
         self.assertEqual(result, expected)
+
+    def test_unpivot(self):
+        sql = """SELECT * FROM monthly_sales
+        UNPIVOT(sales FOR month IN (jan, feb, mar, april))
+        ORDER BY empid;
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                "monthly_sales",
+                {"unpivot": {
+                    "value": "sales",
+                    "for": "month",
+                    "in": {"value": ["jan", "feb", "mar", "april"]},
+                }},
+            ],
+            "orderby": {"value": "empid"},
+            "select": "*",
+        }
+
+        self.assertEqual(result, expected)
+
