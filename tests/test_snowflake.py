@@ -342,12 +342,7 @@ class TestSnowflake(TestCase):
                         "name": "p",
                         "aggregate": {"sum": "amount"},
                         "for": "month",
-                        "in": [
-                            {"literal": "JAN"},
-                            {"literal": "FEB"},
-                            {"literal": "MAR"},
-                            {"literal": "APR"},
-                        ],
+                        "in": {"literal": ["JAN", "FEB", "MAR", "APR"]},
                     },
                 },
             ],
@@ -377,3 +372,30 @@ class TestSnowflake(TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_issue_116_select_w_quotes1(self):
+        sql = """SELECT src:"sales-person".name
+        FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "sales-person"},
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_116_select_w_quotes2(self):
+        sql = """SELECT src:".".name
+        FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "."},
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)

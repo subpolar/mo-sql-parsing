@@ -39,37 +39,26 @@ simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR)
 
 
 def common_parser():
-    combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | simple_ident, separator=".", combine=True,
-    )).set_parser_name("identifier")
-
-    return parser(regex_string | ansi_string, combined_ident)
+    atomic_ident = ansi_ident | mysql_backtick_ident | simple_ident
+    return parser(regex_string | ansi_string, atomic_ident)
 
 
 def mysql_parser():
     utils.emit_warning_for_double_quotes = False
 
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
-    mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | ident_w_dash,
-        separator=".",
-        combine=True,
-    )).set_parser_name("mysql identifier")
-
-    return parser(mysql_string, mysql_ident)
+    atomic_ident = mysql_backtick_ident | sqlserver_ident | ident_w_dash
+    return parser(mysql_string, atomic_ident)
 
 
 def sqlserver_parser():
-    combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident,
-        separator=".",
-        combine=True,
-    )).set_parser_name("identifier")
-
-    return parser(regex_string | ansi_string, combined_ident, sqlserver=True)
+    atomic_ident = ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident
+    return parser(regex_string | ansi_string, atomic_ident, sqlserver=True)
 
 
-def parser(literal_string, ident, sqlserver=False):
+def parser(literal_string, simple_ident, sqlserver=False):
+    ident = Combine(delimited_list(simple_ident, separator=".", combine=True))
+
     with Whitespace() as white:
         rest_of_line = Regex(r"[^\n]*")
 
