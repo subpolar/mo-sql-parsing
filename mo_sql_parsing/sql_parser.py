@@ -39,37 +39,26 @@ simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR)
 
 
 def common_parser():
-    combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | simple_ident, separator=".", combine=True,
-    )).set_parser_name("identifier")
-
-    return parser(regex_string | ansi_string, combined_ident)
+    atomic_ident = ansi_ident | mysql_backtick_ident | simple_ident
+    return parser(regex_string | ansi_string, atomic_ident)
 
 
 def mysql_parser():
     utils.emit_warning_for_double_quotes = False
 
     mysql_string = regex_string | ansi_string | mysql_doublequote_string
-    mysql_ident = Combine(delimited_list(
-        mysql_backtick_ident | sqlserver_ident | ident_w_dash,
-        separator=".",
-        combine=True,
-    )).set_parser_name("mysql identifier")
-
-    return parser(mysql_string, mysql_ident)
+    atomic_ident = mysql_backtick_ident | sqlserver_ident | ident_w_dash
+    return parser(mysql_string, atomic_ident)
 
 
 def sqlserver_parser():
-    combined_ident = Combine(delimited_list(
-        ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident,
-        separator=".",
-        combine=True,
-    )).set_parser_name("identifier")
-
-    return parser(regex_string | ansi_string, combined_ident, sqlserver=True)
+    atomic_ident = ansi_ident | mysql_backtick_ident | sqlserver_ident | simple_ident
+    return parser(regex_string | ansi_string, atomic_ident, sqlserver=True)
 
 
-def parser(literal_string, ident, sqlserver=False):
+def parser(literal_string, simple_ident, sqlserver=False):
+    ident = Combine(delimited_list(simple_ident, separator=".", combine=True))
+
     with Whitespace() as white:
         rest_of_line = Regex(r"[^\n]*")
 
@@ -367,23 +356,32 @@ def parser(literal_string, ident, sqlserver=False):
 
         table_source = Forward()
 
-        value_column = (
-            TRUE | FALSE | timestamp | literal_string | hex_num | real_num | int_num
-        )
-
         pivot_join = (
             PIVOT("op")
             + (
                 LB
-                + (expression("aggregate") + assign("for", identifier) + IN)
-                + (LB + delimited_list(value_column)("in") + RB)
+                + expression("aggregate")
+                + assign("for", identifier)
+                + (IN + expression("in"))
                 + RB
                 + alias
             )("kwargs")
         ) / to_pivot_call
 
+        unpivot_join = (
+            UNPIVOT("op")
+            + (
+                LB
+                + (expression("value") + assign("for", identifier) + IN)
+                + (LB + delimited_list(expression)("in") + RB)
+                + RB
+                + alias
+            )("kwargs")
+        ) / to_unpivot_call
+
         join = (
             pivot_join
+            | unpivot_join
             | (
                 Group(joins)("op")
                 + table_source("join")
@@ -696,6 +694,13 @@ def parser(literal_string, ident, sqlserver=False):
             + returning
         ) / to_json_call
 
+        set = (
+            keyword("set")("op")
+            + (identifier + EQ + expression)("params") / (lambda t: {t[0]: t[1]})
+        ) / to_json_call
+
+        unset = (keyword("unset")("op") + identifier("params")) / to_json_call
+
         set_parser_names()
 
         return (
@@ -703,4 +708,5 @@ def parser(literal_string, ident, sqlserver=False):
             | (insert | update | delete)
             | (create_table | create_view | create_cache | create_index)
             | (drop_table | drop_view | drop_index)
+            | (Optional(keyword("alter session")).suppress() + (set | unset))
         ).finalize()

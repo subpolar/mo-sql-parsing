@@ -10,7 +10,7 @@
 import ast
 import sys
 
-from mo_dots import is_data, is_null, Data, from_data, literal_field
+from mo_dots import is_data, is_null, Data, from_data, literal_field, unliteral_field
 from mo_future import text, number_types, binary_type, flatten
 from mo_imports import expect
 from mo_parsing import *
@@ -311,7 +311,7 @@ def to_kwarg(tokens):
 
 
 def to_literal(t):
-    return {"literal": t[0]}
+    return {"literal": unliteral_field(t[0])}
 
 
 def to_json_call(tokens):
@@ -391,8 +391,11 @@ def to_join_call(tokens):
 
 
 def to_pivot_call(tokens):
-    output = {"pivot": dict(tokens["kwargs"])}
-    return output
+    return {"pivot": dict(tokens["kwargs"])}
+
+
+def to_unpivot_call(tokens):
+    return {"unpivot": dict(tokens["kwargs"])}
 
 
 def to_expression_call(tokens):

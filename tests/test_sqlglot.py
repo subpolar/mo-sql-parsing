@@ -14,20 +14,17 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import skip, TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
 class TestSqlGlot(TestCase):
-    @skip("does not pass yet")
     def test_issue_46_sqlglot_0(self):
         sql = """SET x = 1"""
         result = parse(sql)
-        expected = {}
+        expected = {"set":{"x":1}}
         self.assertEqual(result, expected)
 
-    @skip("does not pass yet")
+    @skip("set requires =")
     def test_issue_46_sqlglot_1(self):
         sql = """SET -v"""
         result = parse(sql)

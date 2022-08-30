@@ -132,6 +132,7 @@ NOT = keyword("not")
 OR = keyword("or")
 LATERAL = keyword("lateral")
 PIVOT = keyword("pivot")
+UNPIVOT = keyword("unpivot")
 VIEW = keyword("view")
 
 # COMPOUND KEYWORDS
@@ -230,6 +231,7 @@ RESERVED = MatchFirst([
     UNION,
     UNIQUE,
     UNNEST,
+    UNPIVOT,
     USING,
     WHEN,
     WHERE,

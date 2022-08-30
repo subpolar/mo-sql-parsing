@@ -342,16 +342,78 @@ class TestSnowflake(TestCase):
                         "name": "p",
                         "aggregate": {"sum": "amount"},
                         "for": "month",
-                        "in": [
-                            {"literal": "JAN"},
-                            {"literal": "FEB"},
-                            {"literal": "MAR"},
-                            {"literal": "APR"},
-                        ],
+                        "in": {"literal": ["JAN", "FEB", "MAR", "APR"]},
                     },
                 },
             ],
             "select": "*",
         }
 
+        self.assertEqual(result, expected)
+
+    def test_unpivot(self):
+        sql = """SELECT * FROM monthly_sales
+        UNPIVOT(sales FOR month IN (jan, feb, mar, april))
+        ORDER BY empid;
+        """
+        result = parse(sql)
+        expected = {
+            "from": [
+                "monthly_sales",
+                {"unpivot": {
+                    "value": "sales",
+                    "for": "month",
+                    "in": {"value": ["jan", "feb", "mar", "april"]},
+                }},
+            ],
+            "orderby": {"value": "empid"},
+            "select": "*",
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_issue_116_select_w_quotes1(self):
+        sql = """SELECT src:"sales-person".name
+        FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "sales-person"},
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_116_select_w_quotes2(self):
+        sql = """SELECT src:".".name
+        FROM car_sales"""
+        result = parse(sql)
+        expected = {
+            "from": "car_sales",
+            "select": {"value": {"get": [
+                "src",
+                {"literal": "."},
+                {"literal": "name"},
+            ]}},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_118_set1(self):
+        sql = """ALTER SESSION SET TIMESTAMP_TYPE_MAPPING = TIMESTAMP_NTZ"""
+        result = parse(sql)
+        expected = {"set": {"TIMESTAMP_TYPE_MAPPING": "TIMESTAMP_NTZ"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_118_set2(self):
+        sql = """ALTER SESSION SET LOCK_TIMEOUT = 3600*2"""
+        result = parse(sql)
+        expected = {"set": {"LOCK_TIMEOUT": {"mul": [3600, 2]}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_118_unset(self):
+        sql = """ALTER SESSION UNSET LOCK_TIMEOUT"""
+        result = parse(sql)
+        expected = {"unset": "LOCK_TIMEOUT"}
         self.assertEqual(result, expected)
