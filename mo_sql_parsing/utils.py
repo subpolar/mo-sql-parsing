@@ -193,7 +193,7 @@ def to_json_operator(tokens):
     operands = [tokens[0], tokens[2]]
     binary_op = Call(op, operands, {})
 
-    if op in {"add", "mul", "and", "or"}:
+    if op in {"add", "mul", "and", "or", "concat", "binary_and", "binary_or"}:
         # ASSOCIATIVE OPERATORS
         acc = []
         for operand in operands:

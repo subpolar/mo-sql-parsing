@@ -417,3 +417,9 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {"unset": "LOCK_TIMEOUT"}
         self.assertEqual(result, expected)
+
+    def test_issue_121_many_concat(self):
+        sql = "SELECT a"+(" || a" * 300)
+        result = parse(sql)
+        expected = {"select": {"value": {"concat": ["a"]*301}}}
+        self.assertEqual(result, expected)
