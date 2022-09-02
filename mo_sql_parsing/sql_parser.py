@@ -694,12 +694,64 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + returning
         ) / to_json_call
 
+        #############################################################
+        # PROCEEDURAL
+        #############################################################
         set = (
             keyword("set")("op")
             + (identifier + EQ + expression)("params") / (lambda t: {t[0]: t[1]})
         ) / to_json_call
 
         unset = (keyword("unset")("op") + identifier("params")) / to_json_call
+
+        copy_options = Forward()
+        copy_options << ZeroOrMore(MatchFirst(
+            [
+                keyword(n).suppress()
+                + EQ
+                + (LB + copy_options + RB | expression)(n.lower())
+                for n in copy_params
+            ]
+            + [PARTITION_BY.suppress() + expression("partition_by")]
+        ))
+
+        with NO_WHITESPACE:
+            file_name = Regex("[a-zA-Z0-9-_!.]+")
+            file_path = Optional(
+                "/"
+                + delimited_list(file_name, separator="/", combine=True)
+                + Optional("/")
+            )
+            # @%load1/data1/
+            file_source = Combine(
+                Literal("@")
+                + (
+                    Literal("~") + file_path
+                    | Literal("%") + file_name + file_path
+                    | (
+                        simple_ident
+                        + Optional("." + Optional("%") + file_name)
+                        + file_path
+                    )
+                )
+                | (
+                    CaselessLiteral("azure")
+                    | CaselessLiteral("s3")
+                    | CaselessLiteral("gcs")
+                )
+                + "://"
+                + file_name
+                + file_path
+            )
+
+        copy = assign(
+            "copy",
+            (
+                assign("into", file_source | expression)
+                + Optional(assign("from", file_source | expression))
+                + copy_options
+            ),
+        )
 
         set_parser_names()
 
@@ -708,5 +760,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | (insert | update | delete)
             | (create_table | create_view | create_cache | create_index)
             | (drop_table | drop_view | drop_index)
+            | copy
             | (Optional(keyword("alter session")).suppress() + (set | unset))
         ).finalize()
