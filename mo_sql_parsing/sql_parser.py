@@ -694,9 +694,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + returning
         ) / to_json_call
 
-
-
-
+        #############################################################
+        # PROCEEDURAL
+        #############################################################
         set = (
             keyword("set")("op")
             + (identifier + EQ + expression)("params") / (lambda t: {t[0]: t[1]})
@@ -704,27 +704,35 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         unset = (keyword("unset")("op") + identifier("params")) / to_json_call
 
-        # COPY
-        options = Forward()
-        options << ZeroOrMore(MatchFirst([
-            keyword(n).suppress() + EQ + (LB + options + RB | expression)(n.lower())
-            for n in copy_options
-        ]))
+        copy_options = Forward()
+        copy_options << ZeroOrMore(MatchFirst(
+            [
+                keyword(n).suppress()
+                + EQ
+                + (LB + copy_options + RB | expression)(n.lower())
+                for n in copy_params
+            ]
+            + [PARTITION_BY.suppress() + expression("partition_by")]
+        ))
 
         with NO_WHITESPACE:
-            filename = Regex("[a-zA-Z0-9-_!.]+")
-            path = Optional(
+            file_name = Regex("[a-zA-Z0-9-_!.]+")
+            file_path = Optional(
                 "/"
-                + delimited_list(filename, separator="/", combine=True)
+                + delimited_list(file_name, separator="/", combine=True)
                 + Optional("/")
             )
             # @%load1/data1/
             file_source = Combine(
                 Literal("@")
                 + (
-                    Literal("~") + path
-                    | Literal("%") + filename + path
-                    | (simple_ident + Optional("." + Optional("%") + filename) + path)
+                    Literal("~") + file_path
+                    | Literal("%") + file_name + file_path
+                    | (
+                        simple_ident
+                        + Optional("." + Optional("%") + file_name)
+                        + file_path
+                    )
                 )
                 | (
                     CaselessLiteral("azure")
@@ -732,16 +740,16 @@ def parser(literal_string, simple_ident, sqlserver=False):
                     | CaselessLiteral("gcs")
                 )
                 + "://"
-                + filename
-                + path
+                + file_name
+                + file_path
             )
 
         copy = assign(
             "copy",
             (
-                assign("into", identifier)
+                assign("into", file_source | expression)
                 + Optional(assign("from", file_source | expression))
-                + options
+                + copy_options
             ),
         )
 

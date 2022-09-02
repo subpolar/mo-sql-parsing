@@ -685,10 +685,11 @@ ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / double_column
 mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / backtick_column
 sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / square_column
 
-copy_options = {
+copy_params = (
     "ALLOW_DUPLICATE",
     "AWS_KEY_ID",
     "AWS_SECRET_KEY",
+    "AWS_TOKEN",
     "AZURE_SAS_TOKEN",
     "BINARY_AS_TEXT",
     "BINARY_FORMAT",
@@ -711,10 +712,13 @@ copy_options = {
     "FILE_FORMAT",
     "FORCE",
     "FORMAT_NAME",
+    "HEADER",
     "IGNORE_UTF8_ERRORS",
+    "INCLUDE_QUERY_ID",
     "LOAD_UNCERTAIN_FILES",
     "MASTER_KEY",
     "MATCH_BY_COLUMN_NAME",
+    "MAX_FILE_SIZE",
     "NULL_IF",
     "ON_ERROR",
     "PATTERN",
@@ -723,6 +727,7 @@ copy_options = {
     "RECORD_DELIMITER",
     "REPLACE_INVALID_CHARACTERS",
     "RETURN_FAILED_ONLY",
+    "SINGLE",
     "SIZE_LIMIT",
     "SKIP_BLANK_LINES",
     "SKIP_BYTE_ORDER_MARK",
@@ -737,4 +742,4 @@ copy_options = {
     "TYPE",
     "TRUNCATECOLUMNS",
     "VALIDATION_MODE",
-}
+)
