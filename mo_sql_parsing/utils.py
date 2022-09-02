@@ -307,7 +307,7 @@ def to_trim_call(tokens):
 
 
 def to_kwarg(tokens):
-    return {k: v for k,v in [tuple(tokens)]}
+    return {k: v for k, v in [tuple(tokens)]}
 
 
 def to_literal(t):
@@ -593,7 +593,7 @@ def to_table(tokens):
 
 def single_literal(tokens):
     val = tokens[0]
-    val = '"""' + val[1:-1].replace("''", "\\'").replace("\"", "\\\"") + '"""'
+    val = '"""' + val[1:-1].replace("''", "\\'").replace('"', '\\"') + '"""'
     return {"literal": ast.literal_eval(val)}
 
 
@@ -684,3 +684,57 @@ mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
 ansi_ident = Regex(r'\"(\"\"|[^"])*\"') / double_column
 mysql_backtick_ident = Regex(r"\`(\`\`|[^`])*\`") / backtick_column
 sqlserver_ident = Regex(r"\[(\]\]|[^\]])*\]") / square_column
+
+copy_options = {
+    "ALLOW_DUPLICATE",
+    "AWS_KEY_ID",
+    "AWS_SECRET_KEY",
+    "AZURE_SAS_TOKEN",
+    "BINARY_AS_TEXT",
+    "BINARY_FORMAT",
+    "COMPRESSION",
+    "CREDENTIALS",
+    "DATE_FORMAT",
+    "DISABLE_AUTO_CONVERT",
+    "DISABLE_SNOWFLAKE_DATA",
+    "EMPTY_FIELD_AS_NULL",
+    "ENABLE_OCTA",
+    "ENCODING",
+    "ENCRYPTION",
+    "ENFORCE_LENGTH",
+    "ERROR_ON_COLUMN_COUNT_MISMATCH",
+    "ESCAPE_UNENCLOSED_FIELD",
+    "ESCAPE",
+    "FIELD_DELIMITER",
+    "FIELD_OPTIONALLY_ENCLOSED_BY",
+    "FILES",
+    "FILE_FORMAT",
+    "FORCE",
+    "FORMAT_NAME",
+    "IGNORE_UTF8_ERRORS",
+    "LOAD_UNCERTAIN_FILES",
+    "MASTER_KEY",
+    "MATCH_BY_COLUMN_NAME",
+    "NULL_IF",
+    "ON_ERROR",
+    "PATTERN",
+    "PRESERVE_SPACE",
+    "PURGE",
+    "RECORD_DELIMITER",
+    "REPLACE_INVALID_CHARACTERS",
+    "RETURN_FAILED_ONLY",
+    "SIZE_LIMIT",
+    "SKIP_BLANK_LINES",
+    "SKIP_BYTE_ORDER_MARK",
+    "SKIP_HEADER",
+    "STORAGE_INTEGRATION",
+    "STRIP_NULL_VALUES",
+    "STRIP_OUTER_ARRAY",
+    "STRIP_OUTER_ELEMENT",
+    "TIME_FORMAT",
+    "TIMESTAMP_FORMAT",
+    "TRIM_SPACE",
+    "TYPE",
+    "TRUNCATECOLUMNS",
+    "VALIDATION_MODE",
+}

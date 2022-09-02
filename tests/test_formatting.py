@@ -737,7 +737,7 @@ class TestSimple(TestCase):
         ))
         self.assertEqual(
             new_sql,
-            "SELECT CONCAT(CONCAT('str1', 'str2'), my_int_field) FROM testtable",
+            "SELECT CONCAT('str1', 'str2', my_int_field) FROM testtable",
         )
 
         new_sql = format(parse(

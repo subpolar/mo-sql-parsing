@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse, normal_op
 
 
@@ -419,7 +421,190 @@ class TestSnowflake(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue_121_many_concat(self):
-        sql = "SELECT a"+(" || a" * 300)
+        sql = "SELECT a" + (" || a" * 300)
         result = parse(sql)
-        expected = {"select": {"value": {"concat": ["a"]*301}}}
+        expected = {"select": {"value": {"concat": ["a"] * 301}}}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy1(self):
+        sql = """COPY INTO mytable FROM @my_int_stage"""
+        result = parse(sql)
+        expected = {"copy": {"from": "@my_int_stage", "into": "mytable"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy2(self):
+        sql = """COPY INTO mytable FILE_FORMAT = (TYPE = CSV)"""
+        result = parse(sql)
+        expected = {"copy": {"file_format": {"type": "CSV"}, "into": "mytable"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy3(self):
+        sql = (
+            """COPY INTO mytable from @~/staged FILE_FORMAT = (FORMAT_NAME = 'mycsv')"""
+        )
+        result = parse(sql)
+        expected = {"copy": {
+            "file_format": {"format_name": {"literal": "mycsv"}},
+            "from": "@~/staged",
+            "into": "mytable",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy4(self):
+        sql = """COPY INTO mycsvtable FROM @my_ext_stage/tutorials/dataloading/contacts1.csv;"""
+        result = parse(sql)
+        expected = {"copy": {
+            "from": "@my_ext_stage/tutorials/dataloading/contacts1.csv",
+            "into": "mycsvtable",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy5(self):
+        sql = """COPY INTO mytable
+            FROM s3://mybucket/data/files
+            STORAGE_INTEGRATION = myint
+            ENCRYPTION=(MASTER_KEY = 'eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8=')
+            FILE_FORMAT = (FORMAT_NAME = my_csv_format);"""
+        result = parse(sql)
+        expected = {"copy": {
+            "encryption": {"master_key": {
+                "literal": "eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8="
+            }},
+            "file_format": {"format_name": "my_csv_format"},
+            "from": "s3://mybucket/data/files",
+            "into": "mytable",
+            "storage_integration": "myint",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy6(self):
+        sql = """COPY INTO mytable
+            FROM s3://mybucket/data/files
+            CREDENTIALS=(AWS_KEY_ID='$AWS_ACCESS_KEY_ID' AWS_SECRET_KEY='$AWS_SECRET_ACCESS_KEY')
+            ENCRYPTION=(MASTER_KEY = 'eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8=')
+            FILE_FORMAT = (FORMAT_NAME = my_csv_format);"""
+        result = parse(sql)
+        expected = {"copy": {
+            "credentials": {
+                "aws_key_id": {"literal": "$AWS_ACCESS_KEY_ID"},
+                "aws_secret_key": {"literal": "$AWS_SECRET_ACCESS_KEY"},
+            },
+            "encryption": {"master_key": {
+                "literal": "eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8="
+            }},
+            "file_format": {"format_name": "my_csv_format"},
+            "from": "s3://mybucket/data/files",
+            "into": "mytable",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy7(self):
+        sql = """COPY INTO mytable
+            FROM 'gcs://mybucket/data/files'
+            STORAGE_INTEGRATION = myint
+            FILE_FORMAT = (FORMAT_NAME = my_csv_format);"""
+        result = parse(sql)
+        expected = {"copy": {
+            "file_format": {"format_name": "my_csv_format"},
+            "from": {"literal": "gcs://mybucket/data/files"},
+            "into": "mytable",
+            "storage_integration": "myint",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy8(self):
+        sql = """COPY INTO mytable
+            FROM 'azure://myaccount.blob.core.windows.net/data/files'
+            STORAGE_INTEGRATION = myint
+            ENCRYPTION=(TYPE='AZURE_CSE' MASTER_KEY = 'kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8=')
+            FILE_FORMAT = (FORMAT_NAME = my_csv_format);"""
+        result = parse(sql)
+        expected = {"copy": {
+            "encryption": {
+                "master_key": {
+                    "literal": "kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8="
+                },
+                "type": {"literal": "AZURE_CSE"},
+            },
+            "file_format": {"format_name": "my_csv_format"},
+            "from": {"literal": "azure://myaccount.blob.core.windows.net/data/files"},
+            "into": "mytable",
+            "storage_integration": "myint",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copy9(self):
+        sql = """COPY INTO mytable
+            FROM 'azure://myaccount.blob.core.windows.net/mycontainer/data/files'
+            CREDENTIALS=(AZURE_SAS_TOKEN='?sv=2016-05-31&ss=b&srt=sco&sp=rwdl&se=2018-06-27T10:05:50Z&st=2017-06-27T02:05:50Z&spr=https,http&sig=bgqQwoXwxzuD2GJfagRg7VOS8hzNr3QLT7rhS8OFRLQ%3D')
+            ENCRYPTION=(TYPE='AZURE_CSE' MASTER_KEY = 'kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8=')
+            FILE_FORMAT = (FORMAT_NAME = my_csv_format);"""
+        result = parse(sql)
+        expected = {"copy": {
+            "credentials": {"azure_sas_token": {
+                "literal": "?sv=2016-05-31&ss=b&srt=sco&sp=rwdl&se=2018-06-27T10:05:50Z&st=2017-06-27T02:05:50Z&spr=https,http&sig=bgqQwoXwxzuD2GJfagRg7VOS8hzNr3QLT7rhS8OFRLQ%3D"
+            }},
+            "encryption": {
+                "master_key": {
+                    "literal": "kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8="
+                },
+                "type": {"literal": "AZURE_CSE"},
+            },
+            "file_format": {"format_name": "my_csv_format"},
+            "from": {
+                "literal": (
+                    "azure://myaccount.blob.core.windows.net/mycontainer/data/files"
+                )
+            },
+            "into": "mytable",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copyA(self):
+        sql = """COPY INTO mytable
+            FILE_FORMAT = (TYPE = 'CSV')
+            PATTERN='.*/.*/.*[.]csv[.]gz';"""
+        result = parse(sql)
+        expected = {"copy": {
+            "file_format": {"type": {"literal": "CSV"}},
+            "into": "mytable",
+            "pattern": {"literal": ".*/.*/.*[.]csv[.]gz"},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copyB(self):
+        sql = """COPY INTO mytable
+            FILE_FORMAT = (FORMAT_NAME = myformat)
+            PATTERN='.*sales.*[.]csv';"""
+        result = parse(sql)
+        expected = {"copy": {
+            "file_format": {"format_name": "myformat"},
+            "into": "mytable",
+            "pattern": {"literal": ".*sales.*[.]csv"},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copyC(self):
+        sql = """COPY INTO load1 FROM @%load1/data1/
+            FILES=('test1.csv', 'test2.csv');"""
+
+        result = parse(sql)
+        expected = {"copy": {
+            "from": "@%load1/data1/",
+            "into": "load1",
+            "files": {"literal": ["test1.csv", "test2.csv"]},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_119_copyD(self):
+        sql = """COPY INTO load1 FROM @%load1/data1/
+            FILES=('test1.csv', 'test2.csv')
+            FORCE=TRUE;"""
+        result = parse(sql)
+        expected = {"copy": {
+            "files": {"literal": ["test1.csv", "test2.csv"]},
+            "force": True,
+            "from": "@%load1/data1/",
+            "into": "load1",
+        }}
         self.assertEqual(result, expected)

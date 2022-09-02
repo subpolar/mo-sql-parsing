@@ -694,12 +694,56 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + returning
         ) / to_json_call
 
+
+
+
         set = (
             keyword("set")("op")
             + (identifier + EQ + expression)("params") / (lambda t: {t[0]: t[1]})
         ) / to_json_call
 
         unset = (keyword("unset")("op") + identifier("params")) / to_json_call
+
+        # COPY
+        options = Forward()
+        options << ZeroOrMore(MatchFirst([
+            keyword(n).suppress() + EQ + (LB + options + RB | expression)(n.lower())
+            for n in copy_options
+        ]))
+
+        with NO_WHITESPACE:
+            filename = Regex("[a-zA-Z0-9-_!.]+")
+            path = Optional(
+                "/"
+                + delimited_list(filename, separator="/", combine=True)
+                + Optional("/")
+            )
+            # @%load1/data1/
+            file_source = Combine(
+                Literal("@")
+                + (
+                    Literal("~") + path
+                    | Literal("%") + filename + path
+                    | (simple_ident + Optional("." + Optional("%") + filename) + path)
+                )
+                | (
+                    CaselessLiteral("azure")
+                    | CaselessLiteral("s3")
+                    | CaselessLiteral("gcs")
+                )
+                + "://"
+                + filename
+                + path
+            )
+
+        copy = assign(
+            "copy",
+            (
+                assign("into", identifier)
+                + Optional(assign("from", file_source | expression))
+                + options
+            ),
+        )
 
         set_parser_names()
 
@@ -708,5 +752,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | (insert | update | delete)
             | (create_table | create_view | create_cache | create_index)
             | (drop_table | drop_view | drop_index)
+            | copy
             | (Optional(keyword("alter session")).suppress() + (set | unset))
         ).finalize()
