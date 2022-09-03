@@ -37,6 +37,7 @@ from mo_sql_parsing.keywords import (
     KNOWN_OPS,
     LT,
     GT,
+    AS,
 )
 from mo_sql_parsing.utils import (
     keyword,
@@ -219,7 +220,9 @@ def get_column_type(expr, identifier, literal_string):
         )
     ) / to_json_call
 
-    column_type << (struct_type | row_type | array_type | simple_types)
+    column_type << (
+        struct_type | row_type | array_type | simple_types
+    )("type") + Optional(AS + LB + expr("value") + RB)
 
     column_def_identity = (
         assign(
@@ -236,8 +239,9 @@ def get_column_type(expr, identifier, literal_string):
         identifier("table") + LB + delimited_list(identifier)("columns") + RB,
     )
 
-    column_options = ZeroOrMore(
-        ((NOT + NULL) / (lambda: False))("nullable")
+    column_options = (
+        (NOT + NULL)("nullable") / (lambda: False)
+        | keyword("not enforced")("enforced") / (lambda: False)
         | (NULL / (lambda t: True))("nullable")
         | flag("unique")
         | flag("auto_increment")
@@ -251,12 +255,12 @@ def get_column_type(expr, identifier, literal_string):
     )
 
     column_definition << Group(
-        identifier("name") + (column_type | identifier)("type") + column_options
+        identifier("name") + (column_type | identifier("type")) + ZeroOrMore(column_options)
     )
 
     set_parser_names()
 
-    return column_type, column_definition, column_def_references
+    return column_type, column_definition, column_def_references, column_options
 
 
 export("mo_sql_parsing.utils", unary_ops)

@@ -167,9 +167,9 @@ NOT_IN = Group(NOT + IN).set_parser_name("nin")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
 _SIMILAR = keyword("similar")
-_TO = keyword("to")
-SIMILAR_TO = Group(_SIMILAR + _TO).set_parser_name("similar_to")
-NOT_SIMILAR_TO = Group(NOT + _SIMILAR + _TO).set_parser_name("not_similar_to")
+TO = keyword("to")
+SIMILAR_TO = Group(_SIMILAR + TO).set_parser_name("similar_to")
+NOT_SIMILAR_TO = Group(NOT + _SIMILAR + TO).set_parser_name("not_similar_to")
 
 RESERVED = MatchFirst([
     # ONY INCLUDE SINGLE WORDS

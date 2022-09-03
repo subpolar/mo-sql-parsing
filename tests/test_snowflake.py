@@ -405,19 +405,19 @@ class TestSnowflake(TestCase):
     def test_issue_118_set1(self):
         sql = """ALTER SESSION SET TIMESTAMP_TYPE_MAPPING = TIMESTAMP_NTZ"""
         result = parse(sql)
-        expected = {"set": {"TIMESTAMP_TYPE_MAPPING": "TIMESTAMP_NTZ"}}
+        expected = {"set": {"timestamp_type_mapping": "timestamp_ntz"}}
         self.assertEqual(result, expected)
 
     def test_issue_118_set2(self):
         sql = """ALTER SESSION SET LOCK_TIMEOUT = 3600*2"""
         result = parse(sql)
-        expected = {"set": {"LOCK_TIMEOUT": {"mul": [3600, 2]}}}
+        expected = {"set": {"lock_timeout": {"mul": [3600, 2]}}}
         self.assertEqual(result, expected)
 
     def test_issue_118_unset(self):
         sql = """ALTER SESSION UNSET LOCK_TIMEOUT"""
         result = parse(sql)
-        expected = {"unset": "LOCK_TIMEOUT"}
+        expected = {"unset": "lock_timeout"}
         self.assertEqual(result, expected)
 
     def test_issue_121_many_concat(self):
@@ -783,5 +783,275 @@ class TestSnowflake(TestCase):
             "from": {"from": "orderstiny", "limit": 5, "select": "*"},
             "into": "@my_stage",
             "validation_mode": {"literal": "RETURN_ROWS"},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table1(self):
+        sql = """ALTER TABLE t1 RENAME TO tt1;"""
+        result = parse(sql)
+        expected = {"alter": {"rename_to": "tt1", "table": "t1"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table2(self):
+        sql = """ALTER TABLE t1 SWAP WITH t2;"""
+        result = parse(sql)
+        expected = {"alter": {"swap_with": "t2", "table": "t1"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table3(self):
+        sql = """ALTER TABLE t1 ADD COLUMN a2 number;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"column": {"name": "a2", "type": {"number": {}}}},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table4(self):
+        sql = """ALTER TABLE t1 ADD COLUMN a3 number NOT NULL;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"column": {
+                "name": "a3",
+                "nullable": False,
+                "type": {"number": {}},
+            }},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table5(self):
+        sql = """ALTER TABLE t1 ADD COLUMN a4 number DEFAULT 0 NOT NULL;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"column": {
+                "default": 0,
+                "name": "a4",
+                "nullable": False,
+                "type": {"number": {}},
+            }},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table6(self):
+        sql = """ALTER TABLE t1 RENAME COLUMN a1 TO b1;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "rename": {"column": {"name": "a1", "to": "b1"}},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table7(self):
+        sql = """ALTER TABLE t1 DROP COLUMN a2;"""
+        result = parse(sql)
+        expected = {"alter": {"drop": {"column": "a2"}, "table": "t1"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table8(self):
+        # VIRTUAL COLUMN a1 = CAST(value as varchar)
+        sql = """ALTER TABLE exttable1 ADD COLUMN a1 varchar AS (value:a1::varchar);"""
+        with Debugger():
+            result = parse(sql)
+        expected = {"alter": {
+            "add": {"column": {
+                "name": "a1",
+                "type": {"varchar": {}},
+                "value": {"cast": [
+                    {"get": ["value", {"literal": "a1"}]},
+                    {"varchar": {}},
+                ]},
+            }},
+            "table": "exttable1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_table9(self):
+        sql = """ALTER TABLE t1 CLUSTER BY (date, id);"""
+        result = parse(sql)
+        expected = {"alter": {"cluster_by": ["date", "id"], "table": "t1"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableA(self):
+        sql = """alter table t1 add row access policy rap_t1 on (empl_id);"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"row_access_policy": {"on": "empl_id", "policy": "rap_t1"}},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableB(self):
+        sql = """alter table t1
+            add row access policy rap_test2 on (cost, item);"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"row_access_policy": {
+                "on": ["cost", "item"],
+                "policy": "rap_test2",
+            }},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableC(self):
+        sql = """alter table t1 drop row access policy rap_v1;"""
+        result = parse(sql)
+        expected = {"alter": {"drop": {"row_access_policy": "rap_v1"}, "table": "t1"}}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableD(self):
+        sql = """alter table t1
+            drop row access policy rap_t1_version_1,
+            add row access policy rap_t1_version_2 on (empl_id);"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"row_access_policy": {
+                "on": "empl_id",
+                "policy": "rap_t1_version_2",
+            }},
+            "drop": {"row_access_policy": "rap_t1_version_1"},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableE(self):
+        sql = """ALTER TABLE table1
+            ADD COLUMN col2 VARCHAR NOT NULL;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {"column": {
+                "name": "col2",
+                "nullable": False,
+                "type": {"varchar": {}},
+            }},
+            "table": "table1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableF(self):
+        sql = """ALTER TABLE table1
+            ADD COLUMN col3 VARCHAR NOT NULL CONSTRAINT uniq_col3 UNIQUE NOT ENFORCED;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "add": {
+                "column": {"name": "col3", "nullable": False, "type": {"varchar": {}}},
+                "constraint": {"name": "uniq_col3", "enforced": False, "unique": True},
+            },
+            "table": "table1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableG(self):
+        sql = """ALTER TABLE t1 ALTER COLUMN c1 DROP NOT NULL;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": {"drop": {"nullable": False}, "name": "c1"},
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableH(self):
+        sql = """ALTER TABLE t1 MODIFY c2 DROP DEFAULT, c3 SET DEFAULT seq5.nextval ;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": [
+                {"drop": "default", "name": "c2"},
+                {"name": "c3", "set": {"default": "seq5.nextval"}},
+            ],
+            "table": "t1",
+        }}
+
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableI(self):
+        sql = """ALTER TABLE t1 ALTER c4 SET DATA TYPE VARCHAR(50), COLUMN c4 DROP DEFAULT;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": [
+                {"name": "c4", "type": {"varchar": 50}},
+                {"drop": "default", "name": "c4"},
+            ],
+            "table": "t1",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableJ(self):
+        sql = """ALTER TABLE t1 ALTER c5 COMMENT '50 character column';"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": {"comment": {"literal": "50 character column"}, "name": "c5"},
+            "table": "t1",
+        }}
+
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableK(self):
+        sql = """ALTER TABLE t1 ALTER (
+            c1 DROP NOT NULL,
+            c5 COMMENT '50 character column',
+            c4 TYPE VARCHAR(50),
+            c2 DROP DEFAULT,
+            COLUMN c4 DROP DEFAULT,
+            COLUMN c3 SET DEFAULT seq5.nextval
+            );"""
+        result = parse(sql)
+        expected = {"alter": {
+            "table": "t1",
+            "modify": [
+                {"name": "c1", "drop": {"nullable": False}},
+                {"name": "c5", "comment": {"literal": "50 character column"}},
+                {"name": "c4", "type": {"varchar": 50}},
+                {"name": "c2", "drop": "default"},
+                {"name": "c4", "drop": "default"},
+                {"name": "c3", "set": {"default": "seq5.nextval"}},
+            ],
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableL(self):
+        sql = """ALTER TABLE empl_info MODIFY COLUMN empl_id SET MASKING POLICY mask_empl_id;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": {"name": "empl_id", "set": {"masking_policy": "mask_empl_id"}},
+            "table": "empl_info",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableM(self):
+        sql = """ALTER TABLE empl_info MODIFY
+            COLUMN empl_id SET MASKING POLICY mask_empl_id
+            , COLUMN empl_dob SET MASKING POLICY mask_empl_dob"""
+        result = parse(sql)
+        expected = {"alter": {
+            "table": "empl_info",
+            "modify": [
+                {"name": "empl_id", "set": {"masking_policy": "mask_empl_id"}},
+                {"name": "empl_dob", "set": {"masking_policy": "mask_empl_dob"}},
+            ],
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableN(self):
+        sql = """ALTER TABLE empl_info modify column empl_id unset masking policy;"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": {"name": "empl_id", "unset": "masking_policy"},
+            "table": "empl_info",
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_120_alter_tableO(self):
+        sql = """ALTER TABLE empl_info MODIFY
+            COLUMN empl_id UNSET MASKING POLICY
+            , COLUMN empl_dob UNSET MASKING POLICY"""
+        result = parse(sql)
+        expected = {"alter": {
+            "modify": [
+                {"name": "empl_id", "unset": "masking_policy"},
+                {"name": "empl_dob", "unset": "masking_policy"},
+            ],
+            "table": "empl_info",
         }}
         self.assertEqual(result, expected)
