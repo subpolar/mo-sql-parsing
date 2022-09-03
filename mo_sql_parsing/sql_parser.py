@@ -72,7 +72,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         # EXPRESSIONS
         expression = Forward()
-        column_type, column_definition, column_def_references = get_column_type(
+        (column_type, column_definition, column_def_references, column_option) = get_column_type(
             expression, identifier, literal_string
         )
 
@@ -561,7 +561,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + Optional(column_def_delete)
         )
 
-        index_options = ZeroOrMore(identifier)("table_constraint_options")
+        index_options = ZeroOrMore(identifier / (lambda t: {t[0]: True}))
 
         table_constraint_definition = Optional(CONSTRAINT + identifier("name")) + (
             assign("primary key", index_type + index_column_names + index_options)
@@ -697,12 +697,16 @@ def parser(literal_string, simple_ident, sqlserver=False):
         #############################################################
         # PROCEEDURAL
         #############################################################
-        set = (
-            keyword("set")("op")
-            + (identifier + EQ + expression)("params") / (lambda t: {t[0]: t[1]})
-        ) / to_json_call
+        special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
+        set_variable = assign(
+            "set",
+            (special_ident + Optional(EQ) + expression)("params")
+            / (lambda t: {
+                t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]
+            }),
+        )
 
-        unset = (keyword("unset")("op") + identifier("params")) / to_json_call
+        unset_variable = assign("unset", special_ident)
 
         copy_options = Forward()
         copy_options << ZeroOrMore(MatchFirst(
@@ -753,6 +757,65 @@ def parser(literal_string, simple_ident, sqlserver=False):
             ),
         )
 
+        column_modifications = delimited_list(Group(
+            Optional(Keyword("column", caseless=True).suppress())
+            + identifier("name")
+            + (
+                keyword("set data type") + column_type
+                | keyword("data type") + column_type
+                | keyword("type") + column_type
+                | set_variable
+                | unset_variable
+                | assign("drop", column_option | special_ident)
+                | Optional(keyword("set")) + column_option
+            )
+        ))
+
+        #############################################################
+        # ALTER TABLE
+        #############################################################
+
+        alter = assign(
+            "alter",
+            (
+                assign("table", identifier)
+                + delimited_list(
+                    assign("rename to", identifier)
+                    | assign(
+                        "rename",
+                        assign("column", identifier("name") + TO + identifier("to")),
+                    )
+                    | assign("swap with", identifier)
+                    | assign(
+                        "add",
+                        ZeroOrMore(
+                            assign("column", column_definition)
+                            | assign(
+                                "constraint",
+                                identifier("name") + ZeroOrMore(column_option),
+                            )
+                            | assign(
+                                "row access policy",
+                                identifier("policy")
+                                + (ON + LB + delimited_list(identifier("on")) + RB),
+                            )
+                        ),
+                    )
+                    | assign(
+                        "drop",
+                        assign("column", identifier)
+                        | assign("row access policy", identifier),
+                    )
+                    | (
+                        (Keyword("alter", caseless=True) | Keyword("modify", caseless=True)).suppress()
+                        + (LB + column_modifications + RB | column_modifications)
+                    )("modify")
+                    | assign("cluster by", LB + delimited_list(identifier) + RB)
+                    #  MODIFY COLUMN empl_id UNSET MASKING POLICY
+                )
+            ),
+        )
+
         set_parser_names()
 
         return (
@@ -760,6 +823,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | (insert | update | delete)
             | (create_table | create_view | create_cache | create_index)
             | (drop_table | drop_view | drop_index)
-            | copy
-            | (Optional(keyword("alter session")).suppress() + (set | unset))
+            | (copy | alter)
+            | (
+                Optional(keyword("alter session")).suppress()
+                + (set_variable | unset_variable)
+            )
         ).finalize()
