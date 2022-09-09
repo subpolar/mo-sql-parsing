@@ -178,7 +178,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                         | (AS + delimited_list(identifier("col")))
                     )
                 )
-            ) + ~FollowedBy(LB))
+            ) + ~FollowedBy(LB))  # THIS IS NOT AN ALIAS
             / to_alias
         )("name"))
 
