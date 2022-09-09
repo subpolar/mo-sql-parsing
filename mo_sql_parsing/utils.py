@@ -721,6 +721,7 @@ copy_params = (
     "MAX_FILE_SIZE",
     "NULL_IF",
     "ON_ERROR",
+    "OVERWRITE",
     "PATTERN",
     "PRESERVE_SPACE",
     "PURGE",

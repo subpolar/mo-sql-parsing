@@ -1055,3 +1055,15 @@ class TestSnowflake(TestCase):
             "table": "empl_info",
         }}
         self.assertEqual(result, expected)
+
+    def test_issue_124_overwrite(self):
+        sql = """COPY INTO '@my_stage/path'
+        FROM my_schema.my_table
+        OVERWRITE = TRUE"""
+        result = parse(sql)
+        expected = {"copy": {
+            "from": "my_schema.my_table",
+            "into": {"literal": "@my_stage/path"},
+            "overwrite": True,
+        }}
+        self.assertEqual(result, expected)
