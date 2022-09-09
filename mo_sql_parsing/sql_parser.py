@@ -695,9 +695,10 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ) / to_json_call
 
         #############################################################
-        # PROCEEDURAL
+        # PROCEDURAL
         #############################################################
         special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
+        declare_variable = assign("declare", column_definition)
         set_variable = assign(
             "set",
             (special_ident + Optional(EQ) + expression)("params")
@@ -705,7 +706,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]
             }),
         )
-
         unset_variable = assign("unset", special_ident)
 
         copy_options = Forward()
@@ -826,6 +826,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | (copy | alter)
             | (
                 Optional(keyword("alter session")).suppress()
-                + (set_variable | unset_variable)
+                + (set_variable | unset_variable | declare_variable)
             )
         ).finalize()
