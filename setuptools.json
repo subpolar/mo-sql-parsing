@@ -19,7 +19,7 @@
     "include_package_data": true,
     "install_requires": [
            "mo-dots==9.189.22201",    "mo-future==6.2.21303", "mo-imports==7.187.22201",
-        "mo-parsing==8.192.22229"
+        "mo-parsing==8.204.22252"
     ],
     "license": "MPL 2.0",
     "long_description": {
@@ -41,12 +41,12 @@
             "",
             "## Project Status",
             "",
-            "June 2022 - There has been some work on improving the error reporting alongside resolving any bug reports.  There are [over 900 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that covers most SQL for most databases, with limited DML support, including:",
+            "September 2022 -  I continue to resolve issues as they are raised. There are [over 1000 tests](https://app.travis-ci.com/github/klahnakoski/mo-sql-parsing), that covers most SQL for most databases, with limited DML support, including:",
             "",
             "  * inner queries, ",
             "  * with clauses, ",
             "  * window functions",
-            "  * create/drop tables and views",
+            "  * create/drop/alter tables and views",
             "  * insert/update/delete statements",
             "  * lambda (`->`) functions",
             "",
@@ -116,7 +116,7 @@
             "}}}",
             "```",
             "",
-            "#### MySQL literal strings",
+            "#### Double-quotes for literal strings",
             "",
             "MySQL uses both double quotes and single quotes to declare literal strings.  This is not ansi behaviour, but it is more forgiving for programmers coming from other languages. A specific parse function is provided: ",
             "",
@@ -183,7 +183,15 @@
             "    do_something(select)",
             "```",
             "",
-            "## Version Changes",
+            "## Version Changes, Features",
+            "",
+            "",
+            "### Version 8.200+",
+            "",
+            "*September 2022*",
+            "",
+            "* Added `ALTER TABLE` and `COPY` command parsing for Snowflake ",
+            "",
             "",
             "### Version 8",
             " ",
@@ -251,6 +259,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "8.203.22246",
+    "version": "8.204.22252",
     "zip_safe": true
 }

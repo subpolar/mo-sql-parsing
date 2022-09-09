@@ -10,7 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase, skip
 
-from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse_bigquery as parse
@@ -507,4 +506,24 @@ class TestBigQuery(TestCase):
                 "with_offset": "offset",
             },
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_123_declare1(self):
+        sql = """DECLARE _current_timestamp timestamp DEFAULT current_timestamp();"""
+        result = parse(sql)
+        expected = {"declare": {
+            "name": "_current_timestamp",
+            "type": {"timestamp": {}},
+            "default": {"current_timestamp": {}},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_123_declare2(self):
+        sql = """DECLARE _current_date      date      DEFAULT current_date("America/Sao_Paulo");"""
+        result = parse(sql)
+        expected = {"declare": {
+            "name": "_current_date",
+            "type": {"date": {}},
+            "default": {"current_date": {"literal": "America/Sao_Paulo"}},
+        }}
         self.assertEqual(result, expected)

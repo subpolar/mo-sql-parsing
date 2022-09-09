@@ -10,8 +10,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse, normal_op
 
 
@@ -142,4 +140,84 @@ class TestAthena(TestCase):
             "args": ["a"],
             "kwargs": {"orderby": {"value": "b"}},
         }}}
+        self.assertEqual(result, expected)
+
+    def test_issue_125_pivot_identifier1(self):
+        sql = """SELECT * FROM pivot;"""
+        result = parse(sql)
+        expected = {"from": "pivot", "select": "*"}
+        self.assertEqual(result, expected)
+
+    def test_issue_125_pivot_identifier2(self):
+        sql = """SELECT * FROM a AS pivot;"""
+        result = parse(sql)
+        expected = {"from": {"name": "pivot", "value": "a"}, "select": "*"}
+        self.assertEqual(result, expected)
+
+    def test_issue_125_pivot_identifier3(self):
+        sql = """SELECT * FROM UNNEST(ARRAY[1, 2, 3]) AS pivot(n);"""
+        result = parse(sql)
+        expected = {
+            "from": {
+                "name": {"pivot": "n"},
+                "value": {"unnest": {"create_array": [1, 2, 3]}},
+            },
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_125_pivot_identifier4(self):
+        sql = """SELECT * FROM UNNEST(ARRAY[1, 2, 3]) AS pivot(n)
+        JOIN a ON a.id = pivot.n;"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                {
+                    "name": {"pivot": "n"},
+                    "value": {"unnest": {"create_array": [1, 2, 3]}},
+                },
+                {"join": "a", "on": {"eq": ["a.id", "pivot.n"]}},
+            ],
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_125_unpivot_identifier1(self):
+        sql = """SELECT * FROM unpivot;"""
+        result = parse(sql)
+        expected = {"from": "unpivot", "select": "*"}
+        self.assertEqual(result, expected)
+
+    def test_issue_125_unpivot_identifier2(self):
+        sql = """SELECT * FROM a AS unpivot;"""
+        result = parse(sql)
+        expected = {"from": {"name": "unpivot", "value": "a"}, "select": "*"}
+        self.assertEqual(result, expected)
+
+    def test_issue_125_unpivot_identifier3(self):
+        sql = """SELECT * FROM UNNEST(ARRAY[1, 2, 3]) AS unpivot(n);"""
+        result = parse(sql)
+        expected = {
+            "from": {
+                "name": {"unpivot": "n"},
+                "value": {"unnest": {"create_array": [1, 2, 3]}},
+            },
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_125_unpivot_identifier4(self):
+        sql = """SELECT * FROM UNNEST(ARRAY[1, 2, 3]) AS unpivot(n)
+        JOIN a ON a.id = pivot.n;"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                {
+                    "name": {"unpivot": "n"},
+                    "value": {"unnest": {"create_array": [1, 2, 3]}},
+                },
+                {"join": "a", "on": {"eq": ["a.id", "pivot.n"]}},
+            ],
+            "select": "*",
+        }
         self.assertEqual(result, expected)
