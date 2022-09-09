@@ -70,7 +70,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "op": "table",
-                "args": [{"op": "generator", "kwargs": {"rowcount": 10},}],
+                "args": [{"op": "generator", "kwargs": {"rowcount": 10}, }],
             },
             "select": {"value": {"op": "seq4"}},
         }
@@ -85,7 +85,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "op": "table",
-                "args": [{"op": "generator", "kwargs": {"rowcount": 5},}],
+                "args": [{"op": "generator", "kwargs": {"rowcount": 5}, }],
             },
             "select": {"value": {"op": "uniform", "args": [1, 10, {"op": "random"}]}},
         }
@@ -852,8 +852,7 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_table8(self):
         # VIRTUAL COLUMN a1 = CAST(value as varchar)
         sql = """ALTER TABLE exttable1 ADD COLUMN a1 varchar AS (value:a1::varchar);"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {"alter": {
             "add": {"column": {
                 "name": "a1",

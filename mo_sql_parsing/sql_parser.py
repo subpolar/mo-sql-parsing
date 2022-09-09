@@ -165,7 +165,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ) / to_json_call
 
         alias = Optional((
-            (
+            ((
                 AS
                 + (
                     identifier("name")
@@ -178,7 +178,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                         | (AS + delimited_list(identifier("col")))
                     )
                 )
-            )
+            ) + ~FollowedBy(LB))
             / to_alias
         )("name"))
 
