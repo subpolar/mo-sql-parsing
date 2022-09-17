@@ -55,6 +55,7 @@ RLIKE = keyword("rlike")
 SAFE_CAST = keyword("safe_cast")
 SAMPLE = keyword("sample").suppress()
 SELECT = keyword("select").suppress()
+SET = keyword("set").suppress()
 TABLE = keyword("table").suppress()
 TABLESAMPLE = keyword("tablesample").suppress()
 THEN = keyword("then").suppress()
@@ -225,6 +226,7 @@ RESERVED = MatchFirst([
     RIGHT,
     RLIKE,
     SELECT,
+    SET,
     TABLESAMPLE,
     THEN,
     TRUE,

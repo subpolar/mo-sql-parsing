@@ -72,9 +72,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         # EXPRESSIONS
         expression = Forward()
-        (column_type, column_definition, column_def_references, column_option) = get_column_type(
-            expression, identifier, literal_string
-        )
+        (
+            column_type,
+            column_definition,
+            column_def_references,
+            column_option,
+        ) = get_column_type(expression, identifier, literal_string)
 
         # CASE
         case = (
@@ -165,20 +168,23 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ) / to_json_call
 
         alias = Optional((
-            ((
-                AS
-                + (
-                    identifier("name")
-                    + Optional(LB + delimited_list(ident("col")) + RB)
-                )
-                | (
-                    identifier("name")
-                    + Optional(
-                        (LB + delimited_list(ident("col")) + RB)
-                        | (AS + delimited_list(identifier("col")))
+            (
+                (
+                    AS
+                    + (
+                        identifier("name")
+                        + Optional(LB + delimited_list(ident("col")) + RB)
+                    )
+                    | (
+                        identifier("name")
+                        + Optional(
+                            (LB + delimited_list(ident("col")) + RB)
+                            | (AS + delimited_list(identifier("col")))
+                        )
                     )
                 )
-            ) + ~FollowedBy(LB))  # THIS IS NOT AN ALIAS
+                + ~FollowedBy(LB)  # THIS IS NOT AN ALIAS
+            )
             / to_alias
         )("name"))
 
@@ -678,13 +684,14 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ) / to_insert_call
 
         update = (
-            keyword("update")("op")
-            + identifier("params")
+            keyword("update").suppress()
+            + identifier("value")
+            + Optional(identifier("name"))
             + assign("set", Dict(delimited_list(Group(identifier + EQ + expression))))
             + Optional((FROM + delimited_list(table_source) + ZeroOrMore(join))("from"))
             + Optional(WHERE + expression("where"))
             + returning
-        ) / to_json_call
+        ) / to_update_call
 
         delete = (
             keyword("delete")("op")
@@ -697,7 +704,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
         #############################################################
         # PROCEDURAL
         #############################################################
-        special_ident = keyword("masking policy") | identifier / (lambda t: t[0].lower())
+        special_ident = (
+            keyword("masking policy") | identifier / (lambda t: t[0].lower())
+        )
         declare_variable = assign("declare", column_definition)
         set_variable = assign(
             "set",
@@ -807,7 +816,10 @@ def parser(literal_string, simple_ident, sqlserver=False):
                         | assign("row access policy", identifier),
                     )
                     | (
-                        (Keyword("alter", caseless=True) | Keyword("modify", caseless=True)).suppress()
+                        (
+                            Keyword("alter", caseless=True)
+                            | Keyword("modify", caseless=True)
+                        ).suppress()
                         + (LB + column_modifications + RB | column_modifications)
                     )("modify")
                     | assign("cluster by", LB + delimited_list(identifier) + RB)
