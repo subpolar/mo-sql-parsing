@@ -572,6 +572,18 @@ def to_insert_call(tokens):
     )
 
 
+def to_update_call(tokens):
+    value = tokens["value"]
+    name = tokens["name"]
+    if name:
+        value = {"name": name, "value": value}
+    set = tokens["set"]
+    frum = tokens["from"]
+    where = tokens["where"]
+
+    return {"update": value, "set": set, "from": frum, "where": where}
+
+
 def to_query(tokens):
     output = tokens["query"][0]
     try:

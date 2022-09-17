@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 
@@ -872,11 +874,27 @@ class TestCreateForBigQuery(TestCase):
         SET score = src.score
         FROM src_table src
         WHERE target_table.id = src.id"""
+
         result = parse(sql)
         expected = {
             "from": {"name": "src", "value": "src_table"},
             "set": {"score": "src.score"},
             "update": "target_table",
             "where": {"eq": ["target_table.id", "src.id"]},
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_127_set(self):
+        sql = """UPDATE my_table a
+        SET flag = 1
+        FROM source_table s
+        WHERE a.name = s.name"""
+
+        result = parse(sql)
+        expected = {
+            "update": {"value":"my_table", "name":"a"},
+            "from": {"name": "s", "value": "source_table"},
+            "set": {"flag": 1},
+            "where": {"eq": ["a.name", "s.name"]},
         }
         self.assertEqual(result, expected)
