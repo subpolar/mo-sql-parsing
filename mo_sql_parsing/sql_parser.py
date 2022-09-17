@@ -183,8 +183,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
                         )
                     )
                 )
-                + ~FollowedBy(LB)
-            )  # THIS IS NOT AN ALIAS
+                + ~FollowedBy(LB)  # THIS IS NOT AN ALIAS
+            )
             / to_alias
         )("name"))
 
