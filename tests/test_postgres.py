@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse
 
 
@@ -235,4 +237,11 @@ class TestPostgres(TestCase):
             ]},
             "returning": {"name": "some_table.id", "value": "RETURNING"},
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_128_substring(self):
+        # https://www.w3resource.com/PostgreSQL/substring-function.php
+        sql = """SELECT substring(name from 1 for 5)"""
+        result = parse(sql)
+        expected = {"select": {"value": {"substring": "name", "from": 1, "for": 5}}}
         self.assertEqual(result, expected)
