@@ -889,7 +889,6 @@ class TestCreateForBigQuery(TestCase):
         SET flag = 1
         FROM source_table s
         WHERE a.name = s.name"""
-
         result = parse(sql)
         expected = {
             "update": {"value":"my_table", "name":"a"},

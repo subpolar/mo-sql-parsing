@@ -106,6 +106,18 @@ def parser(literal_string, simple_ident, sqlserver=False):
             / to_json_call
         )
 
+        substring = (
+            Group(
+                keyword("substring")("op")
+                + LB
+                + expression("params")
+                + Optional(assign("from", expression))
+                + Optional(assign("for", expression))
+                + RB
+            )
+            / to_json_call
+        )
+
         # TODO: CAN THIS BE MERGED WITH cast?  DOES THE REGEX OPTIMIZATION BREAK?
         safe_cast = (
             Group(
@@ -305,6 +317,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | case
             | switch
             | cast
+            | substring
             | safe_cast
             | distinct
             | trim
@@ -533,7 +546,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             )
         ) / to_union_call
 
-        with_expr = delimited_list(Group(
+        with_clause = delimited_list(Group(
             (
                 (identifier("name") + Optional(LB + delimited_list(ident("col")) + RB))
                 / to_alias
@@ -542,7 +555,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ))
 
         query << (
-            Optional(assign("with recursive", with_expr) | assign("with", with_expr))
+            Optional(
+                assign("with recursive", with_clause) | assign("with", with_clause)
+            )
             + Group(ordered_sql)("query")
         ) / to_query
 
