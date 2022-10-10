@@ -242,7 +242,6 @@ class TestPostgres(TestCase):
     def test_issue_128_substring(self):
         # https://www.w3resource.com/PostgreSQL/substring-function.php
         sql = """SELECT substring(name from 1 for 5)"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {"select": {"value": {"substring": "name", "from": 1, "for": 5}}}
         self.assertEqual(result, expected)
