@@ -245,3 +245,26 @@ class TestPostgres(TestCase):
         result = parse(sql)
         expected = {"select": {"value": {"substring": "name", "from": 1, "for": 5}}}
         self.assertEqual(result, expected)
+
+    def test_issue_129_for_updateA(self):
+        sql = """select * from bmsql_config for update;"""
+        result = parse(sql)
+        expected = {
+            "from": "bmsql_config",
+            "locking": {"mode": "update"},
+            "select": "*",
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_129_for_updateB(self):
+        sql = """select * from bmsql_config for update of bmsql_config nowait;"""
+        result = parse(sql)
+        expected = {
+            "select": "*",
+            "from": "bmsql_config",
+            "locking": {
+                "mode": "update",
+                "table": {"value": "bmsql_config", "nowait": True},
+            },
+        }
+        self.assertEqual(result, expected)

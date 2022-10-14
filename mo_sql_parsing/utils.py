@@ -547,6 +547,7 @@ def to_union_call(tokens):
     output["limit"] = tokens["limit"]
     output["offset"] = tokens["offset"]
     output["fetch"] = tokens["fetch"]
+    output["locking"] = tokens["locking"]
     return output
 
 
