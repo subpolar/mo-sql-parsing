@@ -259,6 +259,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "8.210.22288",
+    "version": "8.211.22288",
     "zip_safe": true
 }
