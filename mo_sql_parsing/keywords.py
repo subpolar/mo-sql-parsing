@@ -30,6 +30,7 @@ CROSS = keyword("cross")
 DISTINCT = keyword("distinct")
 EXCEPT = keyword("except")
 FETCH = keyword("fetch").suppress()
+FOR = keyword("for").suppress()
 FROM = keyword("from").suppress()
 FULL = keyword("full")
 GROUP = keyword("group").suppress()
@@ -192,6 +193,7 @@ RESERVED = MatchFirst([
     FALSE,
     FETCH,
     FOREIGN,
+    FOR,
     FROM,
     FULL,
     GROUP_BY,

@@ -528,6 +528,18 @@ def parser(literal_string, simple_ident, sqlserver=False):
             & Optional(assign("limit", expression))
         )
 
+        # https://www.postgresql.org/docs/current/sql-select.html
+        #  [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF table_name [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
+        for_update = Optional(
+            FOR
+            + (keyword("update") | keyword("share") | keyword("no key update") | keyword("key share"))("mode")
+            + Optional(
+                keyword("of").suppress()
+                + identifier("value")
+                + Optional(flag("nowait") | flag("skip locked"))
+            )("table")
+        )("locking")
+
         ordered_sql = (
             (
                 (unordered_sql | (LB + query + RB))
@@ -540,7 +552,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             )("union")
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
             + limit
-            #  def __init__(self, expr, start, string, msg="", cause=None):
+            + for_update
             + Optional(
                 (UNION | INTERSECT | EXCEPT | MINUS) / bad_operator_on_ordered_sql
             )
