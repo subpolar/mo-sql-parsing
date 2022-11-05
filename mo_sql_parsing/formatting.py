@@ -255,6 +255,10 @@ class Formatter:
             parts.append(f"({window})")
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
+        if "tablesample" in json:
+            sampling_method = json["tablesample"].get("method", "")
+            sampling_pct = "(" + json["tablesample"].get("percent", "") + ")"
+            parts.append(f"TABLESAMPLE {sampling_method} {sampling_pct}")
 
         return " ".join(parts)
 
