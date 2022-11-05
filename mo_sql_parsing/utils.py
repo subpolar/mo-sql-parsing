@@ -275,6 +275,7 @@ binary_ops = {
     "is": "eq",
     "similar_to": "similar_to",
     "like": "like",
+    "ilike": "ilike",
     "rlike": "rlike",
     "not like": "not_like",
     "not_like": "not_like",

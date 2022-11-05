@@ -64,6 +64,7 @@ def escape(ident, ansi_quotes, should_quote):
 
 
 def Operator(_op):
+    binary_ops[_op]
     op_prec = precedence[binary_ops[_op]]
     op = " {0} ".format(_op).replace("_", " ").upper()
 
@@ -143,6 +144,7 @@ class Formatter:
     _binary_and = Operator("&")
     _binary_or = Operator("|")
     _like = Operator("like")
+    _ilike = Operator("ilike")
     _not_like = Operator("not like")
     _rlike = Operator("rlike")
     _not_rlike = Operator("not rlike")

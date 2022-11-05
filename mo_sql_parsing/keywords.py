@@ -294,6 +294,7 @@ precedence = {
     "nin": 8,
     "is": 8,
     "like": 8,
+    "ilike": 8,
     "not_like": 8,
     "rlike": 8,
     "not_rlike": 8,
