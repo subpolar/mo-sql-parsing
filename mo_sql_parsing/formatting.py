@@ -64,7 +64,6 @@ def escape(ident, ansi_quotes, should_quote):
 
 
 def Operator(_op):
-    binary_ops[_op]
     op_prec = precedence[binary_ops[_op]]
     op = " {0} ".format(_op).replace("_", " ").upper()
 
@@ -259,9 +258,24 @@ class Formatter:
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
         if "tablesample" in json:
-            sampling_method = json["tablesample"].get("method", "")
-            sampling_pct = "(" + str(json["tablesample"].get("percent", "")) + ")"
-            parts.append(f"TABLESAMPLE {sampling_method} {sampling_pct}")
+            parts.append("TABLESAMPLE")
+            sample = json["tablesample"]
+            sampling_method = sample.get("method")
+            if sampling_method:
+                parts.append(sampling_method)
+            sampling_rows = sample.get("rows")
+            if sampling_rows:
+                parts.append(f"({sampling_rows} ROWS)")
+            sampling_pct = sample.get("percent")
+            if sampling_pct:
+                parts.append(f"({sampling_pct} PERCENT)")
+            sampling_bucket = sample.get("bucket")
+            if sampling_bucket:
+                bucket_parts = [f"BUCKET {sampling_bucket[0]} OUT OF {sampling_bucket[1]}"]
+                sampling_on = sample.get("on")
+                if sampling_on:
+                    bucket_parts.append(f"ON {self.format(sampling_on)}")
+                parts.append("("+" ".join(bucket_parts)+")")
 
         return " ".join(parts)
 

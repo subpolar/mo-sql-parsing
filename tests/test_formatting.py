@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import format, parse
 
 
@@ -762,3 +764,43 @@ class TestSimple(TestCase):
             new_sql,
             """SELECT (SELECT COUNT(result) FROM dbo.b AS B) AS attr FROM dbo.table"""
         )
+
+    def test_table_sample1(self):
+        sql = "SELECT * FROM foo SAMPLE bernoulli (1)"
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, "SELECT * FROM foo TABLESAMPLE bernoulli (1 PERCENT)")
+
+        sql = "SELECT * FROM foo SAMPLE(1) WHERE a < 42"
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql,  "SELECT * FROM foo TABLESAMPLE (1 PERCENT) WHERE a < 42")
+
+        sql = "SELECT * FROM foo TABLESAMPLE bernoulli (1)"
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, "SELECT * FROM foo TABLESAMPLE bernoulli (1 PERCENT)")
+
+        sql = "SELECT * FROM foo f TABLESAMPLE bernoulli (1) WHERE f.a < 42"
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, "SELECT * FROM foo AS f TABLESAMPLE bernoulli (1 PERCENT) WHERE f.a < 42")
+
+    def test_table_sample2(self):
+        sql = """SELECT a FROM test TABLESAMPLE (BUCKET 1 OUT OF 5)"""
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, sql)
+
+        sql = """SELECT a FROM test TABLESAMPLE (BUCKET 1 OUT OF 5 ON x)"""
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, sql)
+
+        sql = """SELECT a FROM test TABLESAMPLE (BUCKET 1 OUT OF 5 ON RAND())"""
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, sql)
+
+        sql = """SELECT a FROM test TABLESAMPLE (0.1 PERCENT)"""
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, sql)
+
+    def test_table_sample3(self):
+        sql = """SELECT a FROM test TABLESAMPLE (100 ROWS)"""
+        new_sql = format(parse(sql))
+        self.assertEqual(new_sql, sql)
+

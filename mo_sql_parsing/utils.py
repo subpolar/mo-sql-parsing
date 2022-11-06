@@ -282,7 +282,6 @@ binary_ops = {
     "not rlike": "not_rlike",
     "not_rlike": "not_rlike",
     "not ilike": "not_ilike",
-    "not_ilike": "not_ilike",
     "not_simlilar_to": "not_similar_to",
     "or": "or",
     "and": "and",
