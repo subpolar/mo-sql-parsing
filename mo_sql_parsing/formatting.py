@@ -146,6 +146,8 @@ class Formatter:
     _not_like = Operator("not like")
     _rlike = Operator("rlike")
     _not_rlike = Operator("not rlike")
+    _ilike = Operator("ilike")
+    _not_ilike = Operator("not ilike")
     _union = Operator("union")
     _union_all = Operator("union all")
     _intersect = Operator("intersect")
@@ -255,6 +257,25 @@ class Formatter:
             parts.append(f"({window})")
         if "name" in json:
             parts.extend(["AS", self.dispatch(json["name"])])
+        if "tablesample" in json:
+            parts.append("TABLESAMPLE")
+            sample = json["tablesample"]
+            sampling_method = sample.get("method")
+            if sampling_method:
+                parts.append(sampling_method)
+            sampling_rows = sample.get("rows")
+            if sampling_rows:
+                parts.append(f"({sampling_rows} ROWS)")
+            sampling_pct = sample.get("percent")
+            if sampling_pct:
+                parts.append(f"({sampling_pct} PERCENT)")
+            sampling_bucket = sample.get("bucket")
+            if sampling_bucket:
+                bucket_parts = [f"BUCKET {sampling_bucket[0]} OUT OF {sampling_bucket[1]}"]
+                sampling_on = sample.get("on")
+                if sampling_on:
+                    bucket_parts.append(f"ON {self.format(sampling_on)}")
+                parts.append("("+" ".join(bucket_parts)+")")
 
         return " ".join(parts)
 

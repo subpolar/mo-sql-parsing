@@ -297,6 +297,8 @@ precedence = {
     "not_like": 8,
     "rlike": 8,
     "not_rlike": 8,
+    "ilike": 8,
+    "not_ilike": 8,
     "similar_to": 8,
     "not_similar_to": 8,
     "and": 10,
