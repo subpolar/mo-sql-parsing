@@ -167,6 +167,8 @@ class Formatter:
         if isinstance(json, dict):
             if len(json) == 0:
                 return ""
+            elif "substring" in json:
+                return self._substring(json, prec)
             elif "value" in json:
                 return self.value(json, prec)
             elif "join" in json:
@@ -318,6 +320,9 @@ class Formatter:
         return "{0} COLLATE {1}".format(
             self.dispatch(pair[0], precedence["collate"]), pair[1]
         )
+
+    def _substring(self, json, prec):
+        return f"SUBSTRING({json['substring']} FROM {json['from']} FOR {json['for']})"
 
     def _in(self, json, prec):
         member, set = json
