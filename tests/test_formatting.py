@@ -825,3 +825,9 @@ class TestSimple(TestCase):
         }
         sql = format(parsed)
         self.assertEqual(sql, """FROM customer WHERE SUBSTRING(c_phone FROM 1 FOR 2) IN ('28', '27', '17', '10', '14', '34', '15')""")
+
+    def test_issue_136(self):
+        sql = """SELECT * FROM T1 WHERE NOT EXISTS (SELECT * FROM T1,T2 WHERE T1.C1=T2.C2)"""
+        result = parse(sql)
+        new_sql = format(result)
+        self.assertEqual(new_sql,  """SELECT * FROM T1 WHERE NOT EXISTS (SELECT * FROM T1, T2 WHERE T1.C1 = T2.C2)""")

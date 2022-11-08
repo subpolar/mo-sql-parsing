@@ -310,8 +310,18 @@ class Formatter:
     def _binary_not(self, value, prec):
         return "~{0}".format(self.dispatch(value))
 
+    def _not(self, value, prec):
+        op_prec = precedence["not"]
+        if prec >= op_prec:
+            return f"NOT {self.dispatch(value)}"
+        else:
+            return f"NOT ({self.dispatch(value)})"
+
     def _exists(self, value, prec):
-        return "{0} IS NOT NULL".format(self.dispatch(value, precedence["is"]))
+        sql = self.dispatch(value, precedence["exists"])
+        if "from" in value:
+            return f"EXISTS {sql}"
+        return f"{sql} IS NOT NULL"
 
     def _missing(self, value, prec):
         return "{0} IS NULL".format(self.dispatch(value, precedence["is"]))
