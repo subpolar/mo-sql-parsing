@@ -290,6 +290,7 @@ precedence = {
     "at_time_zone": 8,
     "between": 8,
     "not_between": 8,
+    "not": 8,
     "in": 8,
     "nin": 8,
     "is": 8,
