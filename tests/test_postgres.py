@@ -268,3 +268,30 @@ class TestPostgres(TestCase):
             },
         }
         self.assertEqual(result, expected)
+
+    def test_issue_134a(self):
+        # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
+        sql = """SELECT interval ':1' day (3)"""
+        result = parse(sql)
+        expect = {'select': {"value":{"interval": [1, "minute"]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_134b(self):
+        # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
+        sql = """SELECT interval '1:1' minute to second"""
+        result = parse(sql)
+        expect = {'select': {"value":{"add":[
+            {"interval":[1, "minute"]},
+            {"interval": [1, 'second']}
+        ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_134c(self):
+        # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
+        sql = """SELECT interval '1-1' month to second"""
+        result = parse(sql)
+        expect = {'select': {"value":{"add":[
+            {"interval":[1, "month"]},
+            {"interval": [1, 'day']}
+        ]}}}
+        self.assertEqual(result, expect)

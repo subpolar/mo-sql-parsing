@@ -169,7 +169,7 @@ NOT_IN = Group(NOT + IN).set_parser_name("nin")
 IS_NOT = Group(IS + NOT).set_parser_name("is_not")
 
 _SIMILAR = keyword("similar")
-TO = keyword("to")
+TO = Keyword("to", caseless=True).suppress()
 SIMILAR_TO = Group(_SIMILAR + TO).set_parser_name("similar_to")
 NOT_SIMILAR_TO = Group(NOT + _SIMILAR + TO).set_parser_name("not_similar_to")
 

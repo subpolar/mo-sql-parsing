@@ -372,7 +372,7 @@ class TestSqlGlot(TestCase):
                 "partitionby": "a",
                 "range": {
                     "max": 0,
-                    "min": {"neg": {"interval": [{"literal": "1"}, "day"]}},
+                    "min": {"neg": {"interval": [1, "day"]}},
                 },
             },
             "value": {"sum": "x"},
@@ -387,8 +387,8 @@ class TestSqlGlot(TestCase):
                 "orderby": {"value": "b"},
                 "partitionby": "a",
                 "range": {
-                    "max": {"neg": {"interval": [{"literal": "2"}, "day"]}},
-                    "min": {"neg": {"interval": [{"literal": "1"}, "day"]}},
+                    "max": {"neg": {"interval": [2, "day"]}},
+                    "min": {"neg": {"interval": [1, "day"]}},
                 },
             },
             "value": {"sum": "x"},
@@ -402,7 +402,7 @@ class TestSqlGlot(TestCase):
             "over": {
                 "orderby": {"value": "b"},
                 "partitionby": "a",
-                "range": {"min": {"neg": {"interval": [{"literal": "1"}, "day"]}}},
+                "range": {"min": {"neg": {"interval": [1, "day"]}}},
             },
             "value": {"sum": "x"},
         }}
