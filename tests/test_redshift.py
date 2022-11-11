@@ -140,6 +140,20 @@ class TestRedshift(TestCase):
             ]}}},
         )
 
+    def test_dates4(self):
+        sql = "select interval '7 1:1:1'"
+        result = parse(sql)
+
+        self.assertEqual(
+            result,
+            {"select": {"value": {"add": [
+                {"interval": [7, "day"]},
+                {"interval": [1, "hour"]},
+                {"interval": [1, "minute"]},
+                {"interval": [1, "second"]},
+            ]}}}
+        )
+
     def test_dates2(self):
         # https://docs.aws.amazon.com/redshift/latest/dg/r_interval_literals.html
         sql = "select interval '52 weeks'"

@@ -11,7 +11,7 @@ from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
 from mo_sql_parsing.keywords import *
-from mo_sql_parsing.types import get_column_type, time_functions
+from mo_sql_parsing.types import get_column_type, time_functions, _sizes
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
@@ -148,16 +148,46 @@ def parser(literal_string, simple_ident, sqlserver=False):
             / to_trim_call
         )
 
-        _standard_time_intervals = MatchFirst([
-            keyword(d) / (lambda t: durations[t[0].lower()]) for d in durations.keys()
-        ]).set_parser_name("duration")("params")
+        # INTERVAL TYPE
+        time_interval_type = Forward()
+        time_interval_type << MatchFirst([
+            (
+                (Keyword(d, caseless=True) / (lambda t: durations[t[0].lower()]))("op")
+                + _sizes
+                + Optional(TO + time_interval_type("kwargs"))
+            )
+            / to_interval_type
+            for d in durations.keys()
+        ])
+        # COMPOUND INTERVAL
+        csv_interval = Group(delimited_list(Group((real_num | int_num)("expr") + time_interval_type("type"))))("csv")
 
-        duration = expression("params") + _standard_time_intervals
+        def formatted_rules():
+            _rules = [
+                (Empty(), "year"),
+                (Literal("-"), "month"),
+                (Literal("-"), "day"),
+                (Literal(" "), "hour"),
+                (Literal(":"), "minute"),
+                (Literal(":"), "second"),
+                (Literal("."), "fraction"),
+            ]
+            with NO_WHITESPACE:
+                acc = []
+                for i, (prefix, start) in enumerate(_rules):
+                    suffix = Empty()
+                    for separator, next in reversed(_rules[i + 1 :]):
+                        suffix = Optional(separator + int_num(next) + suffix)
+                    acc.append(Optional(prefix) + int_num(start) + suffix)
+                return Group(Or(acc))("formatted")
 
-        literal_duration = (real_num | int_num)("params") + _standard_time_intervals
+        formatted_duration = formatted_rules()
+        duration = Or([formatted_duration, csv_interval])
 
         interval = (
-            INTERVAL + ("'" + delimited_list(literal_duration) + "'" | duration)
+            INTERVAL
+            + ("'" + duration + "'" | formatted_duration | expression("expr"))
+            + Optional(time_interval_type("type"))
         ) / to_interval_call
 
         timestamp = (
@@ -173,7 +203,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         extract = (
             keyword("extract")("op")
             + LB
-            + (_standard_time_intervals | expression("params"))
+            + (time_interval_type("params") | expression("params"))
             + FROM
             + expression("params")
             + RB
@@ -532,7 +562,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
         #  [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF table_name [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
         for_update = Optional(
             FOR
-            + (keyword("update") | keyword("share") | keyword("no key update") | keyword("key share"))("mode")
+            + (
+                keyword("update")
+                | keyword("share")
+                | keyword("no key update")
+                | keyword("key share")
+            )("mode")
             + Optional(
                 keyword("of").suppress()
                 + identifier("value")
