@@ -646,7 +646,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         )
 
         table_element = (
-            column_definition("columns") | table_constraint_definition("constraint")
+           table_constraint_definition("constraint") | column_definition("columns")
         )
         temporary = Optional(
             (
@@ -662,7 +662,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + TABLE
             + Optional((keyword("if not exists") / (lambda: False))("replace"))
             + identifier("name")
-            + Optional(LB + delimited_list(table_element) + RB)
+            + Optional(LB + delimited_list(table_element) + Optional(",") + RB)
             + ZeroOrMore(
                 assign("engine", EQ + identifier)
                 | assign("collate", EQ + identifier)
