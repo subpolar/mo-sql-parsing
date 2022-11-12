@@ -831,3 +831,7 @@ class TestSimple(TestCase):
         result = parse(sql)
         new_sql = format(result)
         self.assertEqual(new_sql,  """SELECT * FROM T1 WHERE NOT EXISTS (SELECT * FROM T1, T2 WHERE T1.C1 = T2.C2)""")
+
+    def test_issue_137_delete(self):
+        formatted = format({"delete": "x", "where": {"gt": ["y", 1]}})
+        self.assertEqual(formatted, """DELETE FROM x\nWHERE y > 1""")

@@ -11,8 +11,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
@@ -891,9 +889,24 @@ class TestCreateForBigQuery(TestCase):
         WHERE a.name = s.name"""
         result = parse(sql)
         expected = {
-            "update": {"value":"my_table", "name":"a"},
+            "update": {"value": "my_table", "name": "a"},
             "from": {"name": "s", "value": "source_table"},
             "set": {"flag": 1},
             "where": {"eq": ["a.name", "s.name"]},
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_139_create_table_with_key(self):
+        sql = """
+        CREATE TABLE `a_table` (
+          `a_column` INT,
+          KEY `a_key` (`a_column`),
+        )
+        """
+        result = parse(sql)
+        expected = {"create table": {
+            "columns": {"name": "a_column", "type": {"int": {}}},
+            "constraint": {"index": {"columns": "a_column", "name": "a_key"}},
+            "name": "a_table",
+        }}
         self.assertEqual(result, expected)
