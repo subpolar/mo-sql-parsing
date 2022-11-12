@@ -14,8 +14,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import skip, TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 

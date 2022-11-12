@@ -167,6 +167,8 @@ class Formatter:
         if isinstance(json, dict):
             if len(json) == 0:
                 return ""
+            elif "delete" in json:
+                return self.delete(json, prec)
             elif "substring" in json:
                 return self._substring(json, prec)
             elif "value" in json:
@@ -601,6 +603,14 @@ class Formatter:
     def fetch(self, json, prec):
         num = self.dispatch(json["offset"], precedence["order"])
         return f"FETCH {num} ROWS ONLY"
+
+    def delete(self, json, prec):
+        acc = ["DELETE FROM ", json['delete']]
+        if "where" in json:
+            json = {k: v for k, v in json.items() if k != "delete"}
+            acc.append("\n")
+            acc.append(self.dispatch(json, prec))
+        return "".join(acc)
 
     def insert(self, json, prec=precedence["from"]):
         acc = ["INSERT"]

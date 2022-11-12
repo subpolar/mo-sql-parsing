@@ -11,8 +11,6 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
-from mo_parsing.debug import Debugger
-
 from mo_sql_parsing import parse
 
 
@@ -905,8 +903,7 @@ class TestCreateForBigQuery(TestCase):
           KEY `a_key` (`a_column`),
         )
         """
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expected = {"create table": {
             "columns": {"name": "a_column", "type": {"int": {}}},
             "constraint": {"index": {"columns": "a_column", "name": "a_key"}},
