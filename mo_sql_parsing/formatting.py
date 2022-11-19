@@ -124,6 +124,10 @@ ordered_clauses = [
     "fetch",
 ]
 
+agg_kwargs = {"distinct", "orderby", "limit", "nulls"}
+
+ordered_query_kwargs = agg_kwargs | set(ordered_clauses)
+
 
 class Formatter:
     # infix operators
@@ -174,10 +178,10 @@ class Formatter:
             elif "value" in json:
                 return self.value(json, prec)
             elif "join" in json:
-                return self._join_on(json)
+                return self._join_on(json, prec)
             elif "insert" in json:
-                return self.insert(json)
-            elif json.keys() & set(ordered_clauses):
+                return self.insert(json, prec)
+            elif json.keys() & ordered_query_kwargs:
                 return self.ordered_query(json, prec)
             elif json.keys() & set(unordered_clauses):
                 return self.unordered_query(json, prec)
@@ -483,9 +487,20 @@ class Formatter:
         return " ".join(acc)
 
     def ordered_query(self, json, prec):
+        op = None
         if json.keys() & set(unordered_clauses) - {"from"}:
             # regular query
             acc = [self.unordered_query(json, precedence["order"])]
+        elif "from" not in json and len(json.keys() - agg_kwargs) == 1:
+            # aggreate operation
+            op = first(json.keys() - agg_kwargs)
+            acc = []
+            if json.get("distinct"):
+                acc.append("DISTINCT")
+            acc.append(self.dispatch(json[op], precedence["order"]))
+            if json.get('nulls'):
+                acc.append(json.get('nulls').upper())
+                acc.append("NULLS")
         else:
             # set-op expression
             acc = [self.dispatch(json["from"], precedence["order"])]
@@ -497,8 +512,13 @@ class Formatter:
             for part in [getattr(self, clause)(json, precedence["order"])]
             if part
         )
-        sql = " ".join(acc)
-        if prec >= precedence["order"]:
+        try:
+            sql = " ".join(acc)
+        except Exception as cause:
+            print(cause)
+        if op:
+            return f"{op.upper()}({sql})"
+        elif prec >= precedence["order"]:
             return sql
         else:
             return f"({sql})"

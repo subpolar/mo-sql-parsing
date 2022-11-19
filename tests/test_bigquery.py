@@ -558,5 +558,13 @@ class TestBigQuery(TestCase):
                 },
             },
         ]}
-
         self.assertEqual(result, expected)
+
+    def test_issue_142_array_agg(self):
+        sql = """SELECT ARRAY_AGG(DISTINCT email IGNORE NULLS) AS email"""
+        result = parse(sql)
+        expect = {"select": {
+            "name": "email",
+            "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"},
+        }}
+        self.assertEqual(result, expect)

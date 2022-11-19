@@ -310,6 +310,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         call_function = (
             function_name("op")
             + LB
+            + Optional(flag("distinct"))
             + Optional(Group(query)("params") | delimited_list(one_param))
             + Optional(
                 (keyword("respect") | keyword("ignore"))("nulls")
