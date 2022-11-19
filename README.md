@@ -160,6 +160,29 @@ for select in listwrap(parsed_result.get('select')):
 ## Version Changes, Features
 
 
+### Version 9
+
+*November 2022*
+
+Output for `COUNT(DISTINCT x)` has changed from function composition
+
+    {"count": {"distinct": x}}
+
+to named parameters
+
+    {"count": x, "distinct": true}
+     
+This was part of a bug fix [issue142](https://github.com/klahnakoski/mo-sql-parsing/issues/142) - realizing `distinct` is just one parameter of many in an aggregate function. Specifically, using the `calls=normal_op` for clarity:
+    
+    >>> from mo_sql_parsing import parse, normal_op
+    >>> parse("select count(distinct x)", calls=normal_op)
+    
+    {'select': {'value': {
+        'op': 'count', 
+        'args': [x], 
+        'kwargs': {'distinct': True}
+    }}}
+
 ### Version 8.200+
 
 *September 2022*

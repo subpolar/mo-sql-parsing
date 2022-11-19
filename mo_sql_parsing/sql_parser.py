@@ -306,15 +306,18 @@ def parser(literal_string, simple_ident, sqlserver=False):
             / to_kwarg
         ) | Group(expression)("params")
 
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/aggregate-function-calls
         call_function = (
             function_name("op")
             + LB
+            + Optional(flag("distinct"))
             + Optional(Group(query)("params") | delimited_list(one_param))
             + Optional(
                 (keyword("respect") | keyword("ignore"))("nulls")
                 + keyword("nulls").suppress()
             )
             + Optional(ORDER_BY + delimited_list(Group(sort_column))("orderby"))
+            + Optional(assign("limit", expression))
             + RB
         ) / to_json_call
 

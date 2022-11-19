@@ -527,3 +527,44 @@ class TestBigQuery(TestCase):
             "default": {"current_date": {"literal": "America/Sao_Paulo"}},
         }}
         self.assertEqual(result, expected)
+
+    def test_issue_141_string_agg(self):
+        sql = """
+            SELECT 
+                string_agg(address_type.name, ', ') as address_type_name
+                ,string_agg(address.street order by length(address.street) limit 1) as street 
+                ,string_agg(address.complement order by length(address.complement) limit 1) as complement 
+        """
+        result = parse(sql)
+        expected = {"select": [
+            {
+                "name": "address_type_name",
+                "value": {"string_agg": ["address_type.name", {"literal": ", "}]},
+            },
+            {
+                "name": "street",
+                "value": {
+                    "limit": 1,
+                    "orderby": {"value": {"length": "address.street"}},
+                    "string_agg": "address.street",
+                },
+            },
+            {
+                "name": "complement",
+                "value": {
+                    "limit": 1,
+                    "orderby": {"value": {"length": "address.complement"}},
+                    "string_agg": "address.complement",
+                },
+            },
+        ]}
+        self.assertEqual(result, expected)
+
+    def test_issue_142_array_agg(self):
+        sql = """SELECT ARRAY_AGG(DISTINCT email IGNORE NULLS) AS email"""
+        result = parse(sql)
+        expect = {"select": {
+            "name": "email",
+            "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"},
+        }}
+        self.assertEqual(result, expect)

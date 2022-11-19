@@ -476,7 +476,7 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
-    def test_found_in_sparqling_queries(self):
+    def test_found_in_sparqling_queries1(self):
         # https://github.com/yandex-research/sparqling-queries/blob/e04d0bfd507c4859be3f35d4e0d8eb57434bb4f6/data/spider
 
         query = """SELECT name, date FROM battle"""
@@ -516,6 +516,7 @@ class TestSimple(TestCase):
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
 
+    def test_found_in_sparqling_queries2(self):
         query = """SELECT document_name FROM documents GROUP BY document_type_code INTERSECT SELECT document_name FROM documents GROUP BY document_structure_code ORDER BY COUNT(*) DESC LIMIT 3"""
         parse_result = parse(query)
         format_result = format(parse_result)
@@ -835,3 +836,8 @@ class TestSimple(TestCase):
     def test_issue_137_delete(self):
         formatted = format({"delete": "x", "where": {"gt": ["y", 1]}})
         self.assertEqual(formatted, """DELETE FROM x\nWHERE y > 1""")
+
+    def test_issue_142_agg_functions(self):
+        sql= """SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x LIMIT 1)"""
+        formatted = format(parse(sql))
+        self.assertEqual(formatted, sql)

@@ -1336,8 +1336,9 @@ class TestSimpleUsingOperators(TestCase):
             {
                 "from": "A",
                 "select": {"value": {
-                    "args": [{"args": ["Y"], "op": "distinct"}],
                     "op": "count",
+                    "args": ["Y"],
+                    "kwargs": {"distinct": True}
                 }},
             },
         )
@@ -1352,13 +1353,11 @@ class TestSimpleUsingOperators(TestCase):
                 "groupby": {"value": "A"},
                 "select": [
                     {"value": {
-                        "args": [{
-                            "args": [{"value": "B"}, {"value": "E"}],
-                            "op": "distinct",
-                        }],
                         "op": "count",
+                        "args": ["B", "E"],
+                        "kwargs": {"distinct": True}
                     }},
-                    {"value": "A"},
+                    {"value": "A"}
                 ],
                 "where": {"args": ["D", "X"], "op": "eq"},
             },

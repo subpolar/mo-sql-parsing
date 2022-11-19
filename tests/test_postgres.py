@@ -273,16 +273,16 @@ class TestPostgres(TestCase):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval ':1' day (3)"""
         result = parse(sql)
-        expect = {'select': {"value":{"interval": [1, "minute"]}}}
+        expect = {"select": {"value": {"interval": [1, "minute"]}}}
         self.assertEqual(result, expect)
 
     def test_issue_134b(self):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval '1:1' minute to second"""
         result = parse(sql)
-        expect = {'select': {"value":{"add":[
-            {"interval":[1, "minute"]},
-            {"interval": [1, 'second']}
+        expect = {"select": {"value": {"add": [
+            {"interval": [1, "minute"]},
+            {"interval": [1, "second"]},
         ]}}}
         self.assertEqual(result, expect)
 
@@ -290,8 +290,26 @@ class TestPostgres(TestCase):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval '1-1' month to second"""
         result = parse(sql)
-        expect = {'select': {"value":{"add":[
-            {"interval":[1, "month"]},
-            {"interval": [1, 'day']}
+        expect = {"select": {"value": {"add": [
+            {"interval": [1, "month"]},
+            {"interval": [1, "day"]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_140_interval_cast1(self):
+        sql = """SELECT '2 months'::interval"""
+        result = parse(sql)
+        expect = {"select": {"value": {"cast": [
+            {"literal": "2 months"},
+            {"interval": {}},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_140_interval_cast2(self):
+        sql = """SELECT CAST('2 months' AS INTERVAL)"""
+        result = parse(sql)
+        expect = {"select": {"value": {"cast": [
+            {"literal": "2 months"},
+            {"interval": {}},
         ]}}}
         self.assertEqual(result, expect)
