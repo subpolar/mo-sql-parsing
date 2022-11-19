@@ -307,8 +307,7 @@ class TestPostgres(TestCase):
 
     def test_issue_140_interval_cast2(self):
         sql = """SELECT CAST('2 months' AS INTERVAL)"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expect = {"select": {"value": {"cast": [
             {"literal": "2 months"},
             {"interval": {}},
