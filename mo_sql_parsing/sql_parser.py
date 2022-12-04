@@ -36,6 +36,7 @@ with whitespaces.NO_WHITESPACE:
     ident_w_dash = Regex(ident_w_dash.__regex__()[1]) / no_dashes
 
 simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR)
+set_parser_names()
 
 
 def common_parser():
