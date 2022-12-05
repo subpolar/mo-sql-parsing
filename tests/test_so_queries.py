@@ -29,7 +29,7 @@ class TestSoQueries(TestCase):
     THESE QUERIES ARE MOSTLY VERY SIMILAR, NOT MANY USEFUL TESTS FOR A PARSER
     """
 
-    @skipIf(not IS_TRAVIS, "slow")
+    # @skipIf(not IS_TRAVIS, "slow")
     def test_so_queries(self):
         import mo_streams  # REQUIRED FOR FUNCTION CHAIN BELOW
 
