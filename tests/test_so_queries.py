@@ -41,7 +41,7 @@ class TestSoQueries(TestCase):
                 new_sql = format(result)
                 new_result = parse(new_sql)
                 self.assertEqual(result, new_result)
-                if randoms.int(10) == 0:
+                if randoms.int(50) == 0:
                     Log.info("{{data}}", data=value2json(result))
             except Exception as cause:
                 Log.warning("failed", cause=cause)
