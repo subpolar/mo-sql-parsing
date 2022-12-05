@@ -33,9 +33,9 @@ with whitespaces.NO_WHITESPACE:
         Char(FIRST_IDENT_CHAR)
         + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
     )
-    ident_w_dash = Regex(ident_w_dash.__regex__()[1]) / no_dashes
+    ident_w_dash = Regex(ident_w_dash.__regex__()[1]).set_parser_name("identifier_with_dashes") / no_dashes
 
-simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR)
+simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
 
 
 def common_parser():

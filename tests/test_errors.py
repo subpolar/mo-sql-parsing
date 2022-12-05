@@ -89,3 +89,17 @@ class TestErrors(FuzzyTestCase):
         sql = "SELECT * FROM foo f TABLESAMPLE(bernoulli) WHERE f.a < 42"
         with self.assertRaises("Expecting {bytes_constraint} | {bucket} | {int}, found \"bernoulli"):
             parse(sql)
+
+    def test_issue_143(self):
+        sql = """WITH balance AS (
+            SELECT * FROM `****`
+        ), balance_settled_to_disregard AS (
+            SELECT * FROM `***`
+        ), tpv AS (
+            SELECT
+                IF(brand_description = 'VISA', 40,
+                    IF(brand_description = 'MasterCard', 50,
+        ...
+        )"""
+        with self.assertRaises("found \"...\\n"):
+            result = parse(sql)
