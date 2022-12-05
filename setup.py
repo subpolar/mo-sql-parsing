@@ -7,7 +7,7 @@ setup(
     author_email='kyle@lahnakoski.com',
     classifiers=["Development Status :: 3 - Alpha","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","Programming Language :: SQL","Programming Language :: Python :: 3.7","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"],
     description='More SQL Parsing! Parse SQL into JSON parse tree',
-    extras_require={"dev":[],"tests":["mo-testing","mo-threads","mo-files","mo-streams"]},
+    extras_require={"dev":[],"tests":["mo-testing","mo-threads","mo-files","mo-streams","zstandard"]},
     include_package_data=True,
     install_requires=["mo-dots==9.266.22338","mo-future==6.265.22338","mo-imports==7.265.22338","mo-parsing==8.266.22338"],
     license='MPL 2.0',
@@ -16,6 +16,6 @@ setup(
     name='mo-sql-parsing',
     packages=["mo_sql_parsing"],
     url='https://github.com/klahnakoski/mo-sql-parsing',
-    version='9.267.22339',
+    version='9.277.22339',
     zip_safe=True
 )

@@ -41,7 +41,7 @@ class TestSoQueries(TestCase):
                 new_sql = format(result)
                 new_result = parse(new_sql)
                 self.assertEqual(result, new_result)
-                if randoms.int(10) == 0:
+                if randoms.int(50) == 0:
                     Log.info("{{data}}", data=value2json(result))
             except Exception as cause:
                 Log.warning("failed", cause=cause)
@@ -55,10 +55,9 @@ class TestSoQueries(TestCase):
                 .utf8()
                 .to_str()
                 .map(careful_parse)
-                .limit(10)
                 .to_list()
             )
-            Log.info("{{num}} results in {{seconds|round(0)}}", num= len(results), seconds=timer.duration.seconds)
+            Log.info("{{num}} results in {{seconds|round(1)}} seconds", num= len(results), seconds=timer.duration.seconds)
 
 
 def scrub(sql):
