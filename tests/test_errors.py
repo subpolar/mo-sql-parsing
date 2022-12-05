@@ -63,8 +63,7 @@ class TestErrors(FuzzyTestCase):
     def test_issue_50_dashes_in_name(self):
         sql = """select col-cpu-usage from test-information"""
         with self.assertRaises("Use backticks (``) around identifiers"):
-            with Debugger():
-                parse_mysql(sql)
+            parse_mysql(sql)
 
     def test_issue_50_subtraction1(self):
         sql = """select col-0pu-usage from test-information"""
