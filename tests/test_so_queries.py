@@ -29,7 +29,7 @@ class TestSoQueries(TestCase):
     THESE QUERIES ARE MOSTLY VERY SIMILAR, NOT MANY USEFUL TESTS FOR A PARSER
     """
 
-    # @skipIf(not IS_TRAVIS, "slow")
+    @skipIf(not IS_TRAVIS, "slow")
     def test_so_queries(self):
         import mo_streams  # REQUIRED FOR FUNCTION CHAIN BELOW
 
@@ -55,10 +55,9 @@ class TestSoQueries(TestCase):
                 .utf8()
                 .to_str()
                 .map(careful_parse)
-                .limit(10)
                 .to_list()
             )
-            Log.info("{{num}} results in {{seconds|round(0)}}", num= len(results), seconds=timer.duration.seconds)
+            Log.info("{{num}} results in {{seconds|round(1)}} seconds", num= len(results), seconds=timer.duration.seconds)
 
 
 def scrub(sql):
