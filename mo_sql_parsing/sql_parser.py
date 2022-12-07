@@ -186,7 +186,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         interval = (
             INTERVAL
-            + ("'" + duration + "'" | formatted_duration | expression("expr"))
+            + ("'" + duration + "'" | expression("expr") ^ formatted_duration )
             + Optional(time_interval_type("type"))
         ) / to_interval_call
 

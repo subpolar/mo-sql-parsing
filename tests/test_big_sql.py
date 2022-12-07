@@ -11,6 +11,10 @@ from __future__ import absolute_import, division, unicode_literals
 import json
 from unittest import TestCase
 
+from mo_json import value2json
+from mo_parsing.debug import Debugger
+from mo_times import Timer
+
 from mo_sql_parsing import parse
 
 
@@ -587,4 +591,485 @@ class TestBigSql(TestCase):
             ],
         }
 
+        self.assertEqual(result, expected)
+
+    def test_issue144(self):
+        sql = """WITH balance AS (
+    SELECT
+        beyblade_id                                               AS beyblade_id
+        ,babala_id                                             AS babala_id
+        ,CASE 
+            WHEN datinha_marota = \"9999-12-31\" 
+            THEN due_date 
+            ELSE datinha_marota 
+        END                                                     AS age
+        ,SUM(hugo_boss)                            AS hugo_boss
+        ,SUM(net_dos_milagres)                              AS net_dos_milagres                                  
+    FROM `*******************.**********************.********************` mov
+    WHERE
+        reference_date <= DATE_SUB(_reference_date, INTERVAL 2 DAY)
+        AND 
+        (datinha_marota > DATE_SUB(_reference_date, INTERVAL 2 DAY) OR datinha_marota IS NULL)
+    GROUP BY 1, 2, 3
+), balance_settled_to_disregard AS (
+    SELECT
+        beyblade_id
+        ,babala_id
+        ,datinha_marota
+        ,SUM(hugo_boss)                                        AS hugo_boss
+        ,SUM(net_dos_milagres)                                          AS net_dos_milagres
+    FROM `*******************.**********************.********************` mov
+    WHERE  
+        (datinha_marota >= DATE_SUB(_reference_date, INTERVAL 1 DAY)
+        AND datinha_marota <= _reference_date)
+        AND reference_date <= DATE_SUB(_reference_date, INTERVAL 2 DAY)
+    GROUP BY 1, 2, 3
+), tpv AS (
+    SELECT
+        IF(teraband_discreto = 'VISA', 10,
+            IF(teraband_discreto = 'MasterCard', 40,
+                IF(teraband_discreto = 'Elo', 20,
+                    IF(teraband_discreto = 'Hiper / HiperCard', 78,
+                        IF(teraband_discreto = 'American Express', 23,
+                            IF(teraband_discreto = 'Cabal', 1235, 1234)))))) as beyblade_id
+        ,CASE WHEN
+            teraband_discreto = 'MasterCard' THEN
+                IF(tipinho_maroto_id = 2, 1234, 12354)
+            ELSE
+                IF(tipinho_maroto_id = 10, 123, 234)
+        END AS babala_id
+        ,DATE(IF(
+            tipinho_maroto_id = 2, 
+            DATE_ADD(dia_da_apresentacaozinha, INTERVAL 28+(installment_number-1)*30 DAY), 
+            dia_da_apresentacaozinha
+        ))                                                                              AS age       
+        ,SUM(
+        CASE 
+            WHEN tx_type = 1 
+            THEN +instagram_original 
+            ELSE -instagram_original 
+        END)                                                                            AS hugo_boss
+        ,SUM(
+        CASE 
+            WHEN tx_type = 1 
+            THEN +instagram_original 
+            ELSE -instagram_original 
+        END) -
+        SUM(
+        CASE 
+            WHEN tx_type = 1 
+            THEN +amount 
+            ELSE -amount 
+        END)                                                                            AS net_dos_milagres
+    FROM `*******************.**********************.********************` t
+    WHERE
+        CASE 
+            WHEN tipinho_maroto_id = 1
+            THEN (
+                CASE 
+                    WHEN is_week_day
+                    THEN (
+                        DATE(dia_da_apresentacaozinha) = _reference_date
+                    )
+                    ELSE (
+                        DATE(dia_da_apresentacaozinha) 
+                        BETWEEN 
+                        DATE_SUB(_reference_date, INTERVAL 1 DAY) AND
+                        _reference_date
+                        
+                    )
+                END 
+            )
+            ELSE (
+                DATE(dia_da_apresentacaozinha) 
+                BETWEEN 
+                DATE_SUB(_reference_date, INTERVAL 1 DAY) AND
+                _reference_date 
+            )
+        END
+    GROUP BY 1, 2, 3
+)
+
+SELECT
+    stg.reference_date
+    ,inst.name                  AS hytofly
+    ,st.name                    AS service_type
+    ,stg.age
+    ,stg.hugo_boss
+    ,stg.net_dos_milagres
+    ,stg.updated_at
+FROM (
+    SELECT 
+        _reference_date                                                                                     AS reference_date
+        ,IFNULL(IFNULL(bal.babala_id, bstd.babala_id), t.babala_id)                       AS babala_id
+        ,IFNULL(IFNULL(bal.beyblade_id, bstd.beyblade_id), t.beyblade_id)                          AS beyblade_id
+        ,COALESCE(DATE(t.age), DATE(bal.age))                                                               AS age
+        ,IFNULL(bal.hugo_boss, 0) - IFNULL(bstd.hugo_boss, 0) + IFNULL(t.hugo_boss, 0)             AS hugo_boss
+        ,IFNULL(bal.net_dos_milagres, 0) - IFNULL(bstd.net_dos_milagres, 0) + IFNULL(t.net_dos_milagres, 0)                   AS net_dos_milagres
+        ,current_timestamp                                                                                  AS updated_at
+    FROM balance bal
+    FULL JOIN balance_settled_to_disregard bstd 
+        ON DATE(bal.age) = DATE(bstd.datinha_marota)
+        AND bal.babala_id = bstd.babala_id
+        AND bal.beyblade_id = bstd.beyblade_id
+    FULL JOIN tpv t
+        ON DATE(bal.age) = DATE(t.age)
+        AND bal.babala_id = t.babala_id
+        AND bal.beyblade_id = t.beyblade_id
+) stg
+    JOIN `*******************.**********************.********************` st
+        ON st.babala_id = stg.babala_id
+    JOIN `*******************.**********************.********************` inst
+        ON inst.beyblade_id = stg.beyblade_id
+"""
+        with Timer("parse big sql"):
+            result = parse(sql)
+        value2json(result)
+        expected = {
+            "from": [
+                {
+                    "name": "stg",
+                    "value": {
+                        "from": [
+                            {"name": "bal", "value": "balance"},
+                            {
+                                "full join": {
+                                    "name": "bstd",
+                                    "value": "balance_settled_to_disregard",
+                                },
+                                "on": {"and": [
+                                    {"eq": [
+                                        {"date": "bal.age"},
+                                        {"date": "bstd.datinha_marota"},
+                                    ]},
+                                    {"eq": ["bal.babala_id", "bstd.babala_id"]},
+                                    {"eq": ["bal.beyblade_id", "bstd.beyblade_id"]},
+                                ]},
+                            },
+                            {
+                                "full join": {"name": "t", "value": "tpv"},
+                                "on": {"and": [
+                                    {"eq": [{"date": "bal.age"}, {"date": "t.age"}]},
+                                    {"eq": ["bal.babala_id", "t.babala_id"]},
+                                    {"eq": ["bal.beyblade_id", "t.beyblade_id"]},
+                                ]},
+                            },
+                        ],
+                        "select": [
+                            {"name": "reference_date", "value": "_reference_date"},
+                            {
+                                "name": "babala_id",
+                                "value": {"ifnull": [
+                                    {"ifnull": ["bal.babala_id", "bstd.babala_id"]},
+                                    "t.babala_id",
+                                ]},
+                            },
+                            {
+                                "name": "beyblade_id",
+                                "value": {"ifnull": [
+                                    {"ifnull": ["bal.beyblade_id", "bstd.beyblade_id"]},
+                                    "t.beyblade_id",
+                                ]},
+                            },
+                            {
+                                "name": "age",
+                                "value": {"coalesce": [
+                                    {"date": "t.age"},
+                                    {"date": "bal.age"},
+                                ]},
+                            },
+                            {
+                                "name": "hugo_boss",
+                                "value": {"add": [
+                                    {"sub": [
+                                        {"ifnull": ["bal.hugo_boss", 0]},
+                                        {"ifnull": ["bstd.hugo_boss", 0]},
+                                    ]},
+                                    {"ifnull": ["t.hugo_boss", 0]},
+                                ]},
+                            },
+                            {
+                                "name": "net_dos_milagres",
+                                "value": {"add": [
+                                    {"sub": [
+                                        {"ifnull": ["bal.net_dos_milagres", 0]},
+                                        {"ifnull": ["bstd.net_dos_milagres", 0]},
+                                    ]},
+                                    {"ifnull": ["t.net_dos_milagres", 0]},
+                                ]},
+                            },
+                            {"name": "updated_at", "value": "current_timestamp"},
+                        ],
+                    },
+                },
+                {
+                    "join": {
+                        "name": "st",
+                        "value": "*******************..**********************..********************",
+                    },
+                    "on": {"eq": ["st.babala_id", "stg.babala_id"]},
+                },
+                {
+                    "join": {
+                        "name": "inst",
+                        "value": "*******************..**********************..********************",
+                    },
+                    "on": {"eq": ["inst.beyblade_id", "stg.beyblade_id"]},
+                },
+            ],
+            "select": [
+                {"value": "stg.reference_date"},
+                {"name": "hytofly", "value": "inst.name"},
+                {"name": "service_type", "value": "st.name"},
+                {"value": "stg.age"},
+                {"value": "stg.hugo_boss"},
+                {"value": "stg.net_dos_milagres"},
+                {"value": "stg.updated_at"},
+            ],
+            "with": [
+                {
+                    "name": "balance",
+                    "value": {
+                        "from": {
+                            "name": "mov",
+                            "value": "*******************..**********************..********************",
+                        },
+                        "groupby": [{"value": 1}, {"value": 2}, {"value": 3}],
+                        "select": [
+                            {"name": "beyblade_id", "value": "beyblade_id"},
+                            {"name": "babala_id", "value": "babala_id"},
+                            {
+                                "name": "age",
+                                "value": {"case": [
+                                    {
+                                        "then": "due_date",
+                                        "when": {"eq": [
+                                            "datinha_marota",
+                                            "9999-12-31",
+                                        ]},
+                                    },
+                                    "datinha_marota",
+                                ]},
+                            },
+                            {"name": "hugo_boss", "value": {"sum": "hugo_boss"}},
+                            {
+                                "name": "net_dos_milagres",
+                                "value": {"sum": "net_dos_milagres"},
+                            },
+                        ],
+                        "where": {"and": [
+                            {"lte": [
+                                "reference_date",
+                                {"date_sub": [
+                                    "_reference_date",
+                                    {"interval": [2, "day"]},
+                                ]},
+                            ]},
+                            {"or": [
+                                {"gt": [
+                                    "datinha_marota",
+                                    {"date_sub": [
+                                        "_reference_date",
+                                        {"interval": [2, "day"]},
+                                    ]},
+                                ]},
+                                {"missing": "datinha_marota"},
+                            ]},
+                        ]},
+                    },
+                },
+                {
+                    "name": "balance_settled_to_disregard",
+                    "value": {
+                        "from": {
+                            "name": "mov",
+                            "value": "*******************..**********************..********************",
+                        },
+                        "groupby": [{"value": 1}, {"value": 2}, {"value": 3}],
+                        "select": [
+                            {"value": "beyblade_id"},
+                            {"value": "babala_id"},
+                            {"value": "datinha_marota"},
+                            {"name": "hugo_boss", "value": {"sum": "hugo_boss"}},
+                            {
+                                "name": "net_dos_milagres",
+                                "value": {"sum": "net_dos_milagres"},
+                            },
+                        ],
+                        "where": {"and": [
+                            {"gte": [
+                                "datinha_marota",
+                                {"date_sub": [
+                                    "_reference_date",
+                                    {"interval": [1, "day"]},
+                                ]},
+                            ]},
+                            {"lte": ["datinha_marota", "_reference_date"]},
+                            {"lte": [
+                                "reference_date",
+                                {"date_sub": [
+                                    "_reference_date",
+                                    {"interval": [2, "day"]},
+                                ]},
+                            ]},
+                        ]},
+                    },
+                },
+                {
+                    "name": "tpv",
+                    "value": {
+                        "from": {
+                            "name": "t",
+                            "value": "*******************..**********************..********************",
+                        },
+                        "groupby": [{"value": 1}, {"value": 2}, {"value": 3}],
+                        "select": [
+                            {
+                                "name": "beyblade_id",
+                                "value": {"if": [
+                                    {"eq": ["teraband_discreto", {"literal": "VISA"}]},
+                                    10,
+                                    {"if": [
+                                        {"eq": [
+                                            "teraband_discreto",
+                                            {"literal": "MasterCard"},
+                                        ]},
+                                        40,
+                                        {"if": [
+                                            {"eq": [
+                                                "teraband_discreto",
+                                                {"literal": "Elo"},
+                                            ]},
+                                            20,
+                                            {"if": [
+                                                {"eq": [
+                                                    "teraband_discreto",
+                                                    {"literal": "Hiper / HiperCard"},
+                                                ]},
+                                                78,
+                                                {"if": [
+                                                    {"eq": [
+                                                        "teraband_discreto",
+                                                        {"literal": "American Express"},
+                                                    ]},
+                                                    23,
+                                                    {"if": [
+                                                        {"eq": [
+                                                            "teraband_discreto",
+                                                            {"literal": "Cabal"},
+                                                        ]},
+                                                        1235,
+                                                        1234,
+                                                    ]},
+                                                ]},
+                                            ]},
+                                        ]},
+                                    ]},
+                                ]},
+                            },
+                            {
+                                "name": "babala_id",
+                                "value": {"case": [
+                                    {
+                                        "then": {"if": [
+                                            {"eq": ["tipinho_maroto_id", 2]},
+                                            1234,
+                                            12354,
+                                        ]},
+                                        "when": {"eq": [
+                                            "teraband_discreto",
+                                            {"literal": "MasterCard"},
+                                        ]},
+                                    },
+                                    {"if": [
+                                        {"eq": ["tipinho_maroto_id", 10]},
+                                        123,
+                                        234,
+                                    ]},
+                                ]},
+                            },
+                            {
+                                "name": "age",
+                                "value": {"date": {"if": [
+                                    {"eq": ["tipinho_maroto_id", 2]},
+                                    {"date_add": [
+                                        "dia_da_apresentacaozinha",
+                                        {"interval": [
+                                            {"add": [
+                                                28,
+                                                {"mul": [
+                                                    {"sub": ["installment_number", 1]},
+                                                    30,
+                                                ]},
+                                            ]},
+                                            "day",
+                                        ]},
+                                    ]},
+                                    "dia_da_apresentacaozinha",
+                                ]}},
+                            },
+                            {
+                                "name": "hugo_boss",
+                                "value": {"sum": {"case": [
+                                    {
+                                        "then": {"pos": "instagram_original"},
+                                        "when": {"eq": ["tx_type", 1]},
+                                    },
+                                    {"neg": "instagram_original"},
+                                ]}},
+                            },
+                            {
+                                "name": "net_dos_milagres",
+                                "value": {"sub": [
+                                    {"sum": {"case": [
+                                        {
+                                            "then": {"pos": "instagram_original"},
+                                            "when": {"eq": ["tx_type", 1]},
+                                        },
+                                        {"neg": "instagram_original"},
+                                    ]}},
+                                    {"sum": {"case": [
+                                        {
+                                            "then": {"pos": "amount"},
+                                            "when": {"eq": ["tx_type", 1]},
+                                        },
+                                        {"neg": "amount"},
+                                    ]}},
+                                ]},
+                            },
+                        ],
+                        "where": {"case": [
+                            {
+                                "then": {"case": [
+                                    {
+                                        "then": {"eq": [
+                                            {"date": "dia_da_apresentacaozinha"},
+                                            "_reference_date",
+                                        ]},
+                                        "when": "is_week_day",
+                                    },
+                                    {"between": [
+                                        {"date": "dia_da_apresentacaozinha"},
+                                        {"date_sub": [
+                                            "_reference_date",
+                                            {"interval": [1, "day"]},
+                                        ]},
+                                        "_reference_date",
+                                    ]},
+                                ]},
+                                "when": {"eq": ["tipinho_maroto_id", 1]},
+                            },
+                            {"between": [
+                                {"date": "dia_da_apresentacaozinha"},
+                                {"date_sub": [
+                                    "_reference_date",
+                                    {"interval": [1, "day"]},
+                                ]},
+                                "_reference_date",
+                            ]},
+                        ]},
+                    },
+                },
+            ],
+        }
         self.assertEqual(result, expected)

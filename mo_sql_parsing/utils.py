@@ -390,7 +390,7 @@ def to_interval_call(tokens, index, string):
                             tokens['formatted'].type,
                             tokens['formatted'].start,
                             string,
-                            """Ambiguious value for given interal""",
+                            """Ambiguious value for given interval""",
                         )
                     return Call("interval", [formatted['year'], type], {})
                 elif 'year' not in type and 'month' in type:
@@ -408,7 +408,7 @@ def to_interval_call(tokens, index, string):
                         tokens['formatted'].type,
                         tokens['formatted'].start,
                         string,
-                        """Ambiguious value for given interal""",
+                        """Ambiguious value for given interval""",
                     )
                 return Call("interval", [float(str(formatted['second'])+"."+str(formatted['fraction'])), type], {})
 
