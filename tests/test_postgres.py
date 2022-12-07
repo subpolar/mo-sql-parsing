@@ -311,3 +311,15 @@ class TestPostgres(TestCase):
             {"interval": {}},
         ]}}}
         self.assertEqual(result, expect)
+
+    def test_issue_144_interval(self):
+        sql = """SELECT DATE_ADD(ha, INTERVAL 28+(installment_number-1)*30 DAY)"""
+        result = parse(sql)
+        expect = {"select": {"value": {"date_add": [
+            "ha",
+            {"interval": [
+                {"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30]}]},
+                "day",
+            ]},
+        ]}}}
+        self.assertEqual(result, expect)
