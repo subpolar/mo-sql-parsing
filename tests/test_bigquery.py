@@ -568,3 +568,45 @@ class TestBigQuery(TestCase):
             "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"},
         }}
         self.assertEqual(result, expect)
+
+    def test_issue_145(self):
+        sql = """WITH
+            shift_history_pivoted as (
+                SELECT * FROM `*********************.**************.**************` 
+                    UNPIVOT INCLUDE NULLS (
+                        status FOR time_interval IN (
+                            x0h00m_0h30m,
+                            x0h30m_1h00m
+                        )
+                    )
+            )            
+            SELECT
+                id
+            FROM
+                nu_com_a_mao_no_bolso
+            WHERE
+                time_interval IS NOT NULL
+            """
+        result = parse(sql)
+        expected = {
+            "select": {"value": "id"},
+            "from": "nu_com_a_mao_no_bolso",
+            "where": {"exists": "time_interval"},
+            "with": {
+                "name": "shift_history_pivoted",
+                "value": {
+                    "select": "*",
+                    "from": [
+                        "*********************..**************..**************",
+                        {"unpivot": {
+                            "for": "time_interval",
+                            "in": {"value": ["x0h00m_0h30m", "x0h30m_1h00m"]},
+                            "nulls": True,
+                            "value": "status",
+                        }},
+                    ],
+                },
+            },
+        }
+
+        self.assertEqual(result, expected)

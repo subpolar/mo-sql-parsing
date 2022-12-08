@@ -420,8 +420,13 @@ def parser(literal_string, simple_ident, sqlserver=False):
             )("kwargs")
         ) / to_pivot_call
 
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unpivot_operator
         unpivot_join = (
             UNPIVOT("op")
+            + Optional(
+                keyword("EXCLUDE NULLS")("nulls") / (lambda: True)
+                | keyword("INCLUDE NULLS")("nulls") / (lambda: True)
+            )("kwargs")
             + (
                 LB
                 + (expression("value") + assign("for", identifier) + IN)
