@@ -44,7 +44,7 @@ class TestSoQueries(TestCase):
                 if randoms.int(50) == 0:
                     Log.info("{{data}}", data=value2json(result))
             except Exception as cause:
-                Log.warning("failed", cause=cause)
+                Log.error("failed", cause=cause)
 
         with Timer("parse so queries") as timer:
             results = (
