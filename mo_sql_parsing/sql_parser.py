@@ -33,7 +33,10 @@ with whitespaces.NO_WHITESPACE:
         Char(FIRST_IDENT_CHAR)
         + (Regex("(?<=[^ 0-9])\\-(?=[^ 0-9])") | Char(IDENT_CHAR))[...]
     )
-    ident_w_dash = Regex(ident_w_dash.__regex__()[1]).set_parser_name("identifier_with_dashes") / no_dashes
+    ident_w_dash = (
+        Regex(ident_w_dash.__regex__()[1]).set_parser_name("identifier_with_dashes")
+        / no_dashes
+    )
 
 simple_ident = Word(FIRST_IDENT_CHAR, IDENT_CHAR).set_parser_name("identifier")
 
@@ -68,7 +71,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         with whitespaces.NO_WHITESPACE:
             identifier = ~RESERVED + ident
-        function_name = ~FROM + ident
+        function_name = ~(FROM | WHERE) + ident
 
         # EXPRESSIONS
         expression = Forward()
@@ -160,7 +163,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
             for d in durations.keys()
         ])
         # COMPOUND INTERVAL
-        csv_interval = Group(delimited_list(Group((real_num | int_num)("expr") + time_interval_type("type"))))("csv")
+        csv_interval = Group(delimited_list(Group(
+            (real_num | int_num)("expr") + time_interval_type("type")
+        )))("csv")
 
         def formatted_rules():
             _rules = [
@@ -186,7 +191,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         interval = (
             INTERVAL
-            + ("'" + duration + "'" | expression("expr") ^ formatted_duration )
+            + ("'" + duration + "'" | expression("expr") ^ formatted_duration)
             + Optional(time_interval_type("type"))
         ) / to_interval_call
 
@@ -213,10 +218,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             (
                 (
                     AS
-                    + (
-                        identifier("name")
-                        + Optional(LB + delimited_list(ident("col")) + RB)
-                    )
+                    + (ident("name") + Optional(LB + delimited_list(ident("col")) + RB))
                     | (
                         identifier("name")
                         + Optional(
@@ -367,7 +369,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | real_num
             | int_num
             | call_function
-            | Combine(identifier + Optional(".*"))
+            | Combine(function_name + Optional(".*"))
         )
 
         window_clause, over_clause = window(expression, identifier, sort_column)
@@ -542,12 +544,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 | unnest
                 | stack
                 | call_function
-                | identifier
+                | ident
             )("value")
             + MatchAll([
                 Optional(flag("with ordinality")),
                 Optional(WITH + LB + keyword("nolock")("hint") + RB),
-                Optional(WITH + OFFSET + Optional(AS) + identifier("with_offset")),
+                Optional(WITH + OFFSET + Optional(AS) + ident("with_offset")),
                 Optional(tablesample),
                 alias,
             ])
@@ -654,7 +656,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         )
 
         table_element = (
-           table_constraint_definition("constraint") | column_definition("columns")
+            table_constraint_definition("constraint") | column_definition("columns")
         )
         temporary = Optional(
             (
