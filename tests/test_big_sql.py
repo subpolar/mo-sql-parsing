@@ -12,7 +12,6 @@ import json
 from unittest import TestCase
 
 from mo_json import value2json
-from mo_parsing.debug import Debugger
 from mo_times import Timer
 
 from mo_sql_parsing import parse
@@ -1072,4 +1071,362 @@ FROM (
                 },
             ],
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_146(self):
+        sql = """SELECT
+    sid AS jaguaraquara_id,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_sid') AS task_id,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.channelSid'
+    ) AS channel_id,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.conversation_id'
+    ) AS conversation_id,
+    JSON_EXTRACT_SCALAR(
+          JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+          '$.call_sid'
+    ) AS call_id,
+    JSON_EXTRACT_SCALAR(
+          JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+          '$.conference.sid'
+    ) AS call_conference_id,
+    JSON_EXTRACT_SCALAR(
+          JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+          '$.voiceType'
+    ) AS call_type,
+    JSON_EXTRACT_SCALAR(
+          JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+          '$.from'
+    ) AS call_from,
+    JSON_EXTRACT_SCALAR(
+          JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+          '$.to'
+    ) AS call_to,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.case'
+    ) AS forcador_id,
+    continha_sid AS twitter_conta_id,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.reservation_sid') AS reservation_id,
+    resource_sid AS resource_id,
+    resource_type AS event_group,
+    event_type,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.fup_project'
+    ) AS fup_project,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.ja_vai_nego_velho_id'
+    ) AS ja_vai_nego_velho_id,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.fupMessage'
+    ) AS fup_message,
+    JSON_VALUE_ARRAY(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.hora_de_mofar_ids'
+    ) AS hora_de_mofar_ids,
+    SAFE_CAST(NULL AS STRING) AS target_changed_reason,
+    SAFE_CAST(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_age')
+        AS INTEGER
+    ) AS task_age,
+    SAFE_CAST(NULL AS INTEGER) AS task_age_in_queue,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_assignment_status') AS task_assignment_status,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_channel_unique_name') AS task_channel_name,
+    DATETIME(
+        SAFE_CAST(
+            JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_queue_entered_date')
+            AS TIMESTAMP
+        ),
+        \"America/Sao_Paulo\"
+    ) AS task_date_created_at,
+    SAFE_CAST(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_priority')
+        AS INTEGER
+    ) AS task_priority,
+    DATETIME(
+        SAFE_CAST(
+            JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_queue_entered_date')
+            AS TIMESTAMP
+        ),
+        \"America/Sao_Paulo\"
+    ) AS task_queue_entered_at,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_queue_name') AS task_queue_name,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_queue_sid') AS task_queue_id,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_queue_target_expression') AS task_queue_target_expression,
+    SAFE_CAST(NULL AS STRING) AS task_re_evaluated_reason,
+    SAFE_CAST(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_version')
+        AS INTEGER
+    ) AS task_version,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.task_completed_reason') AS end_reason,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.endReason'
+    ) AS end_reason_detailed,
+    DATETIME(
+        SAFE_CAST(
+            JSON_EXTRACT_SCALAR(
+                JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+                '$.transferInfo.date'
+            ) AS TIMESTAMP
+        ),
+        \"America/Sao_Paulo\"
+    ) AS transfered_at,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_1'
+    ) AS conversation_attribute_1,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_2'
+    ) AS conversation_attribute_2,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_3'
+    ) AS conversation_attribute_3,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_4'
+    ) AS conversation_attribute_4,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_5'
+    ) AS conversation_attribute_5,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_6'
+    ) AS conversation_attribute_6,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.papinhos.papinhos_atributos_7'
+    ) AS conversation_attribute_7,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.initiated_by'
+    ) AS initiated_by,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.canal_de_comunicacao'
+    ) AS canal_de_comunicacao,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.channelType'
+    ) AS channel_type,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.phone'
+    ) AS customer_phone,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.email'
+    ) AS customer_email,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.conversations.outcome'
+    ) AS conversation_outcome,
+    SAFE_CAST(
+        JSON_EXTRACT_SCALAR(
+            JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+            '$.isTransfered'
+        ) AS BOOL
+    ) AS is_transfered,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.teamOrigin'
+    ) AS from_team_transfer,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.ignoreAgent'
+    ) AS from_member_transfer,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.transferTargetType'
+    ) AS transfer_target_type,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.atributozinhos'),
+        '$.annotation'
+    ) AS annotation,    
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.trabalho_ativo_nome') AS member_status,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.worker_activity_sid') AS member_activity_id,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.worker_sid') AS member_twilio_id,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.worker_name') AS member_email,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.worker_previous_activity_name') AS member_previous_status,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.worker_previous_activity_sid') AS member_previous_activity_id,
+    JSON_EXTRACT_SCALAR(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.worker_attributes'),
+        '$.user_role'
+    ) AS member_role,
+    SAFE_CAST(
+        JSON_EXTRACT_SCALAR(balacobaco_data, '$.trabalho_tempo_em_proximos_ativos_sm')
+        AS INTEGER
+    ) AS member_time_in_previous_activity,
+    SAFE_CAST(NULL AS STRING) AS workflow_filter_name,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.workflow_name') AS workflow_name,
+    JSON_EXTRACT_SCALAR(balacobaco_data, '$.workflow_sid') AS workflow_id,
+    DATETIME(event_date, \"America/Sao_Paulo\") AS created_at
+FROM
+    `**********.**********.*********` TABLESAMPLE SYSTEM (0.1 PERCENT)
+WHERE
+    event_date > checkpoint.start_date
+    AND event_date <= checkpoint.end_date
+QUALIFY ROW_NUMBER() OVER (PARTITION BY sid ORDER BY event_date DESC) = 1
+LIMIT 50000"""
+        with Timer("parse big sql"):
+            result = parse(sql)
+        value2json(result)
+        expected = {'select': [{'value': 'sid', 'name': 'jaguaraquara_id'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_sid'}]},
+                                'name': 'task_id'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.channelSid'}]}, 'name': 'channel_id'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conversations.conversation_id'}]}, 'name': 'conversation_id'}, {
+                                   'value': {'json_extract_scalar': [
+                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                       {'literal': '$.call_sid'}]}, 'name': 'call_id'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conference.sid'}]}, 'name': 'call_conference_id'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.voiceType'}]}, 'name': 'call_type'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.from'}]}, 'name': 'call_from'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.to'}]}, 'name': 'call_to'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conversations.case'}]}, 'name': 'forcador_id'},
+                               {'value': 'continha_sid', 'name': 'twitter_conta_id'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.reservation_sid'}]},
+                                'name': 'reservation_id'}, {'value': 'resource_sid', 'name': 'resource_id'},
+                               {'value': 'resource_type', 'name': 'event_group'}, {'value': 'event_type'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.fup_project'}]}, 'name': 'fup_project'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.ja_vai_nego_velho_id'}]}, 'name': 'ja_vai_nego_velho_id'}, {
+                                   'value': {'json_extract_scalar': [
+                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                       {'literal': '$.fupMessage'}]}, 'name': 'fup_message'}, {'value': {
+                'json_value_array': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                     {'literal': '$.hora_de_mofar_ids'}]}, 'name': 'hora_de_mofar_ids'},
+                               {'value': {'safe_cast': [{'null': {}}, {'string': {}}]},
+                                'name': 'target_changed_reason'}, {'value': {
+                'safe_cast': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_age'}]},
+                              {'integer': {}}]}, 'name': 'task_age'},
+                               {'value': {'safe_cast': [{'null': {}}, {'integer': {}}]}, 'name': 'task_age_in_queue'}, {
+                                   'value': {'json_extract_scalar': ['balacobaco_data',
+                                                                     {'literal': '$.task_assignment_status'}]},
+                                   'name': 'task_assignment_status'}, {'value': {
+                'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_channel_unique_name'}]},
+                                                                       'name': 'task_channel_name'}, {'value': {
+                'datetime': [{'safe_cast': [
+                    {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_entered_date'}]},
+                    {'timestamp': {}}]}, 'America/Sao_Paulo']}, 'name': 'task_date_created_at'}, {'value': {
+                'safe_cast': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_priority'}]},
+                              {'integer': {}}]}, 'name': 'task_priority'}, {'value': {'datetime': [{'safe_cast': [
+                {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_entered_date'}]},
+                {'timestamp': {}}]}, 'America/Sao_Paulo']}, 'name': 'task_queue_entered_at'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_name'}]},
+                                'name': 'task_queue_name'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_sid'}]},
+                                'name': 'task_queue_id'}, {'value': {
+                'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_target_expression'}]},
+                                                           'name': 'task_queue_target_expression'},
+                               {'value': {'safe_cast': [{'null': {}}, {'string': {}}]},
+                                'name': 'task_re_evaluated_reason'}, {'value': {
+                'safe_cast': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_version'}]},
+                              {'integer': {}}]}, 'name': 'task_version'}, {'value': {
+                'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_completed_reason'}]},
+                                                                           'name': 'end_reason'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.endReason'}]}, 'name': 'end_reason_detailed'}, {'value': {
+                'datetime': [{'safe_cast': [{'json_extract_scalar': [
+                    {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                    {'literal': '$.transferInfo.date'}]}, {'timestamp': {}}]}, 'America/Sao_Paulo']},
+                                                                                                       'name': 'transfered_at'},
+                               {'value': {'json_extract_scalar': [
+                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                   {'literal': '$.papinhos.papinhos_atributos_1'}]},
+                                'name': 'conversation_attribute_1'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.papinhos.papinhos_atributos_2'}]},
+                                                                      'name': 'conversation_attribute_2'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.papinhos.papinhos_atributos_3'}]},
+                                                                                                            'name': 'conversation_attribute_3'},
+                               {'value': {'json_extract_scalar': [
+                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                   {'literal': '$.papinhos.papinhos_atributos_4'}]},
+                                'name': 'conversation_attribute_4'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.papinhos.papinhos_atributos_5'}]},
+                                                                      'name': 'conversation_attribute_5'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.papinhos.papinhos_atributos_6'}]},
+                                                                                                            'name': 'conversation_attribute_6'},
+                               {'value': {'json_extract_scalar': [
+                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                   {'literal': '$.papinhos.papinhos_atributos_7'}]},
+                                'name': 'conversation_attribute_7'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conversations.initiated_by'}]}, 'name': 'initiated_by'}, {
+                                   'value': {'json_extract_scalar': [
+                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                       {'literal': '$.conversations.canal_de_comunicacao'}]},
+                                   'name': 'canal_de_comunicacao'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.channelType'}]}, 'name': 'channel_type'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conversations.phone'}]}, 'name': 'customer_phone'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conversations.email'}]}, 'name': 'customer_email'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.conversations.outcome'}]}, 'name': 'conversation_outcome'}, {
+                                   'value': {'safe_cast': [{'json_extract_scalar': [
+                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                       {'literal': '$.isTransfered'}]}, {'bool': {}}]}, 'name': 'is_transfered'}, {
+                                   'value': {'json_extract_scalar': [
+                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                       {'literal': '$.teamOrigin'}]}, 'name': 'from_team_transfer'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.ignoreAgent'}]}, 'name': 'from_member_transfer'}, {'value': {
+                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                        {'literal': '$.transferTargetType'}]}, 'name': 'transfer_target_type'}, {
+                                   'value': {'json_extract_scalar': [
+                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
+                                       {'literal': '$.annotation'}]}, 'name': 'annotation'}, {'value': {
+                'json_extract_scalar': ['balacobaco_data', {'literal': '$.trabalho_ativo_nome'}]},
+                                                                                              'name': 'member_status'},
+                               {'value': {
+                                   'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_activity_sid'}]},
+                                'name': 'member_activity_id'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_sid'}]},
+                                'name': 'member_twilio_id'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_name'}]},
+                                'name': 'member_email'}, {'value': {
+                'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_previous_activity_name'}]},
+                                                          'name': 'member_previous_status'}, {'value': {
+                'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_previous_activity_sid'}]},
+                                                                                              'name': 'member_previous_activity_id'},
+                               {'value': {'json_extract_scalar': [
+                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_attributes'}]},
+                                   {'literal': '$.user_role'}]}, 'name': 'member_role'}, {'value': {'safe_cast': [
+                {'json_extract_scalar': ['balacobaco_data', {'literal': '$.trabalho_tempo_em_proximos_ativos_sm'}]},
+                {'integer': {}}]}, 'name': 'member_time_in_previous_activity'},
+                               {'value': {'safe_cast': [{'null': {}}, {'string': {}}]}, 'name': 'workflow_filter_name'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.workflow_name'}]},
+                                'name': 'workflow_name'},
+                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.workflow_sid'}]},
+                                'name': 'workflow_id'},
+                               {'value': {'datetime': ['event_date', 'America/Sao_Paulo']}, 'name': 'created_at'}],
+                    'from': {'value': '**********..**********..*********',
+                             'tablesample': {'method': 'system', 'percent': 0.1}}, 'where': {
+                'and': [{'gt': ['event_date', 'checkpoint.start_date']},
+                        {'lte': ['event_date', 'checkpoint.end_date']}]}, 'qualify': {'eq': [
+                {'over': {'partitionby': 'sid', 'orderby': {'value': 'event_date', 'sort': 'desc'}},
+                 'value': {'row_number': {}}}, 1]}, 'limit': 50000}
         self.assertEqual(result, expected)
