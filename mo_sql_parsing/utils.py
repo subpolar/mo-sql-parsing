@@ -373,6 +373,13 @@ def to_interval_call(tokens, index, string):
     # ARRANGE INTO {interval: [amount, type]} FORMAT
     csv = list(tokens['csv'])
     if csv:
+        seen_minute = False
+        for v in reversed(csv):
+            if seen_minute and v['type']=='minute':
+                v['type']='month'
+            if v['type'] in ['minute', 'hour', 'day', 'week']:
+                seen_minute = True
+
         result = Call("add", [
             Call("interval", [v['expr'], v['type']], {})
             for v in csv
@@ -385,14 +392,7 @@ def to_interval_call(tokens, index, string):
         if formatted:
             if 'year' in formatted:
                 if len(formatted) == 1:
-                    if not type:
-                        raise ParseException(
-                            tokens['formatted'].type,
-                            tokens['formatted'].start,
-                            string,
-                            """Ambiguious value for given interval""",
-                        )
-                    return Call("interval", [formatted['year'], type], {})
+                    return Call("interval", [formatted['year'], type or 'second'], {})
                 elif 'year' not in type and 'month' in type:
                     formatted['day'] = formatted['month']
                     formatted['month'] = formatted['year']

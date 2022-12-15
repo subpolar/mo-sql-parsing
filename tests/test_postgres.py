@@ -8,7 +8,9 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import TestCase
+from unittest import TestCase, skip
+
+from mo_parsing.debug import Debugger
 
 from mo_sql_parsing import parse
 
@@ -321,5 +323,94 @@ class TestPostgres(TestCase):
                 {"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30]}]},
                 "day",
             ]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_147_interval1(self):
+        sql = "SELECT INTERVAL '1'"
+        result = parse(sql)
+        expect={"select": {"value": {"interval": [1, "second"]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_147_interval3(self):
+        sql = "SELECT INTERVAL 'P0001-02-03T04:05:06'"
+        result = parse(sql)
+        expect={"select": {"value": {"add": [
+            {"interval": [1, "year"]},
+            {"interval": [2, "month"]},
+            {"interval": [3, "day"]},
+            {"interval": [4, "hour"]},
+            {"interval": [5, "minute"]},
+            {"interval": [6, "second"]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_147_interval4(self):
+        sql = "SELECT INTERVAL 'P1Y2M3DT4H5M6S'"
+        with Debugger():
+            result = parse(sql)
+        expect={"select": {"value": {"add": [
+            {"interval": [1, "year"]},
+            {"interval": [2, "month"]},
+            {"interval": [3, "day"]},
+            {"interval": [4, "hour"]},
+            {"interval": [5, "minute"]},
+            {"interval": [6, "second"]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    @skip("broken")
+    def test_issue_147_interval5(self):
+        sql = "SELECT INTERVAL '-1-2 +3 -4:05:06'"
+        result = parse(sql)
+        expect={"select": {"value": {"add": [
+            {"interval": [-1, "year"]},
+            {"interval": [-2, "month"]},
+            {"interval": [3, "day"]},
+            {"interval": [-4, "hour"]},
+            {"interval": [-5, "minute"]},
+            {"interval": [-6, "second"]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    @skip("broken")
+    def test_issue_147_interval6(self):
+        sql = "SELECT INTERVAL '-1 year -2 mons +3 days -04:05:06'"
+        with Debugger():
+            result = parse(sql)
+        expect={"select": {"value": {"add": [
+            {"interval": [-1, "year"]},
+            {"interval": [-2, "month"]},
+            {"interval": [3, "day"]},
+            {"interval": [-4, "hour"]},
+            {"interval": [-5, "minute"]},
+            {"interval": [-6, "second"]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    @skip("broken")
+    def test_issue_147_interval7(self):
+        sql = "SELECT INTERVAL '@ 1 year 2 mons -3 days 4 hours 5 mins 6 secs ago'"
+        result = parse(sql)
+        expect={"select": {"value": {"add": [
+            {"interval": [-1, "year"]},
+            {"interval": [-2, "month"]},
+            {"interval": [3, "day"]},
+            {"interval": [-4, "hour"]},
+            {"interval": [-5, "minute"]},
+            {"interval": [-6, "second"]},
+        ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_147_interval8(self):
+        sql = "SELECT INTERVAL 'P-1Y-2M3DT-4H-5M-6S'"
+        result = parse(sql)
+        expect={"select": {"value": {"add": [
+            {"interval": [-1, "year"]},
+            {"interval": [-2, "month"]},
+            {"interval": [3, "day"]},
+            {"interval": [-4, "hour"]},
+            {"interval": [-5, "minute"]},
+            {"interval": [-6, "second"]},
         ]}}}
         self.assertEqual(result, expect)

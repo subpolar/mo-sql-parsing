@@ -152,10 +152,11 @@ def parser(literal_string, simple_ident, sqlserver=False):
         )
 
         # INTERVAL TYPE
+        # https://www.postgresql.org/docs/current/datatype-datetime.html
         time_interval_type = Forward()
         time_interval_type << MatchFirst([
             (
-                (Keyword(d, caseless=True) / (lambda t: durations[t[0].lower()]))("op")
+                (CaselessLiteral(d) / (lambda t: durations[t[0].lower()]))("op")
                 + _sizes
                 + Optional(TO + time_interval_type("kwargs"))
             )
@@ -163,16 +164,17 @@ def parser(literal_string, simple_ident, sqlserver=False):
             for d in durations.keys()
         ])
         # COMPOUND INTERVAL
-        csv_interval = Group(delimited_list(Group(
-            (real_num | int_num)("expr") + time_interval_type("type")
-        )))("csv")
+        csv_interval = Optional(Literal('@')|Literal('P'))+Group(delimited_list(
+            Group((real_num | int_num)("expr") + time_interval_type("type")),
+            separator=Regex(r"(,|T|\s)*")
+        ))("csv")
 
         def formatted_rules():
             _rules = [
                 (Empty(), "year"),
                 (Literal("-"), "month"),
                 (Literal("-"), "day"),
-                (Literal(" "), "hour"),
+                ((Literal("T") | Literal(" ")), "hour"),
                 (Literal(":"), "minute"),
                 (Literal(":"), "second"),
                 (Literal("."), "fraction"),
@@ -184,7 +186,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                     for separator, next in reversed(_rules[i + 1 :]):
                         suffix = Optional(separator + int_num(next) + suffix)
                     acc.append(Optional(prefix) + int_num(start) + suffix)
-                return Group(Or(acc))("formatted")
+                return Group(Optional(Literal('@')|Literal('P'))+Or(acc))("formatted")
 
         formatted_duration = formatted_rules()
         duration = Or([formatted_duration, csv_interval])

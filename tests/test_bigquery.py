@@ -18,10 +18,7 @@ from mo_sql_parsing import parse_bigquery as parse
 class TestBigQuery(TestCase):
     def test_with_expression(self):
         # https://github.com/pyparsing/pyparsing/issues/291
-        sql = (
-            'with t as (CASE EXTRACT(dayofweek FROM CURRENT_DATETIME()) when 1 then "S"'
-            " end) select * from t"
-        )
+        sql = """with t as (CASE EXTRACT(dayofweek FROM CURRENT_DATETIME()) when 1 then "S" end) select * from t"""
         result = parse(sql)
         expected = {
             "from": "t",

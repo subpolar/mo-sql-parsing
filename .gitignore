@@ -13,3 +13,4 @@ vendor/
 ._*
 .DS_Store
 .eggs
+/tests/test_working.py
