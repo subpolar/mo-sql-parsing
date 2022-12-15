@@ -347,8 +347,7 @@ class TestPostgres(TestCase):
 
     def test_issue_147_interval4(self):
         sql = "SELECT INTERVAL 'P1Y2M3DT4H5M6S'"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expect={"select": {"value": {"add": [
             {"interval": [1, "year"]},
             {"interval": [2, "month"]},
@@ -376,8 +375,7 @@ class TestPostgres(TestCase):
     @skip("broken")
     def test_issue_147_interval6(self):
         sql = "SELECT INTERVAL '-1 year -2 mons +3 days -04:05:06'"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expect={"select": {"value": {"add": [
             {"interval": [-1, "year"]},
             {"interval": [-2, "month"]},
