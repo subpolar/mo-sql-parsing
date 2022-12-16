@@ -44,7 +44,7 @@ class TestSoQueries(TestCase):
                 if randoms.int(50) == 0:
                     Log.info("{{data}}", data=value2json(result))
             except Exception as cause:
-                Log.warning("failed", cause=cause)
+                Log.error("failed", cause=cause)
 
         with Timer("parse so queries") as timer:
             results = (
@@ -57,12 +57,16 @@ class TestSoQueries(TestCase):
                 .map(careful_parse)
                 .to_list()
             )
-            Log.info("{{num}} results in {{seconds|round(1)}} seconds", num= len(results), seconds=timer.duration.seconds)
+            Log.info(
+                "{{num}} results in {{seconds|round(1)}} seconds",
+                num=len(results),
+                seconds=timer.duration.seconds,
+            )
 
 
 def scrub(sql):
     comment = strings.between(sql, "--", "\n")
     while comment:
-        sql = sql.replace("--"+comment, "")
+        sql = sql.replace("--" + comment, "")
         comment = strings.between(sql, "--", "\n")
     return sql.translate(table).lower()
