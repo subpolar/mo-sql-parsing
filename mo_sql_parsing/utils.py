@@ -371,63 +371,22 @@ def to_interval_type(tokens):
 
 def to_interval_call(tokens, index, string):
     # ARRANGE INTO {interval: [amount, type]} FORMAT
-    csv = list(tokens['csv'])
-    if csv:
-        seen_minute = False
-        for v in reversed(csv):
-            if seen_minute and v['type']=='minute':
-                v['type']='month'
-            if v['type'] in ['minute', 'hour', 'day', 'week']:
-                seen_minute = True
+    expr = tokens["expr"]
+    type = tokens['type']
+    if expr and type:
+        return Call("interval", [expr, type], {})
+    if expr:
+        return Call("interval", [expr], {})
+    if type:
+        return Call("interval", [tokens['second'], type], {})
 
-        result = Call("add", [
-            Call("interval", [v['expr'], v['type']], {})
-            for v in csv
-        ], {})
-    else:
-        type = tokens['type']
-        formatted = dict(tokens['formatted'])
-        expr = tokens["expr"]
-
-        if formatted:
-            if 'year' in formatted:
-                if len(formatted) == 1:
-                    return Call("interval", [formatted['year'], type or 'second'], {})
-                elif 'year' not in type and 'month' in type:
-                    formatted['day'] = formatted['month']
-                    formatted['month'] = formatted['year']
-                    formatted['year'] = None
-            if 'hour' in formatted:
-                if 'hour' not in type and "minute" in type:
-                    formatted['second'] = formatted['minute']
-                    formatted['minute'] = formatted['hour']
-                    formatted['hour'] = None
-            if 'second' in formatted and 'fraction' in formatted and len(formatted) == 2:
-                if not type:
-                    raise ParseException(
-                        tokens['formatted'].type,
-                        tokens['formatted'].start,
-                        string,
-                        """Ambiguious value for given interval""",
-                    )
-                return Call("interval", [float(str(formatted['second'])+"."+str(formatted['fraction'])), type], {})
-
-            result = Call("add", [
-                Call("interval", [v, k], {})
-                for k, v in formatted.items()
-                if v is not None
-            ], {})
-        elif expr:
-            return Call("interval", [expr, type], {})
-        else:
-            # SIMPLE TYPE, NO VALUE
-            return type
-
-    # SIMPLIFY
-    if len(result.args) > 1:
-        return result
-    return result.args[0]
-
+    result = Call("add", [
+        Call("interval", [v, k], {})
+        for k, v in tokens.items()
+    ], {})
+    if len(result.args) == 1:
+        return result.args[0]
+    return result
 
 
 def to_case_call(tokens):

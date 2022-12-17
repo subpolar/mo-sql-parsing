@@ -246,6 +246,7 @@ RESERVED = MatchFirst([
 LB = Literal("(").suppress()
 RB = Literal(")").suppress()
 EQ = Char("=").suppress()
+comma = Optional(",").suppress()
 
 join_keywords = {
     "join",
