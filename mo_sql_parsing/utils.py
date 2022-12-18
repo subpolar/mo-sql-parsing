@@ -369,23 +369,33 @@ def to_interval_type(tokens):
             return {op: {}, **kwargs}
 
 
+def has_something(tokens, index, string):
+    if not tokens:
+        raise ParseException(tokens.type, index, string, "expecting something to match") from None
+
+
 def to_interval_call(tokens, index, string):
     # ARRANGE INTO {interval: [amount, type]} FORMAT
     expr = tokens["expr"]
-    type = tokens['type']
+    type = tokens["type"]
     if expr and type:
         return Call("interval", [expr, type], {})
     if expr:
         return Call("interval", [expr], {})
-    if type:
-        return Call("interval", [tokens['second'], type], {})
 
-    result = Call("add", [
-        Call("interval", [v, k], {})
-        for k, v in tokens.items()
-    ], {})
+    result = Call(
+        "add",
+        [Call("interval", [v, k], {}) for k, v in tokens.items() if k != "type"],
+        {},
+    )
     if len(result.args) == 1:
-        return result.args[0]
+        result = result.args[0]
+    if result.args[1] == "second" and type:
+        return Call("interval", [result.args[0], type], {})
+
+    if type:
+        return Call("cast", [result, type], {})
+
     return result
 
 

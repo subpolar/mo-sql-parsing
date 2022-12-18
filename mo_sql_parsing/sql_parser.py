@@ -182,34 +182,22 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + matching("week")
             + comma
             + matching("day")
-        )
+        ) / has_something
 
         iso_time = (
             matching("hour") + comma + matching("minute") + comma + matching("second")
-        )
+        ) / has_something
 
-        def sql_interval(_rules):
-            with NO_WHITESPACE:
-                acc = []
-                for i, (prefix, type) in enumerate(_rules):
-                    seq = []
-                    if prefix:
-                        seq.append(Optional(Literal(prefix)).suppress())
-                    seq.append(int_num(type))
-
-                    for separator, type in _rules[i + 1 :]:
-                        if separator:
-                            seq.append(Literal(separator).suppress())
-                        seq.append(int_num(type))
-                    acc.append(And(seq))
-                return MatchFirst(acc)
-
-        sql_date = sql_interval([("", "year"), ("-", "month"), ("-", "day")])
-        sql_time = sql_interval([
-            ("", "hour"),
-            (":", "minute"),
-            (":", "second"),
-        ]) + Optional("." + int_num("fraction"))
+        sql_date = MatchFirst([
+            int_num("year") + "-" + int_num("month") + Optional("-" + int_num("day")),
+            int_num("day"),
+        ])
+        sql_time = MatchFirst([
+            int_num("hour")+":"+int_num("minute")+Optional(":"+int_num("second")+ Optional("." + int_num("fraction"))),
+            ":" + int_num("minute") + Optional(":" + int_num("second") + Optional("." + int_num("fraction"))),
+            int_num("minute") + ":" + int_num("second") + Optional("." + int_num("fraction")),
+            int_num("second") + Optional("." + int_num("fraction"))
+        ])
 
         formatted_duration = (
             Optional(one_of("@ T", caseless=True)).suppress()

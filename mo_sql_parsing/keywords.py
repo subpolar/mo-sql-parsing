@@ -400,6 +400,7 @@ durations = {
     "mons": "month",
     "mon": "month",
     "m": "minute",
+    "M": "month",
     "quarters": "quarter",
     "quarter": "quarter",
     "years": "year",
