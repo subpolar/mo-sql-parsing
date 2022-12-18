@@ -279,11 +279,13 @@ class Formatter:
                 parts.append(f"({sampling_pct} PERCENT)")
             sampling_bucket = sample.get("bucket")
             if sampling_bucket:
-                bucket_parts = [f"BUCKET {sampling_bucket[0]} OUT OF {sampling_bucket[1]}"]
+                bucket_parts = [
+                    f"BUCKET {sampling_bucket[0]} OUT OF {sampling_bucket[1]}"
+                ]
                 sampling_on = sample.get("on")
                 if sampling_on:
                     bucket_parts.append(f"ON {self.format(sampling_on)}")
-                parts.append("("+" ".join(bucket_parts)+")")
+                parts.append("(" + " ".join(bucket_parts) + ")")
 
         return " ".join(parts)
 
@@ -498,8 +500,8 @@ class Formatter:
             if json.get("distinct"):
                 acc.append("DISTINCT")
             acc.append(self.dispatch(json[op], precedence["order"]))
-            if json.get('nulls'):
-                acc.append(json.get('nulls').upper())
+            if json.get("nulls"):
+                acc.append(json.get("nulls").upper())
                 acc.append("NULLS")
         else:
             # set-op expression
@@ -548,7 +550,9 @@ class Formatter:
             return "WITH {0}".format(parts)
 
     def select(self, json, prec):
-        param = ", ".join(self.dispatch(s, precedence['select']) for s in listwrap(json["select"]))
+        param = ", ".join(
+            self.dispatch(s, precedence["select"]) for s in listwrap(json["select"])
+        )
         if "top" in json:
             top = self.dispatch(json["top"])
             return f"SELECT TOP ({top}) {param}"
@@ -625,7 +629,7 @@ class Formatter:
         return f"FETCH {num} ROWS ONLY"
 
     def delete(self, json, prec):
-        acc = ["DELETE FROM ", json['delete']]
+        acc = ["DELETE FROM ", json["delete"]]
         if "where" in json:
             json = {k: v for k, v in json.items() if k != "delete"}
             acc.append("\n")

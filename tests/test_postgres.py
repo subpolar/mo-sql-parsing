@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import TestCase, skip
+from unittest import TestCase
 
 from mo_parsing.debug import Debugger
 
@@ -272,8 +272,7 @@ class TestPostgres(TestCase):
     def test_issue_134a(self):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval ':1' day (3)"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expect = {"select": {"value": {"cast": [{"interval": [1, "minute"]}, {"day": 3}]}}}
         self.assertEqual(result, expect)
 
@@ -336,7 +335,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval3(self):
         sql = "SELECT INTERVAL 'P0001-02-03T04:05:06'"
         result = parse(sql)
-        expect={"select": {"value": {"add": [
+        expect = {"select": {"value": {"add": [
             {"interval": [1, "year"]},
             {"interval": [2, "month"]},
             {"interval": [3, "day"]},
@@ -348,8 +347,7 @@ class TestPostgres(TestCase):
 
     def test_issue_147_interval4(self):
         sql = "SELECT INTERVAL 'P1Y2M3DT4H5M6S'"
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expect={"select": {"value": {"add": [
             {"interval": [1, "year"]},
             {"interval": [2, "month"]},

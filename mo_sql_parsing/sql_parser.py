@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import whitespaces
+from mo_parsing import whitespaces, debug, Null
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -60,6 +60,9 @@ def sqlserver_parser():
 
 
 def parser(literal_string, simple_ident, sqlserver=False):
+    debugger = debug.DEBUGGER or Null
+    debugger.__exit__(None, None, None)
+
     ident = Combine(delimited_list(simple_ident, separator=".", combine=True))
 
     with Whitespace() as white:
@@ -174,7 +177,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 ])
             )
 
-        iso_date = (
+        iso_datetime = (
             matching("year")
             + comma
             + matching("month")
@@ -182,43 +185,63 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + matching("week")
             + comma
             + matching("day")
+            + comma
+            + matching("hour")
+            + comma
+            + matching("minute")
+            + comma
+            + matching("second")
+            + Optional(CaselessLiteral("ago")("ago"))
         ) / has_something
 
-        iso_time = (
-            matching("hour") + comma + matching("minute") + comma + matching("second")
-        ) / has_something
-
+        ago = Optional(Regex("[+-]"))("ago")
         sql_date = MatchFirst([
-            int_num("year") + "-" + int_num("month") + Optional("-" + int_num("day")),
+            ago
+            + int_pos("year")
+            + "-"
+            + int_pos("month")
+            + Optional(ago("day-ago") + int_pos("day")),
             int_num("day"),
         ])
+
         sql_time = MatchFirst([
-            int_num("hour")+":"+int_num("minute")+Optional(":"+int_num("second")+ Optional("." + int_num("fraction"))),
-            ":" + int_num("minute") + Optional(":" + int_num("second") + Optional("." + int_num("fraction"))),
-            int_num("minute") + ":" + int_num("second") + Optional("." + int_num("fraction")),
-            int_num("second") + Optional("." + int_num("fraction"))
+            ago
+            + int_pos("day")
+            + Optional(CaselessLiteral("T") | ",")
+            + int_pos("hour")
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + int_pos("hour")
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + int_pos("minute")
+            + ":"
+            + int_pos("second")
+            + Optional("." + int_pos("fraction")),
+            (int_num | real_num)("expr"),
         ])
 
-        formatted_duration = (
-            Optional(one_of("@ T", caseless=True)).suppress()
-            + (sql_time ^ iso_time)
-        ) ^ (
-            Optional(one_of("@ P", caseless=True))
-            + (sql_date ^ iso_date)
-            + Optional(
-                Optional(CaselessLiteral("T") | Literal(",")).suppress()
-                + (sql_time ^ iso_time)
-            )
-        )
+        formatted_duration = Regex("[@Pp]*") + (delimited_list(
+            (sql_time ^ sql_date ^ iso_datetime) / to_interval_call,
+            separator=Regex("[,TtPp]*"),
+        ))
 
         interval = (
             INTERVAL
             + (
-                "'" + formatted_duration + "'"
-                | (expression("expr") ^ formatted_duration)
-            )
+                Literal("'").suppress() + formatted_duration + Literal("'").suppress()
+                | (expression ^ formatted_duration)
+            )("expr")
             + Optional(time_interval_type("type"))
-        ) / to_interval_call
+        ) / cast_interval_call
 
         timestamp = (
             time_functions("op")
@@ -926,6 +949,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
         )
 
         set_parser_names()
+
+        debugger.__enter__()
 
         return (
             query
