@@ -257,7 +257,9 @@ def get_column_type(expr, identifier, literal_string):
     )
 
     column_definition << Group(
-        identifier("name") + (column_type | identifier("type")) + ZeroOrMore(column_options)
+        identifier("name")
+        + (column_type | identifier("type"))
+        + ZeroOrMore(column_options)
     )
 
     set_parser_names()

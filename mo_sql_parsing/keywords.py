@@ -246,6 +246,7 @@ RESERVED = MatchFirst([
 LB = Literal("(").suppress()
 RB = Literal(")").suppress()
 EQ = Char("=").suppress()
+comma = Optional(",").suppress()
 
 join_keywords = {
     "join",
@@ -337,8 +338,10 @@ KNOWN_OPS = [
     NOT_IN,
     IS_NOT,
     IS,
-    LIKE, ILIKE,
-    NOT_LIKE, NOT_ILIKE,
+    LIKE,
+    ILIKE,
+    NOT_LIKE,
+    NOT_ILIKE,
     RLIKE,
     NOT_RLIKE,
     SIMILAR_TO,
@@ -399,6 +402,7 @@ durations = {
     "mons": "month",
     "mon": "month",
     "m": "minute",
+    "M": "month",
     "quarters": "quarter",
     "quarter": "quarter",
     "years": "year",

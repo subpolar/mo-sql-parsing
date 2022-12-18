@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import whitespaces
+from mo_parsing import whitespaces, debug, Null
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
@@ -60,6 +60,9 @@ def sqlserver_parser():
 
 
 def parser(literal_string, simple_ident, sqlserver=False):
+    debugger = debug.DEBUGGER or Null
+    debugger.__exit__(None, None, None)
+
     ident = Combine(delimited_list(simple_ident, separator=".", combine=True))
 
     with Whitespace() as white:
@@ -163,39 +166,82 @@ def parser(literal_string, simple_ident, sqlserver=False):
             / to_interval_type
             for d in durations.keys()
         ])
-        # COMPOUND INTERVAL
-        csv_interval = Optional(Literal('@')|Literal('P'))+Group(delimited_list(
-            Group((real_num | int_num)("expr") + time_interval_type("type")),
-            separator=Regex(r"(,|T|\s)*")
-        ))("csv")
 
-        def formatted_rules():
-            _rules = [
-                (Empty(), "year"),
-                (Literal("-"), "month"),
-                (Literal("-"), "day"),
-                ((Literal("T") | Literal(" ")), "hour"),
-                (Literal(":"), "minute"),
-                (Literal(":"), "second"),
-                (Literal("."), "fraction"),
-            ]
-            with NO_WHITESPACE:
-                acc = []
-                for i, (prefix, start) in enumerate(_rules):
-                    suffix = Empty()
-                    for separator, next in reversed(_rules[i + 1 :]):
-                        suffix = Optional(separator + int_num(next) + suffix)
-                    acc.append(Optional(prefix) + int_num(start) + suffix)
-                return Group(Optional(Literal('@')|Literal('P'))+Or(acc))("formatted")
+        def matching(type):
+            return Optional(
+                (real_num | int_num)(type)
+                + MatchFirst([
+                    CaselessLiteral(k).suppress()
+                    for k, v in durations.items()
+                    if v == type
+                ])
+            )
 
-        formatted_duration = formatted_rules()
-        duration = Or([formatted_duration, csv_interval])
+        iso_datetime = (
+            matching("year")
+            + comma
+            + matching("month")
+            + comma
+            + matching("week")
+            + comma
+            + matching("day")
+            + comma
+            + matching("hour")
+            + comma
+            + matching("minute")
+            + comma
+            + matching("second")
+            + Optional(CaselessLiteral("ago")("ago"))
+        ) / has_something
+
+        ago = Optional(Regex("[+-]"))("ago")
+        sql_date = MatchFirst([
+            ago
+            + int_pos("year")
+            + "-"
+            + int_pos("month")
+            + Optional(ago("day-ago") + int_pos("day")),
+            int_num("day"),
+        ])
+
+        sql_time = MatchFirst([
+            ago
+            + int_pos("day")
+            + Optional(CaselessLiteral("T") | ",")
+            + int_pos("hour")
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + int_pos("hour")
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + int_pos("minute")
+            + ":"
+            + int_pos("second")
+            + Optional("." + int_pos("fraction")),
+            (int_num | real_num)("expr"),
+        ])
+
+        formatted_duration = Regex("[@Pp]*") + (delimited_list(
+            (sql_time ^ sql_date ^ iso_datetime) / to_interval_call,
+            separator=Regex("[,TtPp]*"),
+        ))
 
         interval = (
             INTERVAL
-            + ("'" + duration + "'" | expression("expr") ^ formatted_duration)
+            + (
+                Literal("'").suppress() + formatted_duration + Literal("'").suppress()
+                | (expression ^ formatted_duration)
+            )("expr")
             + Optional(time_interval_type("type"))
-        ) / to_interval_call
+        ) / cast_interval_call
 
         timestamp = (
             time_functions("op")
@@ -903,6 +949,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
         )
 
         set_parser_names()
+
+        debugger.__enter__()
 
         return (
             query
