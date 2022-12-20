@@ -209,6 +209,8 @@ class Formatter:
 
     def value(self, json, prec=precedence["from"]):
         parts = [self.dispatch(json["value"], prec)]
+        if "filter" in json:
+            parts.append(f"FILTER (WHERE {self.dispatch(json['filter'])})")
         if "over" in json:
             over = json["over"]
             parts.append("OVER")
