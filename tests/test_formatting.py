@@ -841,3 +841,15 @@ class TestSimple(TestCase):
         sql= """SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x LIMIT 1)"""
         formatted = format(parse(sql))
         self.assertEqual(formatted, sql)
+
+    def test_issue_148_filter_format(self):
+        sql = """SELECT MAX(1) FILTER (WHERE 1 = 1) AS foo"""
+        result = parse(sql)
+        expected = {"select": {
+            "filter": {"eq": [1, 1]},
+            "name": "foo",
+            "value": {"max": 1},
+        }}
+        self.assertEqual(result, expected)
+        formatted = format(parse(sql))
+        self.assertEqual(formatted, sql)
