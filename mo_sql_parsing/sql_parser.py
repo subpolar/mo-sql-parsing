@@ -506,12 +506,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 (SELECT + "*" + EXCEPT.suppress())
                 + (LB + delimited_list(select_column)("select_except") + RB)
             )
-            | assign("select as struct", delimited_list(select_column))
-            | assign("select as value", delimited_list(select_column))
             | (SELECT + DISTINCT + ON)
             + (LB + delimited_list(select_column)("distinct_on") + RB)
             + delimited_list(select_column)("select")
-            | assign("select_distinct", delimited_list(select_column))
+            | assign("select distinct", delimited_list(select_column))
+            | assign("select as struct", delimited_list(select_column))
+            | assign("select as value", delimited_list(select_column))
             | (
                 SELECT
                 + Optional(

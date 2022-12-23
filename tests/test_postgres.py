@@ -419,8 +419,7 @@ class TestPostgres(TestCase):
         )
         INSERT INTO tb
         SELECT * FROM delta;"""
-        with Debugger():
-            result = parse(sql)
+        result = parse(sql)
         expect = {
             "with": {"name": "delta", "value": {"from": "ta", "select": "*"}},
             "insert": "tb",
