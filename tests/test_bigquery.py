@@ -607,3 +607,40 @@ class TestBigQuery(TestCase):
         }
 
         self.assertEqual(result, expected)
+
+    def test_issue_150(self):
+        sql = """SELECT AS STRUCT
+            CASE
+                WHEN ee.babala = TRUE THEN 'avisos'
+                ELSE NULL
+            END AS bot_name,
+            ee.avisos AS estagio,
+            SAFE_CAST(NULL AS STRING) AS demanda,
+            SAFE_CAST(NULL AS STRING) AS transfere,
+            SAFE_CAST(NULL AS STRING) AS segurana,
+            SAFE_CAST(NULL AS BOOLEAN) AS jacson"""
+        result = parse(sql)
+        expected = {"select_as_struct": [
+            {
+                "name": "bot_name",
+                "value": {"case": [
+                    {
+                        "then": {"literal": "avisos"},
+                        "when": {"eq": ["ee.babala", True]},
+                    },
+                    {"null": {}},
+                ]},
+            },
+            {"name": "estagio", "value": "ee.avisos"},
+            {"name": "demanda", "value": {"safe_cast": [{"null": {}}, {"string": {}}]}},
+            {
+                "name": "transfere",
+                "value": {"safe_cast": [{"null": {}}, {"string": {}}]},
+            },
+            {
+                "name": "segurana",
+                "value": {"safe_cast": [{"null": {}}, {"string": {}}]},
+            },
+            {"name": "jacson", "value": {"safe_cast": [{"null": {}}, {"boolean": {}}]}},
+        ]}
+        self.assertEqual(result, expected)

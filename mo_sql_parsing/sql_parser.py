@@ -509,7 +509,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | (SELECT + DISTINCT + ON)
             + (LB + delimited_list(select_column)("distinct_on") + RB)
             + delimited_list(select_column)("select")
-            | SELECT + DISTINCT + delimited_list(select_column)("select_distinct")
+            | assign("select distinct", delimited_list(select_column))
+            | assign("select as struct", delimited_list(select_column))
+            | assign("select as value", delimited_list(select_column))
             | (
                 SELECT
                 + Optional(
@@ -791,6 +793,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         returning = Optional(delimited_list(select_column)("returning"))
 
         insert = (
+            Optional(assign("with", with_clause)) +
             keyword("insert").suppress()
             + (
                 flag("overwrite") + keyword("table").suppress()
