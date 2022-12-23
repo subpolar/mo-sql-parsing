@@ -791,6 +791,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         returning = Optional(delimited_list(select_column)("returning"))
 
         insert = (
+            Optional(assign("with", with_clause)) +
             keyword("insert").suppress()
             + (
                 flag("overwrite") + keyword("table").suppress()

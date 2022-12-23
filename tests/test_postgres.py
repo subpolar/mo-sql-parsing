@@ -273,27 +273,30 @@ class TestPostgres(TestCase):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval ':1' day (3)"""
         result = parse(sql)
-        expect = {"select": {"value": {"cast": [{"interval": [1, "minute"]}, {"day": 3}]}}}
+        expect = {"select": {"value": {"cast": [
+            {"interval": [1, "minute"]},
+            {"day": 3},
+        ]}}}
         self.assertEqual(result, expect)
 
     def test_issue_134b(self):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval '1:1' minute to second"""
         result = parse(sql)
-        expect = {"select": {"value": {"cast":[{"add": [
-            {"interval": [1, "hour"]},
-            {"interval": [1, "minute"]},
-        ]}, {"minute":{}, "second":{}} ]}}}
+        expect = {"select": {"value": {"cast": [
+            {"add": [{"interval": [1, "hour"]}, {"interval": [1, "minute"]},]},
+            {"minute": {}, "second": {}},
+        ]}}}
         self.assertEqual(result, expect)
 
     def test_issue_134c(self):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-manipulating-datetime-interval-values
         sql = """SELECT interval '1-1' month to second"""
         result = parse(sql)
-        expect = {"select": {"value": {"cast":[{"add": [
-            {"interval": [1, "year"]},
-            {"interval": [1, "month"]},
-        ]}, {"month":{}, "second":{}} ]}}}
+        expect = {"select": {"value": {"cast": [
+            {"add": [{"interval": [1, "year"]}, {"interval": [1, "month"]},]},
+            {"month": {}, "second": {}},
+        ]}}}
         self.assertEqual(result, expect)
 
     def test_issue_140_interval_cast1(self):
@@ -329,7 +332,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval1(self):
         sql = "SELECT INTERVAL '1'"
         result = parse(sql)
-        expect={"select": {"value": {"interval": [1, "second"]}}}
+        expect = {"select": {"value": {"interval": [1, "second"]}}}
         self.assertEqual(result, expect)
 
     def test_issue_147_interval3(self):
@@ -348,7 +351,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval4(self):
         sql = "SELECT INTERVAL 'P1Y2M3DT4H5M6S'"
         result = parse(sql)
-        expect={"select": {"value": {"add": [
+        expect = {"select": {"value": {"add": [
             {"interval": [1, "year"]},
             {"interval": [2, "month"]},
             {"interval": [3, "day"]},
@@ -361,7 +364,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval5(self):
         sql = "SELECT INTERVAL '-1-2 +3 -4:05:06'"
         result = parse(sql)
-        expect={"select": {"value": {"add": [
+        expect = {"select": {"value": {"add": [
             {"interval": [-1, "year"]},
             {"interval": [-2, "month"]},
             {"interval": [3, "day"]},
@@ -374,7 +377,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval6(self):
         sql = "SELECT INTERVAL '-1 year -2 mons +3 days -04:05:06'"
         result = parse(sql)
-        expect={"select": {"value": {"add": [
+        expect = {"select": {"value": {"add": [
             {"interval": [-1, "year"]},
             {"interval": [-2, "month"]},
             {"interval": [3, "day"]},
@@ -387,7 +390,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval7(self):
         sql = "SELECT INTERVAL '@ 1 year 2 mons -3 days 4 hours 5 mins 6 secs ago'"
         result = parse(sql)
-        expect={"select": {"value": {"add": [
+        expect = {"select": {"value": {"add": [
             {"interval": [-1, "year"]},
             {"interval": [-2, "month"]},
             {"interval": [3, "day"]},
@@ -400,7 +403,7 @@ class TestPostgres(TestCase):
     def test_issue_147_interval8(self):
         sql = "SELECT INTERVAL 'P-1Y-2M3DT-4H-5M-6S'"
         result = parse(sql)
-        expect={"select": {"value": {"add": [
+        expect = {"select": {"value": {"add": [
             {"interval": [-1, "year"]},
             {"interval": [-2, "month"]},
             {"interval": [3, "day"]},
@@ -408,4 +411,19 @@ class TestPostgres(TestCase):
             {"interval": [-5, "minute"]},
             {"interval": [-6, "second"]},
         ]}}}
+        self.assertEqual(result, expect)
+
+    def test_issue_149_insert(self):
+        sql = """WITH delta AS (
+            SELECT * from ta
+        )
+        INSERT INTO tb
+        SELECT * FROM delta;"""
+        with Debugger():
+            result = parse(sql)
+        expect = {
+            "with": {"name": "delta", "value": {"from": "ta", "select": "*"}},
+            "insert": "tb",
+            "query": {"from": "delta", "select": "*"},
+        }
         self.assertEqual(result, expect)
