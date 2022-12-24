@@ -425,7 +425,7 @@ class TestSimple(TestCase):
             "from": "T",
             "where": {"in": [
                 ["a", "b"],
-                [{"literal": ["a", "b"]}, {"literal": ["c", "d"]}],
+                {"literal": [["a", "b"], ["c", "d"]]},
             ]},
         }
         self.assertEqual(parse_result, expected_result)
@@ -711,7 +711,7 @@ class TestSimple(TestCase):
                 "select": "*",
                 "where": {"in": [
                     ["origin", "dest"],
-                    [{"literal": ["ATL", "ABE"]}, {"literal": ["DFW", "ABI"]}],
+                    {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]},
                 ]},
             },
         )

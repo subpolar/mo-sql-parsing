@@ -230,19 +230,26 @@ def to_window_mod(tokens):
     return Call("value", [expr], {**window})
 
 
-def to_tuple_call(tokens):
+def as_literal(token):
+    if isinstance(token, number_types):
+        return token
+    if is_data(token) and "literal" in token:
+        return token['literal']
+    if isinstance(token, ParseResults) and isinstance(token.type, Group) and token.length() == 1:
+        return as_literal(token[0])
+
+
+def to_tuple_call(token, index, string):
     # IS THIS ONE VALUE IN (), OR MANY?
-    tokens = list(tokens)
+    tokens = list(token)
     if len(tokens) == 1:
-        return [tokens[0]]
+        return tokens
     if all(isinstance(r, number_types) for r in tokens):
         return [tokens]
-    if all(
-        isinstance(r, number_types) or (is_data(r) and "literal" in r.keys())
-        for r in tokens
-    ):
-        candidate = {"literal": [r["literal"] if is_data(r) else r for r in tokens]}
-        return candidate
+
+    candidate = [as_literal(t) for t in tokens]
+    if all(candidate):
+        return {"literal": candidate}
 
     return [tokens]
 
