@@ -171,7 +171,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
             return Optional(
                 (real_num | int_num)(type)
                 + MatchFirst([
-                    CaselessLiteral(k).suppress()
+                    # CONSUME ALL THE NAME, BUT NOT THE "T" USED TO DESIGNATE TIME
+                    CaselessKeyword(k, ident_chars=Regex("[a-su-z]")).suppress()
                     for k, v in durations.items()
                     if v == type
                 ])
@@ -191,6 +192,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + matching("minute")
             + comma
             + matching("second")
+            + comma
+            + matching("millisecond")
             + Optional(CaselessLiteral("ago")("ago"))
         ) / has_something
 
@@ -557,7 +560,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         # https://wiki.postgresql.org/wiki/TABLESAMPLE_Implementation
         # https://docs.snowflake.com/en/sql-reference/constructs/sample.html
         # https://docs.microsoft.com/en-us/sql/t-sql/queries/from-transact-sql?view=sql-server-ver16
-        tablesample = (TABLESAMPLE | SAMPLE) + (
+        tablesample = (TABLESAMPLE | SAMPLE) + Group(
             Optional((
                 keyword("bernoulli")
                 | keyword("row")
@@ -620,7 +623,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         # https://www.postgresql.org/docs/current/sql-select.html
         #  [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF table_name [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
-        for_update = Optional(
+        for_update = Optional(Group(
             FOR
             + (
                 keyword("update")
@@ -633,7 +636,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 + identifier("value")
                 + Optional(flag("nowait") | flag("skip locked"))
             )("table")
-        )("locking")
+        ))("locking")
 
         ordered_sql = (
             (
