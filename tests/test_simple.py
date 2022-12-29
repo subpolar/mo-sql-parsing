@@ -1550,7 +1550,6 @@ class TestSimple(TestCase):
         )
         self.assertEqual(s, """SELECT TRIM(\'.1\' FROM TRIM(column1)) FROM my_table""")
 
-    @skip("please fix")
     def test_issue_68_group_strings(self):
         sql = """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))"""
         p = parse(sql)

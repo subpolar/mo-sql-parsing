@@ -426,3 +426,55 @@ class TestPostgres(TestCase):
             "query": {"from": "delta", "select": "*"},
         }
         self.assertEqual(result, expect)
+
+    def test_issue_154_millisecond(self):
+        sql = """SELECT
+            DISTINCT
+            m AS mesa,
+            COALESCE(
+                LEAD(
+                    TIMESTAMP_SUB(systema, INTERVAL 1 MILLISECOND)
+                ) OVER (PARTITION BY id ORDER BY systema ASC),
+                TIMESTAMP('9999-12-31 23:59:59.999')) AS end_at,
+            airflow_metad AS synced_at
+        FROM
+            `projeto.dataset.tabela` TABLESAMPLE SYSTEM (0.1 PERCENT)
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY id, systema) = 1
+        LIMIT 50000"""
+        result = parse(sql)
+        expect = {
+            "from": {
+                "tablesample": {"method": "system", "percent": 0.1},
+                "value": "projeto..dataset..tabela",
+            },
+            "limit": 50000,
+            "qualify": {"eq": [
+                {
+                    "over": {"partitionby": ["id", "systema"]},
+                    "value": {"row_number": {}},
+                },
+                1,
+            ]},
+            "select_distinct": [
+                {"name": "mesa", "value": "m"},
+                {
+                    "name": "end_at",
+                    "value": {"coalesce": [
+                        {
+                            "value": {"lead": {"timestamp_sub": [
+                                "systema",
+                                {"interval": [1, "millisecond"]},
+                            ]}},
+                            "over": {
+                                "orderby": {"sort": "asc", "value": "systema"},
+                                "partitionby": "id",
+                            },
+                        },
+                        {"timestamp": {"literal": "9999-12-31 23:59:59.999"}},
+                    ]},
+                },
+                {"name": "synced_at", "value": "airflow_metad"},
+            ],
+        }
+
+        self.assertEqual(result, expect)
