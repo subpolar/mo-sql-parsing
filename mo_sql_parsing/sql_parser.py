@@ -477,8 +477,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
         unpivot_join = (
             UNPIVOT("op")
             + Optional(
-                keyword("EXCLUDE NULLS")("nulls") / (lambda: True)
-                | keyword("INCLUDE NULLS")("nulls") / (lambda: True)
+                keyword("EXCLUDE NULLS")("nulls") / True
+                | keyword("INCLUDE NULLS")("nulls") / True
             )("kwargs")
             + (
                 LB
@@ -715,7 +715,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             (
                 Keyword("temporary", caseless=True) | Keyword("temp", caseless=True)
             )("temporary")
-            / (lambda: True)
+            / True
         ) + Optional(flag("transient"))
 
         create_table = (
@@ -723,7 +723,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + Optional(keyword("or") + flag("replace"))
             + temporary
             + TABLE
-            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + Optional((keyword("if not exists") / False)("replace"))
             + identifier("name")
             + Optional(LB + delimited_list(table_element) + Optional(",") + RB)
             + ZeroOrMore(
@@ -742,7 +742,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + Optional(keyword("or") + flag("replace"))
             + temporary
             + VIEW.suppress()
-            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + Optional((keyword("if not exists") / False)("replace"))
             + identifier("name")
             + AS
             + query("query")
@@ -752,7 +752,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
         create_index = (
             keyword("create index")
             + Optional(keyword("or") + flag("replace"))(INDEX | KEY)
-            + Optional((keyword("if not exists") / (lambda: False))("replace"))
+            + Optional((keyword("if not exists") / False)("replace"))
             + identifier("name")
             + ON
             + identifier("table")
