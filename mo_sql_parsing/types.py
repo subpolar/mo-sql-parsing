@@ -244,7 +244,7 @@ def get_column_type(expr, identifier, literal_string):
     column_options = (
         (NOT + NULL)("nullable") / False
         | keyword("not enforced")("enforced") / False
-        | (NULL / (lambda t: True))("nullable")
+        | (NULL / True)("nullable")
         | flag("unique")
         | flag("auto_increment")
         | assign("comment", literal_string)

@@ -526,7 +526,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 / to_top_clause
                 + delimited_list(select_column)("select")
             )
-        )
+        )+comma
 
         row = (LB + delimited_list(Group(expression)) + RB) / to_row
         values = VALUES + delimited_list(row) / to_values
