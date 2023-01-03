@@ -12,9 +12,9 @@ from mo_parsing import *
 
 from mo_sql_parsing.utils import SQL_NULL, keyword
 
-NULL = keyword("null") / (lambda: SQL_NULL)
-TRUE = keyword("true") / (lambda: True)
-FALSE = keyword("false") / (lambda: False)
+NULL = keyword("null") / SQL_NULL
+TRUE = keyword("true") / True
+FALSE = keyword("false") / False
 NOCASE = keyword("nocase")
 ASC = keyword("asc")
 DESC = keyword("desc")

@@ -644,3 +644,39 @@ class TestBigQuery(TestCase):
             {"name": "jacson", "value": {"safe_cast": [{"null": {}}, {"boolean": {}}]}},
         ]}
         self.assertEqual(result, expected)
+
+    def test_issue_155_trailing_comma(self):
+        sql = """SELECT
+            a.day AS src,
+            b.day as tgt,
+            ROW_NUMBER() OVER(PARTITION BY a.day ORDER BY b.day) - 1 AS qtde_wd,
+        FROM workdays a
+        join workdays b ON a.day <= b.day"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                {"name": "a", "value": "workdays"},
+                {
+                    "join": {"name": "b", "value": "workdays"},
+                    "on": {"lte": ["a.day", "b.day"]},
+                },
+            ],
+            "select": [
+                {"name": "src", "value": "a.day"},
+                {"name": "tgt", "value": "b.day"},
+                {
+                    "name": "qtde_wd",
+                    "value": {"sub": [
+                        {
+                            "over": {
+                                "orderby": {"value": "b.day"},
+                                "partitionby": "a.day",
+                            },
+                            "value": {"row_number": {}},
+                        },
+                        1,
+                    ]},
+                },
+            ],
+        }
+        self.assertEqual(result, expected)

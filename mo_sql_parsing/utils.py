@@ -41,14 +41,14 @@ null_locations = []
 def keyword(keywords):
     return And([
         Keyword(k, caseless=True) for k in keywords.split(" ")
-    ]).set_parser_name(keywords) / (lambda: keywords.replace(" ", "_"))
+    ]).set_parser_name(keywords) / keywords.replace(" ", "_")
 
 
 def flag(keywords):
     """
     RETURN {keywords: True}
     """
-    return (keyword(keywords) / (lambda: True))(keywords.replace(" ", "_"))
+    return (keyword(keywords) / True)(keywords.replace(" ", "_"))
 
 
 def assign(key: str, value: ParserElement):

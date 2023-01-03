@@ -84,7 +84,7 @@ BYTES = (keyword("bytes")("op") + _size) / to_json_call
 CHAR = (
     Combine(
         (Keyword("char", caseless=True) | Keyword("character", caseless=True))
-        + Optional(Keyword("varying", caseless=True) / (lambda: "_varying"))
+        + Optional(Keyword("varying", caseless=True) / "_varying")
     )("op")
     + _size
 ) / to_json_call
@@ -99,7 +99,7 @@ UUID = Group(keyword("uuid")("op")) / to_json_call
 
 DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
 DOUBLE_PRECISION = (
-    Group((keyword("double precision") / (lambda: "double_precision"))("op"))
+    Group((keyword("double precision") / "double_precision")("op"))
     / to_json_call
 )
 NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
@@ -229,7 +229,7 @@ def get_column_type(expr, identifier, literal_string):
     column_def_identity = (
         assign(
             "generated",
-            (keyword("always") | keyword("by default") / (lambda: "by_default")),
+            (keyword("always") | keyword("by default") / "by_default"),
         )
         + keyword("as identity").suppress()
         + Optional(assign("start with", int_num))
@@ -242,9 +242,9 @@ def get_column_type(expr, identifier, literal_string):
     )
 
     column_options = (
-        (NOT + NULL)("nullable") / (lambda: False)
-        | keyword("not enforced")("enforced") / (lambda: False)
-        | (NULL / (lambda t: True))("nullable")
+        (NOT + NULL)("nullable") / False
+        | keyword("not enforced")("enforced") / False
+        | (NULL / True)("nullable")
         | flag("unique")
         | flag("auto_increment")
         | assign("comment", literal_string)
