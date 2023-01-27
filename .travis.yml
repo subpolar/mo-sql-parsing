@@ -1,11 +1,13 @@
 language: python
+cache: pip
 python:
 - 3.7.8
-- 3.8
-- 3.9
+- '3.8'
+- '3.9'
 group: dev
 install:
 - pip install -r tests/requirements.txt
+- cp packaging/setup.py .
 - pip install .
 env:
 - PYTHONPATH=.
@@ -13,3 +15,11 @@ script:
 - python -Werror tests/smoke_test.py
 - python -m unittest discover tests
 - echo test
+jobs:
+  include:
+  - name: Python 3.10
+    dist: jammy
+    python: '3.10'
+    before_install:
+    - pip install wheel==0.37.1
+    - pip install setuptools==45.2.0
