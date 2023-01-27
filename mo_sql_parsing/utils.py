@@ -710,8 +710,7 @@ def to_table(tokens):
     output = dict(tokens)
     if len(list(output.keys())) > 1:
         return output
-    else:
-        return output["value"]
+    return [output["value"]]
 
 
 def single_literal(tokens):

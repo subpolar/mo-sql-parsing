@@ -594,6 +594,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             (
                 lateral_source
                 | (LB + query + RB)
+                | (LB + delimited_list(table_source) + ZeroOrMore(join) + RB)
                 | unnest
                 | stack
                 | call_function

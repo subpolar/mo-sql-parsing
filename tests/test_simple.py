@@ -8,9 +8,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-from unittest import TestCase, skip
-
-from mo_parsing.debug import Debugger
+from unittest import TestCase
 
 from mo_sql_parsing import parse, parse_mysql, format
 
@@ -1147,10 +1145,7 @@ class TestSimple(TestCase):
             {
                 "from": "C",
                 "select": [
-                    {"value": {
-                        "count": ["B", "E"],
-                        "distinct": True,
-                    }},
+                    {"value": {"count": ["B", "E"], "distinct": True,}},
                     {"value": "A"},
                 ],
                 "where": {"eq": ["D", "X"]},
@@ -1611,5 +1606,17 @@ class TestSimple(TestCase):
                 "name": "x",
                 "value": {"case": [{"when": {"eq": [1, 1]}, "then": 1}, -1]},
             },
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_156(self):
+        sql = """select * FROM (t1 INNER JOIN t2 ON t1.c1 = t2.c2)"""
+        result = parse(sql)
+        expected = {
+            "from": [
+                "t1",
+                {"inner join": "t2", "on": {"eq": ["t1.c1", "t2.c2"]}},
+            ],
+            "select": "*",
         }
         self.assertEqual(result, expected)
