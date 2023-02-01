@@ -352,6 +352,10 @@ def to_json_call(tokens):
     )
 
 
+def to_option(tokens):
+    return dict([list(tokens)])
+
+
 def to_interval_type(tokens):
     # ARRANGE INTO {op: params} FORMAT
     op = tokens["op"].lower()

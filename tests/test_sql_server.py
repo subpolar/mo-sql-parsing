@@ -239,3 +239,10 @@ class TestSqlServer(TestCase):
             ],
         }
         self.assertEqual(result, expected)
+
+
+    def test_issue_157_describe(self):
+        sql = """describe with_recommendations select * from temp"""
+        result = parse(sql)
+        expected = {'explain': {'from': 'temp', 'select': '*'}, 'with_recommendations': True}
+        self.assertEqual(result, expected)

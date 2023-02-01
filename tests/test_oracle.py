@@ -31,11 +31,14 @@ class TestOracle(TestCase):
         sql = "SELECT * FROM foo SAMPLE(1) WHERE a < 42"
         result = parse(sql)
         expected = {
-            "from": {
-                "tablesample": {"percent": 1},
-                "value": "foo",
-            },
+            "from": {"tablesample": {"percent": 1}, "value": "foo",},
             "select": "*",
             "where": {"lt": ["a", 42]},
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe(self):
+        sql = """describe into s.t@database for select * from temp"""
+        result = parse(sql)
+        expected = {"explain": {"from": "temp", "select": "*"}, "into": "s.t@database"}
         self.assertEqual(result, expected)

@@ -526,7 +526,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 / to_top_clause
                 + delimited_list(select_column)("select")
             )
-        )+comma
+        ) + comma
 
         row = (LB + delimited_list(Group(expression)) + RB) / to_row
         values = VALUES + delimited_list(row) / to_values
@@ -797,8 +797,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
         returning = Optional(delimited_list(select_column)("returning"))
 
         insert = (
-            Optional(assign("with", with_clause)) +
-            keyword("insert").suppress()
+            Optional(assign("with", with_clause))
+            + keyword("insert").suppress()
             + (
                 flag("overwrite") + keyword("table").suppress()
                 | keyword("into").suppress() + Optional(keyword("table").suppress())
@@ -907,6 +907,60 @@ def parser(literal_string, simple_ident, sqlserver=False):
             )
         ))
 
+        # EXPLAIN
+        statement = Forward()
+        explain_option = MatchFirst([
+            (
+                Keyword(option, caseless=True)
+                + Optional(EQ)
+                + (
+                    TRUE
+                    | FALSE
+                    | Keyword("on") / True
+                    | Keyword("off") / False
+                    | Keyword("1") / True
+                    | Keyword("0") / False
+                    | Empty() / True
+                )
+            )
+            / to_option
+            for option in [
+                "analyze",
+                "buffers",
+                "costs",
+                "settings",
+                "summary",
+                "timing",
+                "verbose",
+                "wal",
+                "with_recommendations"
+            ]
+        ])
+        explain_format = (
+            Keyword("format", caseless=True)
+            + Optional(EQ)
+            + MatchFirst([
+                keyword(k)
+                for k in ["json", "yaml", "xml", "tree", "text", "traditional"]
+            ])
+        ) / to_option
+        explain_into = (
+            Keyword("into", caseless=True) + ident + Optional(file_source)
+        ) / to_option
+        explain = (
+            ((EXPLAIN | DESC | DESCRIBE) + Optional(keyword("query plan")))("op") / "explain"
+            + Optional(Group(
+                (
+                    LB
+                    + delimited_list(explain_option | explain_format | explain_into)
+                    + RB
+                )
+                | delimited_list(explain_option | explain_format | explain_into)
+            ))("kwargs")
+            + Optional(FOR)
+            + statement("params")
+        ) / to_json_call
+
         #############################################################
         # ALTER TABLE
         #############################################################
@@ -959,7 +1013,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         debugger.__enter__()
 
-        return (
+        statement << (
             query
             | (insert | update | delete)
             | (create_table | create_view | create_cache | create_index)
@@ -969,4 +1023,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 Optional(keyword("alter session")).suppress()
                 + (set_variable | unset_variable | declare_variable)
             )
-        ).finalize()
+        )
+
+        return (explain | statement).finalize()

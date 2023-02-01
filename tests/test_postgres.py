@@ -478,3 +478,63 @@ class TestPostgres(TestCase):
         }
 
         self.assertEqual(result, expect)
+
+    def test_issue_157_describe1(self):
+        sql = """explain (analyze, verbose true, costs 1, settings on, buffers false, wal 0, timing off, summary) select * from temp"""
+        result = parse(sql)
+        expected = {
+            "explain": {"from": "temp", "select": "*"},
+            "analyze": True,
+            "buffers": False,
+            "costs": True,
+            "settings": True,
+            "summary": True,
+            "timing": False,
+            "verbose": True,
+            "wal": False,
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe2(self):
+        sql = """explain (format text) select * from temp"""
+        result = parse(sql)
+        expected = {"explain": {"from": "temp", "select": "*"}, "format": "text"}
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe3(self):
+        sql = """explain (format xml) select * from temp"""
+        result = parse(sql)
+        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'xml'}
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe4(self):
+        sql = """explain (format yaml) select * from temp"""
+        result = parse(sql)
+        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'yaml'}
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe5(self):
+        sql = """EXPLAIN SELECT * FROM foo, bar WHERE id = fkey"""
+        result = parse(sql)
+        expected = {"explain": {
+            "from": ["foo", "bar"],
+            "select": "*",
+            "where": {"eq": ["id", "fkey"]},
+        }}
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe6(self):
+        sql = (
+            """EXPLAIN (ANALYZE, FORMAT JSON) SELECT * FROM foo, bar WHERE id = fkey"""
+        )
+        result = parse(sql)
+        expected = {
+            "explain": {
+                "from": ["foo", "bar"],
+                "select": "*",
+                "where": {"eq": ["id", "fkey"]},
+            },
+            "analyze": True,
+            "format": "json",
+        }
+        self.assertEqual(result, expected)
