@@ -42,3 +42,9 @@ class TestOracle(TestCase):
         result = parse(sql)
         expected = {"explain": {"from": "temp", "select": "*"}, "into": "s.t@database"}
         self.assertEqual(result, expected)
+
+    def test_issue_157_describe2(self):
+        sql = """explain plan into s.t@database for select * from temp"""
+        result = parse(sql)
+        expected = {"explain": {"from": "temp", "select": "*"}, "into": "s.t@database"}
+        self.assertEqual(result, expected)

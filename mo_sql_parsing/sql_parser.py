@@ -933,7 +933,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 "timing",
                 "verbose",
                 "wal",
-                "with_recommendations"
+                "with_recommendations",
             ]
         ])
         explain_format = (
@@ -948,7 +948,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
             Keyword("into", caseless=True) + ident + Optional(file_source)
         ) / to_option
         explain = (
-            ((EXPLAIN | DESC | DESCRIBE) + Optional(keyword("query plan")))("op") / "explain"
+            (
+                (EXPLAIN | DESC | DESCRIBE)
+                + Optional(keyword("query"))
+                + Optional(keyword("plan"))
+            )("op")
+            / "explain"
             + Optional(Group(
                 (
                     LB
