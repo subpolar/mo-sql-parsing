@@ -1117,7 +1117,7 @@ class TestSimple(TestCase):
         sql = "SELECT DISTINCT Country, City FROM Customers"
         result = parse(sql)
         expected = {
-            "select_distinct": [{"value": "Country"}, {"value": "City"},],
+            "select_distinct": [{"value": "Country"}, {"value": "City"}, ],
             "from": "Customers",
         }
         self.assertEqual(result, expected)
@@ -1145,7 +1145,7 @@ class TestSimple(TestCase):
             {
                 "from": "C",
                 "select": [
-                    {"value": {"count": ["B", "E"], "distinct": True,}},
+                    {"value": {"count": ["B", "E"], "distinct": True, }},
                     {"value": "A"},
                 ],
                 "where": {"eq": ["D", "X"]},
@@ -1619,4 +1619,10 @@ class TestSimple(TestCase):
             ],
             "select": "*",
         }
+        self.assertEqual(result, expected)
+
+    def test_issue_157_describe(self):
+        sql = """describe query plan select * from temp"""
+        result = parse(sql)
+        expected = {'explain': {'from': 'temp', 'select': '*'}}
         self.assertEqual(result, expected)
