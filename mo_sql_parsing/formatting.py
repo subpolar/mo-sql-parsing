@@ -342,7 +342,14 @@ class Formatter:
         )
 
     def _substring(self, json, prec):
-        return f"SUBSTRING({json['substring']} FROM {json['from']} FOR {json['for']})"
+        if "from" in json.keys():
+            return (
+                f"SUBSTRING({json['substring']} FROM {json['from']} FOR {json['for']})"
+            )
+        else:
+            # if substring does not contain list compose substring fn
+            params = ", ".join(self.dispatch(p) for p in listwrap(json.values()))
+            return f"{list(json.keys())[0].upper()}({params})"
 
     def _in(self, json, prec):
         member, set = json
@@ -408,9 +415,9 @@ class Formatter:
 
     def _literal(self, json, prec=0):
         if isinstance(json, list):
-            return "({0})".format(", ".join(
-                self._literal(v, precedence["literal"]) for v in json
-            ))
+            return "({0})".format(
+                ", ".join(self._literal(v, precedence["literal"]) for v in json)
+            )
         elif isinstance(json, string_types):
             return "'{0}'".format(json.replace("'", "''"))
         else:
@@ -656,10 +663,12 @@ class Formatter:
                 if "if exists" in json:
                     acc.append("IF EXISTS")
                 acc.append("VALUES")
-                acc.append(",\n".join(
-                    "(" + ", ".join(self._literal(row[c]) for c in columns) + ")"
-                    for row in values
-                ))
+                acc.append(
+                    ",\n".join(
+                        "(" + ", ".join(self._literal(row[c]) for c in columns) + ")"
+                        for row in values
+                    )
+                )
             else:
                 if "if exists" in json:
                     acc.append("IF EXISTS")
