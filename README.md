@@ -7,7 +7,7 @@
 
 Parse SQL into JSON so we can translate it for other datastores!
 
-[See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)
+[See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes-features)
 
 ## Objective
 

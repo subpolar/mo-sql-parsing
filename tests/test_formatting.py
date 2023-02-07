@@ -853,3 +853,9 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
         formatted = format(parse(sql))
         self.assertEqual(formatted, sql)
+
+    def test_issue_158_format_substring(self):
+        sql = """SELECT CASE WHEN a.attr1 IS NULL THEN CONCAT(SUBSTRING(CONVERT(CHAR(7), attr2 + 1000000), 2, 6), SUBSTRING(CONVERT(CHAR(8), attr3 + 10000000), 2, 7)) ELSE a.attr1 END AS alias1 FROM schema.table AS a"""
+        result = parse(sql)
+        formatted = format(parse(sql))
+        self.assertEqual(formatted, sql)
