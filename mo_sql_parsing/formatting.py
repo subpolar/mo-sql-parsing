@@ -347,7 +347,7 @@ class Formatter:
                 f"SUBSTRING({json['substring']} FROM {json['from']} FOR {json['for']})"
             )
         else:
-            # if substring does not contain list compose substring fn
+            # if substring does not contain from and for,  compose normal substring function
             params = ", ".join(self.dispatch(p) for p in listwrap(json.values()))
             return f"{list(json.keys())[0].upper()}({params})"
 
