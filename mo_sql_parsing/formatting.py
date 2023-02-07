@@ -348,8 +348,8 @@ class Formatter:
             )
         else:
             # if substring does not contain from and for,  compose normal substring function
-            params = ", ".join(self.dispatch(p) for p in listwrap(json.values()))
-            return f"{list(json.keys())[0].upper()}({params})"
+            params = ", ".join(self.dispatch(p) for p in json['substring'])
+            return f"SUBSTRING({params})"
 
     def _in(self, json, prec):
         member, set = json
