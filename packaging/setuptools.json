@@ -34,7 +34,7 @@
             "",
             "Parse SQL into JSON so we can translate it for other datastores!",
             "",
-            "[See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes)",
+            "[See changes](https://github.com/klahnakoski/mo-sql-parsing#version-changes-features)",
             "",
             "## Objective",
             "",
@@ -284,6 +284,6 @@
     "name": "mo-sql-parsing",
     "packages": ["mo_sql_parsing"],
     "url": "https://github.com/klahnakoski/mo-sql-parsing",
-    "version": "9.351.23032",
+    "version": "9.352.23038",
     "zip_safe": true
 }
