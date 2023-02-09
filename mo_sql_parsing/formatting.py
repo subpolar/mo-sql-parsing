@@ -348,7 +348,7 @@ class Formatter:
             )
         else:
             # if substring does not contain from and for,  compose normal substring function
-            params = ", ".join(self.dispatch(p) for p in json['substring'])
+            params = ", ".join(self.dispatch(p) for p in json["substring"])
             return f"SUBSTRING({params})"
 
     def _in(self, json, prec):
@@ -401,6 +401,17 @@ class Formatter:
             type = {type_name.upper(): params}
 
         return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
+
+    def _try_cast(self, json, prec):
+        expr, type = json
+
+        type_name, params = first(type.items())
+        if not params:
+            type = type_name.upper()
+        else:
+            type = {type_name.upper(): params}
+
+        return f"TRY_CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
 
     def _extract(self, json, prec):
         interval, value = json["extract"]
