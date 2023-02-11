@@ -88,12 +88,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
         # CASE
         case = (
             CASE
-            + Group(
-                ZeroOrMore(
-                    (WHEN + expression("when") + THEN + expression("then"))
-                    / to_when_call
-                )
-            )("case")
+            + Group(ZeroOrMore(
+                (WHEN + expression("when") + THEN + expression("then")) / to_when_call
+            ))("case")
             + Optional(ELSE + expression("else"))
             + END
         ) / to_case_call
@@ -101,12 +98,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
         switch = (
             CASE
             + expression("value")
-            + Group(
-                ZeroOrMore(
-                    (WHEN + expression("when") + THEN + expression("then"))
-                    / to_when_call
-                )
-            )("case")
+            + Group(ZeroOrMore(
+                (WHEN + expression("when") + THEN + expression("then")) / to_when_call
+            ))("case")
             + Optional(ELSE + expression("else"))
             + END
         ) / to_switch_call
@@ -175,29 +169,25 @@ def parser(literal_string, simple_ident, sqlserver=False):
         # INTERVAL TYPE
         # https://www.postgresql.org/docs/current/datatype-datetime.html
         time_interval_type = Forward()
-        time_interval_type << MatchFirst(
-            [
-                (
-                    (CaselessLiteral(d) / (lambda t: durations[t[0].lower()]))("op")
-                    + _sizes
-                    + Optional(TO + time_interval_type("kwargs"))
-                )
-                / to_interval_type
-                for d in durations.keys()
-            ]
-        )
+        time_interval_type << MatchFirst([
+            (
+                (CaselessLiteral(d) / (lambda t: durations[t[0].lower()]))("op")
+                + _sizes
+                + Optional(TO + time_interval_type("kwargs"))
+            )
+            / to_interval_type
+            for d in durations.keys()
+        ])
 
         def matching(type):
             return Optional(
                 (real_num | int_num)(type)
-                + MatchFirst(
-                    [
-                        # CONSUME ALL THE NAME, BUT NOT THE "T" USED TO DESIGNATE TIME
-                        CaselessKeyword(k, ident_chars=Regex("[a-su-z]")).suppress()
-                        for k, v in durations.items()
-                        if v == type
-                    ]
-                )
+                + MatchFirst([
+                    # CONSUME ALL THE NAME, BUT NOT THE "T" USED TO DESIGNATE TIME
+                    CaselessKeyword(k, ident_chars=Regex("[a-su-z]")).suppress()
+                    for k, v in durations.items()
+                    if v == type
+                ])
             )
 
         iso_datetime = (
@@ -220,56 +210,44 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ) / has_something
 
         ago = Optional(Regex("[+-]"))("ago")
-        sql_date = MatchFirst(
-            [
-                ago
-                + int_pos("year")
-                + "-"
-                + int_pos("month")
-                + Optional(ago("day-ago") + int_pos("day")),
-                int_num("day"),
-            ]
-        )
+        sql_date = MatchFirst([
+            ago
+            + int_pos("year")
+            + "-"
+            + int_pos("month")
+            + Optional(ago("day-ago") + int_pos("day")),
+            int_num("day"),
+        ])
 
-        sql_time = MatchFirst(
-            [
-                ago
-                + int_pos("day")
-                + Optional(CaselessLiteral("T") | ",")
-                + int_pos("hour")
-                + ":"
-                + int_pos("minute")
-                + Optional(
-                    ":" + int_pos("second") + Optional("." + int_pos("fraction"))
-                ),
-                ago
-                + int_pos("hour")
-                + ":"
-                + int_pos("minute")
-                + Optional(
-                    ":" + int_pos("second") + Optional("." + int_pos("fraction"))
-                ),
-                ago
-                + ":"
-                + int_pos("minute")
-                + Optional(
-                    ":" + int_pos("second") + Optional("." + int_pos("fraction"))
-                ),
-                ago
-                + int_pos("minute")
-                + ":"
-                + int_pos("second")
-                + Optional("." + int_pos("fraction")),
-                (int_num | real_num)("expr"),
-            ]
-        )
+        sql_time = MatchFirst([
+            ago
+            + int_pos("day")
+            + Optional(CaselessLiteral("T") | ",")
+            + int_pos("hour")
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + int_pos("hour")
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + ":"
+            + int_pos("minute")
+            + Optional(":" + int_pos("second") + Optional("." + int_pos("fraction"))),
+            ago
+            + int_pos("minute")
+            + ":"
+            + int_pos("second")
+            + Optional("." + int_pos("fraction")),
+            (int_num | real_num)("expr"),
+        ])
 
-        formatted_duration = Regex("[@Pp]*") + (
-            delimited_list(
-                (sql_time ^ sql_date ^ iso_datetime) / to_interval_call,
-                separator=Regex("[,TtPp]*"),
-            )
-        )
+        formatted_duration = Regex("[@Pp]*") + (delimited_list(
+            (sql_time ^ sql_date ^ iso_datetime) / to_interval_call,
+            separator=Regex("[,TtPp]*"),
+        ))
 
         interval = (
             INTERVAL
@@ -284,9 +262,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
             time_functions("op")
             + (
                 literal_string("params")
-                | MatchFirst([keyword(t) / (lambda t: t.lower()) for t in times])(
-                    "params"
-                )
+                | MatchFirst([
+                    keyword(t) / (lambda t: t.lower()) for t in times
+                ])("params")
             )
         ) / to_json_call
 
@@ -299,28 +277,23 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + RB
         ) / to_json_call
 
-        alias = Optional(
+        alias = Optional((
             (
                 (
-                    (
-                        AS
-                        + (
-                            ident("name")
-                            + Optional(LB + delimited_list(ident("col")) + RB)
-                        )
-                        | (
-                            identifier("name")
-                            + Optional(
-                                (LB + delimited_list(ident("col")) + RB)
-                                | (AS + delimited_list(identifier("col")))
-                            )
+                    AS
+                    + (ident("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                    | (
+                        identifier("name")
+                        + Optional(
+                            (LB + delimited_list(ident("col")) + RB)
+                            | (AS + delimited_list(identifier("col")))
                         )
                     )
-                    + ~FollowedBy(LB)  # THIS IS NOT AN ALIAS
                 )
-                / to_alias
-            )("name")
-        )
+                + ~FollowedBy(LB)  # THIS IS NOT AN ALIAS
+            )
+            / to_alias
+        )("name"))
 
         named_column = Group(Group(expression)("value") + alias)
 
@@ -373,9 +346,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 LT.suppress() + delimited_list(column_type)("types") + GT.suppress()
             )
             + LB
-            + delimited_list(Group((expression("value") + alias) / to_select_call))(
-                "args"
-            )
+            + delimited_list(Group(
+                (expression("value") + alias) / to_select_call
+            ))("args")
             + RB
         ) / to_struct
 
@@ -471,18 +444,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 | infix_notation(
                     compound,
                     [
-                        (
-                            dynamic_accessor,
-                            1,
-                            LEFT_ASSOC,
-                            to_offset,
-                        ),
-                        (
-                            simple_accessor,
-                            1,
-                            LEFT_ASSOC,
-                            to_offset,
-                        ),
+                        (dynamic_accessor, 1, LEFT_ASSOC, to_offset,),
+                        (simple_accessor, 1, LEFT_ASSOC, to_offset,),
                         (accessor, 1, LEFT_ASSOC, to_offset),
                         (window_clause, 1, LEFT_ASSOC, to_window_mod),
                         (
@@ -611,14 +574,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
         # https://docs.snowflake.com/en/sql-reference/constructs/sample.html
         # https://docs.microsoft.com/en-us/sql/t-sql/queries/from-transact-sql?view=sql-server-ver16
         tablesample = (TABLESAMPLE | SAMPLE) + Group(
-            Optional(
-                (
-                    keyword("bernoulli")
-                    | keyword("row")
-                    | keyword("system")
-                    | keyword("block")
-                )
-            )("method")
+            Optional((
+                keyword("bernoulli")
+                | keyword("row")
+                | keyword("system")
+                | keyword("block")
+            ))("method")
             # / (lambda t: t if t else "bernoulli")
             + LB
             + (
@@ -654,15 +615,13 @@ def parser(literal_string, simple_ident, sqlserver=False):
                     | call_function
                     | ident
                 )("value")
-                + MatchAll(
-                    [
-                        Optional(flag("with ordinality")),
-                        Optional(WITH + LB + keyword("nolock")("hint") + RB),
-                        Optional(WITH + OFFSET + Optional(AS) + ident("with_offset")),
-                        Optional(tablesample),
-                        alias,
-                    ]
-                )
+                + MatchAll([
+                    Optional(flag("with ordinality")),
+                    Optional(WITH + LB + keyword("nolock")("hint") + RB),
+                    Optional(WITH + OFFSET + Optional(AS) + ident("with_offset")),
+                    Optional(tablesample),
+                    alias,
+                ])
             )
             / to_table
         )
@@ -682,22 +641,20 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         # https://www.postgresql.org/docs/current/sql-select.html
         #  [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF table_name [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
-        for_update = Optional(
-            Group(
-                FOR
-                + (
-                    keyword("update")
-                    | keyword("share")
-                    | keyword("no key update")
-                    | keyword("key share")
-                )("mode")
-                + Optional(
-                    keyword("of").suppress()
-                    + identifier("value")
-                    + Optional(flag("nowait") | flag("skip locked"))
-                )("table")
-            )
-        )("locking")
+        for_update = Optional(Group(
+            FOR
+            + (
+                keyword("update")
+                | keyword("share")
+                | keyword("no key update")
+                | keyword("key share")
+            )("mode")
+            + Optional(
+                keyword("of").suppress()
+                + identifier("value")
+                + Optional(flag("nowait") | flag("skip locked"))
+            )("table")
+        ))("locking")
 
         ordered_sql = (
             (
@@ -717,18 +674,13 @@ def parser(literal_string, simple_ident, sqlserver=False):
             )
         ) / to_union_call
 
-        with_clause = delimited_list(
-            Group(
-                (
-                    (
-                        identifier("name")
-                        + Optional(LB + delimited_list(ident("col")) + RB)
-                    )
-                    / to_alias
-                )("name")
-                + (AS + LB + (query | expression)("value") + RB)
-            )
-        )
+        with_clause = delimited_list(Group(
+            (
+                (identifier("name") + Optional(LB + delimited_list(ident("col")) + RB))
+                / to_alias
+            )("name")
+            + (AS + LB + (query | expression)("value") + RB)
+        ))
 
         (
             query
@@ -778,13 +730,13 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | table_def_foreign_key("foreign_key")
         )
 
-        table_element = table_constraint_definition("constraint") | column_definition(
-            "columns"
+        table_element = (
+            table_constraint_definition("constraint") | column_definition("columns")
         )
         temporary = Optional(
-            (Keyword("temporary", caseless=True) | Keyword("temp", caseless=True))(
-                "temporary"
-            )
+            (
+                Keyword("temporary", caseless=True) | Keyword("temp", caseless=True)
+            )("temporary")
             / True
         ) + Optional(flag("transient"))
 
@@ -831,22 +783,16 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + index_options
         )("create index")
 
-        cache_options = Optional(
-            (
-                keyword("options").suppress()
-                + LB
-                + Dict(
-                    delimited_list(
-                        Group(
-                            literal_string / (lambda tokens: tokens[0]["literal"])
-                            + Optional(EQ)
-                            + identifier
-                        )
-                    )
-                )
-                + RB
-            )("options")
-        )
+        cache_options = Optional((
+            keyword("options").suppress()
+            + LB
+            + Dict(delimited_list(Group(
+                literal_string / (lambda tokens: tokens[0]["literal"])
+                + Optional(EQ)
+                + identifier
+            )))
+            + RB
+        )("options"))
 
         create_cache = (
             keyword("cache").suppress()
@@ -906,33 +852,29 @@ def parser(literal_string, simple_ident, sqlserver=False):
         #############################################################
         # PROCEDURAL
         #############################################################
-        special_ident = keyword("masking policy") | identifier / (
-            lambda t: t[0].lower()
+        special_ident = (
+            keyword("masking policy") | identifier / (lambda t: t[0].lower())
         )
         declare_variable = assign("declare", column_definition)
         set_variable = assign(
             "set",
             (special_ident + Optional(EQ) + expression)("params")
-            / (
-                lambda t: {
-                    t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]
-                }
-            ),
+            / (lambda t: {
+                t[0].lower(): t[1].lower() if isinstance(t[1], str) else t[1]
+            }),
         )
         unset_variable = assign("unset", special_ident)
 
         copy_options = Forward()
-        copy_options << ZeroOrMore(
-            MatchFirst(
-                [
-                    keyword(n).suppress()
-                    + EQ
-                    + (LB + copy_options + RB | expression)(n.lower())
-                    for n in copy_params
-                ]
-                + [PARTITION_BY.suppress() + expression("partition_by")]
-            )
-        )
+        copy_options << ZeroOrMore(MatchFirst(
+            [
+                keyword(n).suppress()
+                + EQ
+                + (LB + copy_options + RB | expression)(n.lower())
+                for n in copy_params
+            ]
+            + [PARTITION_BY.suppress() + expression("partition_by")]
+        ))
 
         with NO_WHITESPACE:
             file_name = Regex("[a-zA-Z0-9-_!.]+")
@@ -972,62 +914,56 @@ def parser(literal_string, simple_ident, sqlserver=False):
             ),
         )
 
-        column_modifications = delimited_list(
-            Group(
-                Optional(Keyword("column", caseless=True).suppress())
-                + identifier("name")
-                + (
-                    keyword("set data type") + column_type
-                    | keyword("data type") + column_type
-                    | keyword("type") + column_type
-                    | set_variable
-                    | unset_variable
-                    | assign("drop", column_option | special_ident)
-                    | Optional(keyword("set")) + column_option
-                )
+        column_modifications = delimited_list(Group(
+            Optional(Keyword("column", caseless=True).suppress())
+            + identifier("name")
+            + (
+                keyword("set data type") + column_type
+                | keyword("data type") + column_type
+                | keyword("type") + column_type
+                | set_variable
+                | unset_variable
+                | assign("drop", column_option | special_ident)
+                | Optional(keyword("set")) + column_option
             )
-        )
+        ))
 
         # EXPLAIN
         statement = Forward()
-        explain_option = MatchFirst(
-            [
-                (
-                    Keyword(option, caseless=True)
-                    + Optional(EQ)
-                    + (
-                        TRUE
-                        | FALSE
-                        | Keyword("on") / True
-                        | Keyword("off") / False
-                        | Keyword("1") / True
-                        | Keyword("0") / False
-                        | Empty() / True
-                    )
+        explain_option = MatchFirst([
+            (
+                Keyword(option, caseless=True)
+                + Optional(EQ)
+                + (
+                    TRUE
+                    | FALSE
+                    | Keyword("on") / True
+                    | Keyword("off") / False
+                    | Keyword("1") / True
+                    | Keyword("0") / False
+                    | Empty() / True
                 )
-                / to_option
-                for option in [
-                    "analyze",
-                    "buffers",
-                    "costs",
-                    "settings",
-                    "summary",
-                    "timing",
-                    "verbose",
-                    "wal",
-                    "with_recommendations",
-                ]
+            )
+            / to_option
+            for option in [
+                "analyze",
+                "buffers",
+                "costs",
+                "settings",
+                "summary",
+                "timing",
+                "verbose",
+                "wal",
+                "with_recommendations",
             ]
-        )
+        ])
         explain_format = (
             Keyword("format", caseless=True)
             + Optional(EQ)
-            + MatchFirst(
-                [
-                    keyword(k)
-                    for k in ["json", "yaml", "xml", "tree", "text", "traditional"]
-                ]
-            )
+            + MatchFirst([
+                keyword(k)
+                for k in ["json", "yaml", "xml", "tree", "text", "traditional"]
+            ])
         ) / to_option
         explain_into = (
             Keyword("into", caseless=True) + ident + Optional(file_source)
@@ -1039,16 +975,14 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 + Optional(keyword("plan"))
             )("op")
             / "explain"
-            + Optional(
-                Group(
-                    (
-                        LB
-                        + delimited_list(explain_option | explain_format | explain_into)
-                        + RB
-                    )
-                    | delimited_list(explain_option | explain_format | explain_into)
+            + Optional(Group(
+                (
+                    LB
+                    + delimited_list(explain_option | explain_format | explain_into)
+                    + RB
                 )
-            )("kwargs")
+                | delimited_list(explain_option | explain_format | explain_into)
+            ))("kwargs")
             + Optional(FOR)
             + statement("params")
         ) / to_json_call
