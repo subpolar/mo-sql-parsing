@@ -391,7 +391,7 @@ class Formatter:
         parts.append("END")
         return " ".join(parts)
 
-    def _cast(self, json, prec):
+    def casting(self, name, json):
         expr, type = json
 
         type_name, params = first(type.items())
@@ -400,18 +400,16 @@ class Formatter:
         else:
             type = {type_name.upper(): params}
 
-        return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
+        return f"{name}({self.dispatch(expr)} AS {self.dispatch(type)})"
+
+    def _cast(self, json, prec):
+        return self.casting("CAST", json)
 
     def _try_cast(self, json, prec):
-        expr, type = json
+        return self.casting("TRY_CAST", json)
 
-        type_name, params = first(type.items())
-        if not params:
-            type = type_name.upper()
-        else:
-            type = {type_name.upper(): params}
-
-        return f"TRY_CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
+    def _safe_cast(self, json, prec):
+        return self.casting("SAFE_CAST", json)
 
     def _extract(self, json, prec):
         interval, value = json["extract"]
