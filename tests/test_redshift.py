@@ -151,7 +151,7 @@ class TestRedshift(TestCase):
                 {"interval": [1, "hour"]},
                 {"interval": [1, "minute"]},
                 {"interval": [1, "second"]},
-            ]}}}
+            ]}}},
         )
 
     def test_dates2(self):

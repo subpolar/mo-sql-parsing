@@ -1338,7 +1338,7 @@ class TestSimpleUsingOperators(TestCase):
                 "select": {"value": {
                     "op": "count",
                     "args": ["Y"],
-                    "kwargs": {"distinct": True}
+                    "kwargs": {"distinct": True},
                 }},
             },
         )
@@ -1355,9 +1355,9 @@ class TestSimpleUsingOperators(TestCase):
                     {"value": {
                         "op": "count",
                         "args": ["B", "E"],
-                        "kwargs": {"distinct": True}
+                        "kwargs": {"distinct": True},
                     }},
-                    {"value": "A"}
+                    {"value": "A"},
                 ],
                 "where": {"args": ["D", "X"], "op": "eq"},
             },

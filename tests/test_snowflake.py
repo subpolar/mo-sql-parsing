@@ -70,7 +70,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "op": "table",
-                "args": [{"op": "generator", "kwargs": {"rowcount": 10}, }],
+                "args": [{"op": "generator", "kwargs": {"rowcount": 10}}],
             },
             "select": {"value": {"op": "seq4"}},
         }
@@ -85,7 +85,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "op": "table",
-                "args": [{"op": "generator", "kwargs": {"rowcount": 5}, }],
+                "args": [{"op": "generator", "kwargs": {"rowcount": 5}}],
             },
             "select": {"value": {"op": "uniform", "args": [1, 10, {"op": "random"}]}},
         }

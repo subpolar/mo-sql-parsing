@@ -47,7 +47,7 @@ class TestSqlServer(TestCase):
         # https://docs.microsoft.com/en-us/sql/t-sql/queries/top-transact-sql?view=sql-server-ver15
         sql = "SELECT TOP 3 * FROM Customers"
         result = parse(sql)
-        self.assertEqual(result, {"top": 3, "select": "*", "from": "Customers",})
+        self.assertEqual(result, {"top": 3, "select": "*", "from": "Customers"})
 
         sql = "SELECT TOP func(value) WITH TIES *"
         result = parse(sql)
@@ -243,9 +243,11 @@ class TestSqlServer(TestCase):
     def test_issue_157_describe(self):
         sql = """describe with_recommendations select * from temp"""
         result = parse(sql)
-        expected = {'explain': {'from': 'temp', 'select': '*'}, 'with_recommendations': True}
+        expected = {
+            "explain": {"from": "temp", "select": "*"},
+            "with_recommendations": True,
+        }
         self.assertEqual(result, expected)
-
 
     def test_try_cast_parsing(self):
         query = """SELECT TRY_CAST(a AS DECIMAL(10, 3)) FROM b.c"""
