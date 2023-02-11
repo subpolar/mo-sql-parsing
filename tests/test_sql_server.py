@@ -240,9 +240,18 @@ class TestSqlServer(TestCase):
         }
         self.assertEqual(result, expected)
 
-
     def test_issue_157_describe(self):
         sql = """describe with_recommendations select * from temp"""
         result = parse(sql)
         expected = {'explain': {'from': 'temp', 'select': '*'}, 'with_recommendations': True}
+        self.assertEqual(result, expected)
+
+
+    def test_try_cast_parsing(self):
+        query = """SELECT TRY_CAST(a AS DECIMAL(10, 3)) FROM b.c"""
+        result = parse(query)
+        expected = {
+            "select": {"value": {"try_cast": ["a", {"decimal": [10, 3]}]}},
+            "from": "b.c",
+        }
         self.assertEqual(result, expected)

@@ -859,3 +859,9 @@ class TestSimple(TestCase):
         result = parse(sql)
         formatted = format(parse(sql))
         self.assertEqual(formatted, sql)
+
+    def test_try_cast_format_back(self):
+        sql = """SELECT TRY_CAST(a AS DECIMAL(10, 3)) FROM b.c"""
+        result = parse(sql)
+        formatted = format(parse(sql))
+        self.assertEqual(formatted, sql)

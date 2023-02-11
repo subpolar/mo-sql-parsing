@@ -24,6 +24,7 @@ AS = keyword("as").suppress()
 ALL = keyword("all")
 BY = keyword("by").suppress()
 CAST = keyword("cast")
+TRY_CAST = keyword("try_cast")
 CONSTRAINT = keyword("constraint").suppress()
 CREATE = keyword("create").suppress()
 CROSS = keyword("cross")
@@ -270,6 +271,7 @@ precedence = {
     "get": 0,
     "interval": 0,
     "cast": 0,
+    "try_cast": 0,
     "collate": 0,
     "concat": 1,
     "mul": 2,

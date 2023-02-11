@@ -402,6 +402,17 @@ class Formatter:
 
         return f"CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
 
+    def _try_cast(self, json, prec):
+        expr, type = json
+
+        type_name, params = first(type.items())
+        if not params:
+            type = type_name.upper()
+        else:
+            type = {type_name.upper(): params}
+
+        return f"TRY_CAST({self.dispatch(expr)} AS {self.dispatch(type)})"
+
     def _extract(self, json, prec):
         interval, value = json["extract"]
         i = self.dispatch(interval).upper()

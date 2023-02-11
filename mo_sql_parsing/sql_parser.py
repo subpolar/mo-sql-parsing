@@ -112,6 +112,18 @@ def parser(literal_string, simple_ident, sqlserver=False):
             / to_json_call
         )
 
+        try_cast = (
+            Group(
+                TRY_CAST("op")
+                + LB
+                + expression("params")
+                + AS
+                + column_type("params")
+                + RB
+            )
+            / to_json_call
+        )
+
         substring = (
             Group(
                 keyword("substring")("op")
@@ -403,6 +415,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | case
             | switch
             | cast
+            | try_cast
             | substring
             | safe_cast
             | distinct
