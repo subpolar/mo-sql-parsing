@@ -6,12 +6,12 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_parsing import Null, debug, whitespaces
+from mo_parsing import whitespaces, debug, Null
 from mo_parsing.whitespaces import NO_WHITESPACE, Whitespace
 
 from mo_sql_parsing import utils
 from mo_sql_parsing.keywords import *
-from mo_sql_parsing.types import _sizes, get_column_type, time_functions
+from mo_sql_parsing.types import get_column_type, time_functions, _sizes
 from mo_sql_parsing.utils import *
 from mo_sql_parsing.windows import window
 
@@ -603,28 +603,24 @@ def parser(literal_string, simple_ident, sqlserver=False):
         unnest = (UNNEST("op") + LB + expression("params") + RB) / to_json_call
         lateral_source = (LATERAL("op") + table_source("params")) / to_json_call
 
-        (
-            table_source
-            << Group(
-                (
-                    lateral_source
-                    | (LB + query + RB)
-                    | (LB + delimited_list(table_source) + ZeroOrMore(join) + RB)
-                    | unnest
-                    | stack
-                    | call_function
-                    | ident
-                )("value")
-                + MatchAll([
-                    Optional(flag("with ordinality")),
-                    Optional(WITH + LB + keyword("nolock")("hint") + RB),
-                    Optional(WITH + OFFSET + Optional(AS) + ident("with_offset")),
-                    Optional(tablesample),
-                    alias,
-                ])
-            )
-            / to_table
-        )
+        table_source << Group(
+            (
+                lateral_source
+                | (LB + query + RB)
+                | (LB + delimited_list(table_source) + ZeroOrMore(join) + RB)
+                | unnest
+                | stack
+                | call_function
+                | ident
+            )("value")
+            + MatchAll([
+                Optional(flag("with ordinality")),
+                Optional(WITH + LB + keyword("nolock")("hint") + RB),
+                Optional(WITH + OFFSET + Optional(AS) + ident("with_offset")),
+                Optional(tablesample),
+                alias,
+            ])
+        ) / to_table
 
         rows = Optional(keyword("row") | keyword("rows"))
         limit = (
@@ -682,16 +678,12 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + (AS + LB + (query | expression)("value") + RB)
         ))
 
-        (
-            query
-            << (
-                Optional(
-                    assign("with recursive", with_clause) | assign("with", with_clause)
-                )
-                + Group(ordered_sql)("query")
+        query << (
+            Optional(
+                assign("with recursive", with_clause) | assign("with", with_clause)
             )
-            / to_query
-        )
+            + Group(ordered_sql)("query")
+        ) / to_query
 
         #####################################################################
         # DML STATEMENTS

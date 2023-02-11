@@ -47,34 +47,24 @@ class TestSqlServer(TestCase):
         # https://docs.microsoft.com/en-us/sql/t-sql/queries/top-transact-sql?view=sql-server-ver15
         sql = "SELECT TOP 3 * FROM Customers"
         result = parse(sql)
-        self.assertEqual(
-            result,
-            {
-                "top": 3,
-                "select": "*",
-                "from": "Customers",
-            },
-        )
+        self.assertEqual(result, {"top": 3, "select": "*", "from": "Customers",})
 
         sql = "SELECT TOP func(value) WITH TIES *"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"top": {"value": {"func": "value"}, "ties": True}, "select": "*"},
+            result, {"top": {"value": {"func": "value"}, "ties": True}, "select": "*"},
         )
 
         sql = "SELECT TOP 1 PERCENT WITH TIES *"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"top": {"percent": 1, "ties": True}, "select": "*"},
+            result, {"top": {"percent": 1, "ties": True}, "select": "*"},
         )
 
         sql = "SELECT TOP a(b) PERCENT item"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"top": {"percent": {"a": "b"}}, "select": {"value": "item"}},
+            result, {"top": {"percent": {"a": "b"}}, "select": {"value": "item"}},
         )
 
         sql = "SELECT TOP a(b) PERCENT"
@@ -121,12 +111,10 @@ class TestSqlServer(TestCase):
                 {"value": "RowsCount"},
                 {"value": "DataName"},
             ],
-            "where": {
-                "and": [
-                    {"gte": ["Timestamp", {"literal": "2020-01-01"}]},
-                    {"lt": ["Timestamp", {"literal": "2020-12-31"}]},
-                ]
-            },
+            "where": {"and": [
+                {"gte": ["Timestamp", {"literal": "2020-01-01"}]},
+                {"lt": ["Timestamp", {"literal": "2020-12-31"}]},
+            ]},
         }
         self.assertEqual(result, expected)
 
@@ -175,11 +163,9 @@ class TestSqlServer(TestCase):
         expected = {
             "from": [
                 {"name": "D", "value": "Department"},
-                {
-                    "cross apply": {
-                        "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
-                    }
-                },
+                {"cross apply": {
+                    "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
+                }},
             ],
             "select": "*",
         }
@@ -194,11 +180,9 @@ class TestSqlServer(TestCase):
         expected = {
             "from": [
                 {"name": "D", "value": "Department"},
-                {
-                    "outer apply": {
-                        "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
-                    }
-                },
+                {"outer apply": {
+                    "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
+                }},
             ],
             "select": "*",
         }
@@ -246,14 +230,12 @@ class TestSqlServer(TestCase):
             "select": "*",
             "from": [
                 "p",
-                {
-                    "pivot": {
-                        "name": "pvt",
-                        "aggregate": {"count": "id"},
-                        "for": "E",
-                        "in": [250, 251, 256, 257, 260],
-                    }
-                },
+                {"pivot": {
+                    "name": "pvt",
+                    "aggregate": {"count": "id"},
+                    "for": "E",
+                    "in": [250, 251, 256, 257, 260],
+                }},
             ],
         }
         self.assertEqual(result, expected)
@@ -261,11 +243,9 @@ class TestSqlServer(TestCase):
     def test_issue_157_describe(self):
         sql = """describe with_recommendations select * from temp"""
         result = parse(sql)
-        expected = {
-            "explain": {"from": "temp", "select": "*"},
-            "with_recommendations": True,
-        }
+        expected = {'explain': {'from': 'temp', 'select': '*'}, 'with_recommendations': True}
         self.assertEqual(result, expected)
+
 
     def test_try_cast_parsing(self):
         query = """SELECT TRY_CAST(a AS DECIMAL(10, 3)) FROM b.c"""

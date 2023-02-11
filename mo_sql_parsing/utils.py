@@ -234,12 +234,8 @@ def as_literal(token):
     if isinstance(token, number_types):
         return token
     if is_data(token) and "literal" in token:
-        return token["literal"]
-    if (
-        isinstance(token, ParseResults)
-        and isinstance(token.type, Group)
-        and token.length() == 1
-    ):
+        return token['literal']
+    if isinstance(token, ParseResults) and isinstance(token.type, Group) and token.length() == 1:
         return as_literal(token[0])
 
 

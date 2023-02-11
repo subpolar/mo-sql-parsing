@@ -99,7 +99,8 @@ UUID = Group(keyword("uuid")("op")) / to_json_call
 
 DECIMAL = (keyword("decimal")("op") + _sizes) / to_json_call
 DOUBLE_PRECISION = (
-    Group((keyword("double precision") / "double_precision")("op")) / to_json_call
+    Group((keyword("double precision") / "double_precision")("op"))
+    / to_json_call
 )
 NUMERIC = (keyword("numeric")("op") + _sizes) / to_json_call
 NUMBER = (keyword("number")("op") + _sizes) / to_json_call
@@ -226,7 +227,10 @@ def get_column_type(expr, identifier, literal_string):
     )("type") + Optional(AS + LB + expr("value") + RB)
 
     column_def_identity = (
-        assign("generated", (keyword("always") | keyword("by default") / "by_default"),)
+        assign(
+            "generated",
+            (keyword("always") | keyword("by default") / "by_default"),
+        )
         + keyword("as identity").suppress()
         + Optional(assign("start with", int_num))
         + Optional(assign("increment by", int_num))
