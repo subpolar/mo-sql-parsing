@@ -105,12 +105,20 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + END
         ) / to_switch_call
 
-        cast = (
-            Group(
-                CAST("op") + LB + expression("params") + AS + column_type("params") + RB
+        casting = MatchFirst([
+            (
+                Group(
+                    Keyword(c, caseless=True)("op")
+                    + LB
+                    + expression("params")
+                    + AS
+                    + column_type("params")
+                    + RB
+                )
+                / to_json_call
             )
-            / to_json_call
-        )
+            for c in ["cast", "safe_cast", "try_cast"]
+        ])
 
         substring = (
             Group(
@@ -119,19 +127,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
                 + expression("params")
                 + Optional(assign("from", expression))
                 + Optional(assign("for", expression))
-                + RB
-            )
-            / to_json_call
-        )
-
-        # TODO: CAN THIS BE MERGED WITH cast?  DOES THE REGEX OPTIMIZATION BREAK?
-        safe_cast = (
-            Group(
-                SAFE_CAST("op")
-                + LB
-                + expression("params")
-                + AS
-                + column_type("params")
                 + RB
             )
             / to_json_call
@@ -402,9 +397,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | extract
             | case
             | switch
-            | cast
+            | casting
             | substring
-            | safe_cast
             | distinct
             | trim
             | stack

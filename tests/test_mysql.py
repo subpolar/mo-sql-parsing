@@ -114,18 +114,17 @@ class TestMySql(TestCase):
     def test_issue_157_describe1(self):
         sql = """Explain format=traditional select * from temp"""
         result = parse(sql)
-        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'traditional'}
+        expected = {"explain": {"from": "temp", "select": "*"}, "format": "traditional"}
         self.assertEqual(result, expected)
 
     def test_issue_157_describe2(self):
         sql = """desc format=tree select * from temp"""
         result = parse(sql)
-        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'tree'}
+        expected = {"explain": {"from": "temp", "select": "*"}, "format": "tree"}
         self.assertEqual(result, expected)
 
     def test_issue_157_describe3(self):
         sql = """desc format=json select * from temp"""
         result = parse(sql)
-        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'json'}
+        expected = {"explain": {"from": "temp", "select": "*"}, "format": "json"}
         self.assertEqual(result, expected)
-

@@ -21,7 +21,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_0(self):
         sql = """SET x = 1"""
         result = parse(sql)
-        expected = {"set":{"x":1}}
+        expected = {"set": {"x": 1}}
         self.assertEqual(result, expected)
 
     @skip("set requires =")
@@ -368,10 +368,7 @@ class TestSqlGlot(TestCase):
             "over": {
                 "orderby": {"value": "b"},
                 "partitionby": "a",
-                "range": {
-                    "max": 0,
-                    "min": {"neg": {"interval": [1, "day"]}},
-                },
+                "range": {"max": 0, "min": {"neg": {"interval": [1, "day"]}}},
             },
             "value": {"sum": "x"},
         }}

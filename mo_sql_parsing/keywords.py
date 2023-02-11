@@ -23,7 +23,6 @@ DESC = keyword("desc")
 AS = keyword("as").suppress()
 ALL = keyword("all")
 BY = keyword("by").suppress()
-CAST = keyword("cast")
 CONSTRAINT = keyword("constraint").suppress()
 CREATE = keyword("create").suppress()
 CROSS = keyword("cross")
@@ -55,7 +54,6 @@ PARTITION = keyword("partition").suppress()
 QUALIFY = keyword("qualify").suppress()
 RIGHT = keyword("right")
 RLIKE = keyword("rlike")
-SAFE_CAST = keyword("safe_cast")
 SAMPLE = keyword("sample").suppress()
 SELECT = keyword("select").suppress()
 SET = keyword("set").suppress()
@@ -270,6 +268,7 @@ precedence = {
     "get": 0,
     "interval": 0,
     "cast": 0,
+    "try_cast": 0,
     "collate": 0,
     "concat": 1,
     "mul": 2,

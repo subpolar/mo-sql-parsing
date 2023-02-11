@@ -504,13 +504,13 @@ class TestPostgres(TestCase):
     def test_issue_157_describe3(self):
         sql = """explain (format xml) select * from temp"""
         result = parse(sql)
-        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'xml'}
+        expected = {"explain": {"from": "temp", "select": "*"}, "format": "xml"}
         self.assertEqual(result, expected)
 
     def test_issue_157_describe4(self):
         sql = """explain (format yaml) select * from temp"""
         result = parse(sql)
-        expected = {'explain': {'from': 'temp', 'select': '*'}, 'format': 'yaml'}
+        expected = {"explain": {"from": "temp", "select": "*"}, "format": "yaml"}
         self.assertEqual(result, expected)
 
     def test_issue_157_describe5(self):
