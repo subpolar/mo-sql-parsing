@@ -160,7 +160,7 @@ GROUP_BY = Group(GROUP + BY).set_parser_name("group by")
 ORDER_BY = Group(ORDER + BY).set_parser_name("order by")
 
 # COMPOUND OPERATORS
-AT_TIME_ZONE = Group(keyword("at") + keyword("time") + keyword("zone"))
+AT_TIME_ZONE = keyword("at time zone")
 NOT_BETWEEN = Group(NOT + BETWEEN).set_parser_name("not_between")
 NOT_ILIKE = Group(NOT + ILIKE).set_parser_name("not_ilike")
 NOT_LIKE = Group(NOT + LIKE).set_parser_name("not_like")
@@ -393,6 +393,7 @@ durations = {
     "dayofyear": "doy",
     "dayofweek": "dow",
     "day": "day",
+    "date": "date",
     "d": "day",
     "dow": "dow",
     "weekday": "dow",

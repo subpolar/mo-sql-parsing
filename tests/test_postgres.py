@@ -20,7 +20,7 @@ class TestPostgres(TestCase):
         sql = """
         SELECT 
             id, 
-            create_date AT TIME ZONE 'UTC' as created_at, 
+            create_date fAT TIME ZONE 'UTC' as created_at, 
             write_date AT TIME ZONE 'UTC' as updated_at
         FROM sometable;
         """

@@ -1097,3 +1097,34 @@ class TestBigQuery(TestCase):
             ],
         }
         self.assertEqual(result, expected)
+
+    def test_issue_163_at_time_zone(self):
+        result = parse(
+            """
+        SELECT
+            REPLACE(CAST(EXTRACT(date from last_modified_date at time zone 'America/Sao_Paulo') AS STRING),'-','') as last_modified_date
+        FROM
+            territory2"""
+        )
+        expected = {
+            "from": "territory2",
+            "select": {
+                "name": "last_modified_date",
+                "value": {"replace": [
+                    {"cast": [
+                        {"extract": [
+                            "date",
+                            {"at_time_zone": [
+                                "last_modified_date",
+                                {"literal": "America/Sao_Paulo"},
+                            ]},
+                        ]},
+                        {"string": {}},
+                    ]},
+                    {"literal": "-"},
+                    {"literal": ""},
+                ]},
+            },
+        }
+
+        self.assertEqual(result, expected)
