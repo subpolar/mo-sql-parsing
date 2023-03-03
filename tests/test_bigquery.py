@@ -1128,3 +1128,103 @@ class TestBigQuery(TestCase):
         }
 
         self.assertEqual(result, expected)
+
+    def test_issue_164_at_time_zone2(self):
+        result = parse(
+            """
+        SELECT
+            REPLACE(
+                cast(
+                    extract(
+                        date
+                        FROM
+                            last_login_date AT TIME ZONE 'America/Sao_Paulo'
+                    ) AS STRING
+                ),
+                '-',
+                ''
+            ) AS last_login_date,
+            REPLACE(
+                cast(
+                    extract(
+                        date
+                        FROM
+                            last_modified_date AT TIME ZONE 'America/Sao_Paulo'
+                    ) AS STRING
+                ),
+                '-',
+                ''
+            ) AS last_modified_date,
+            REPLACE(
+                cast(
+                    extract(
+                        date
+                        FROM
+                            last_viewed_date AT TIME ZONE 'America/Sao_Paulo'
+                    ) AS STRING
+                ),
+                '-',
+                ''
+            ) AS last_viewed_date,
+        FROM
+            user u
+        """
+        )
+        expected = {
+            "from": {"name": "u", "value": "user"},
+            "select": [
+                {
+                    "name": "last_login_date",
+                    "value": {"replace": [
+                        {"cast": [
+                            {"extract": [
+                                "date",
+                                {"at_time_zone": [
+                                    "last_login_date",
+                                    {"literal": "America/Sao_Paulo"},
+                                ]},
+                            ]},
+                            {"string": {}},
+                        ]},
+                        {"literal": "-"},
+                        {"literal": ""},
+                    ]},
+                },
+                {
+                    "name": "last_modified_date",
+                    "value": {"replace": [
+                        {"cast": [
+                            {"extract": [
+                                "date",
+                                {"at_time_zone": [
+                                    "last_modified_date",
+                                    {"literal": "America/Sao_Paulo"},
+                                ]},
+                            ]},
+                            {"string": {}},
+                        ]},
+                        {"literal": "-"},
+                        {"literal": ""},
+                    ]},
+                },
+                {
+                    "name": "last_viewed_date",
+                    "value": {"replace": [
+                        {"cast": [
+                            {"extract": [
+                                "date",
+                                {"at_time_zone": [
+                                    "last_viewed_date",
+                                    {"literal": "America/Sao_Paulo"},
+                                ]},
+                            ]},
+                            {"string": {}},
+                        ]},
+                        {"literal": "-"},
+                        {"literal": ""},
+                    ]},
+                },
+            ],
+        }
+
+        self.assertEqual(result, expected)
