@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase, skip
 
+from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse_bigquery as parse
@@ -676,6 +677,422 @@ class TestBigQuery(TestCase):
                         },
                         1,
                     ]},
+                },
+            ],
+        }
+        self.assertEqual(result, expected)
+
+    def test_issue_162_extract_from(self):
+        result = parse(
+            """SELECT
+             FORMAT_DATETIME("%Y%m%d", DATETIME(full_date)) AS date_key,
+             full_date, 
+             FORMAT_DATETIME("%Y/%m/%d", DATETIME(full_date)) AS date_name,
+             EXTRACT(dayofweek FROM full_date) AS day_of_week,
+             CASE FORMAT_DATE('%A', date(full_date))
+                 WHEN 'Sunday' THEN 'Domingo'
+                 WHEN 'Monday' THEN 'Segunda-feira'
+                 WHEN 'Tuesday' THEN 'Terça-feira'
+                 WHEN 'Wednesday' THEN 'Quarta-feira'
+                 WHEN 'Thursday' THEN 'Quinta-feira'
+                 WHEN 'Friday' THEN 'Sexta-feira'
+                 WHEN 'Saturday' THEN 'Sábado'
+             END AS day_name_of_week,
+             FORMAT_DATETIME("%d", DATETIME(full_date)) AS day_of_month,
+             EXTRACT(dayofyear FROM full_date) AS day_of_year,
+             CASE FORMAT_DATE('%A', DATE(full_date))
+                 WHEN 'Saturday' THEN 'Final de Semana'
+                 WHEN 'Sunday' THEN 'Final de Semana'
+                 else 'Dia da Semana'
+             END AS weekday_weekend,
+             EXTRACT(week FROM full_date) + 1 AS week_of_year,
+             CASE FORMAT_DATETIME("%B", DATETIME(full_date))
+                 WHEN 'January' THEN 'Janeiro'
+                 WHEN 'February' THEN 'Fevereiro'
+                 WHEN 'March' THEN 'Março'
+                 WHEN 'April' THEN 'Abril'
+                 WHEN 'May' THEN 'Maio'
+                 WHEN 'June' THEN 'Junho'
+                 WHEN 'July' THEN 'Julho'
+                 WHEN 'August' THEN 'Agosto'
+                 WHEN 'September' THEN 'Setembro'
+                 WHEN 'October' THEN 'Outubro'
+                 WHEN 'November' THEN 'Novembro'
+                 WHEN 'December' THEN 'Dezembro'
+             END AS month_name,
+             EXTRACT(month FROM full_date) AS month_of_year,
+             IF(DATE_SUB(DATE_TRUNC(DATE_ADD(full_date, INTERVAL 1 MONTH), MONTH), INTERVAL 1 DAY) = full_date, 'Y', 'N') AS is_last_day_of_month,
+             EXTRACT(quarter FROM full_date) AS calendar_quarter,
+             EXTRACT(year FROM full_date) AS calendar_year,
+             FORMAT_DATETIME("%Y-%m", DATETIME(full_date)) AS calendar_year_month,
+             concat( EXTRACT(year FROM full_date), 'Q', EXTRACT(quarter FROM full_date)) AS calendar_year_qtr,
+             20170921 AS insert_audit_key,
+             20170921 AS update_audit_key,
+             if(full_date = holiday.date, 1, 0) AS is_national_holiday,
+             1 AS filter,
+             DATE_SUB(DATE_TRUNC(DATE_ADD(full_date, INTERVAL 1 month), month), INTERVAL 1 DAY) AS last_day_of_month,
+             FORMAT_DATETIME("%Y%m%d", DATETIME(DATE_SUB(DATE_TRUNC(DATE_ADD(full_date, INTERVAL 1 month), month), INTERVAL 1 DAY))) AS last_day_of_month_key,
+             DATE_TRUNC(full_date, month) AS first_day_of_month,
+             FORMAT_DATETIME("%Y%m%d", DATETIME(DATE_TRUNC(full_date, month))) AS first_day_of_month_key
+        FROM UNNEST(GENERATE_DATE_ARRAY("2000-01-01", DATE_ADD(LAST_DAY(current_date, YEAR), INTERVAL 5 YEAR), INTERVAL 1 day)) AS full_date
+        LEFT 
+        JOIN financial_holiday holiday     
+          ON holiday.date = full_date"""
+        )
+        expected = {
+            "select": [
+                {
+                    "value": {"format_datetime": [
+                        {"literal": "%Y%m%d"},
+                        {"datetime": "full_date"},
+                    ]},
+                    "name": "date_key",
+                },
+                {"value": "full_date"},
+                {
+                    "value": {"format_datetime": [
+                        {"literal": "%Y/%m/%d"},
+                        {"datetime": "full_date"},
+                    ]},
+                    "name": "date_name",
+                },
+                {"value": {"extract": ["dow", "full_date"]}, "name": "day_of_week"},
+                {
+                    "value": {"case": [
+                        {
+                            "then": {"literal": "Domingo"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Sunday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Segunda-feira"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Monday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Terça-feira"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Tuesday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Quarta-feira"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Wednesday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Quinta-feira"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Thursday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Sexta-feira"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Friday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Sábado"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Saturday"},
+                            ]},
+                        },
+                    ]},
+                    "name": "day_name_of_week",
+                },
+                {
+                    "value": {"format_datetime": [
+                        {"literal": "%d"},
+                        {"datetime": "full_date"},
+                    ]},
+                    "name": "day_of_month",
+                },
+                {"value": {"extract": ["doy", "full_date"]}, "name": "day_of_year"},
+                {
+                    "value": {"case": [
+                        {
+                            "then": {"literal": "Final de Semana"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Saturday"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Final de Semana"},
+                            "when": {"eq": [
+                                {"format_date": [
+                                    {"literal": "%A"},
+                                    {"date": "full_date"},
+                                ]},
+                                {"literal": "Sunday"},
+                            ]},
+                        },
+                        {"literal": "Dia da Semana"},
+                    ]},
+                    "name": "weekday_weekend",
+                },
+                {
+                    "value": {"add": [{"extract": ["week", "full_date"]}, 1]},
+                    "name": "week_of_year",
+                },
+                {
+                    "value": {"case": [
+                        {
+                            "then": {"literal": "Janeiro"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "January"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Fevereiro"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "February"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Março"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "March"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Abril"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "April"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Maio"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "May"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Junho"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "June"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Julho"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "July"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Agosto"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "August"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Setembro"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "September"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Outubro"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "October"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Novembro"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "November"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "Dezembro"},
+                            "when": {"eq": [
+                                {"format_datetime": [
+                                    {"literal": "%B"},
+                                    {"datetime": "full_date"},
+                                ]},
+                                {"literal": "December"},
+                            ]},
+                        },
+                    ]},
+                    "name": "month_name",
+                },
+                {"value": {"extract": ["month", "full_date"]}, "name": "month_of_year"},
+                {
+                    "value": {"if": [
+                        {"eq": [
+                            {"date_sub": [
+                                {"date_trunc": [
+                                    {"date_add": [
+                                        "full_date",
+                                        {"interval": [1, "month"]},
+                                    ]},
+                                    "MONTH",
+                                ]},
+                                {"interval": [1, "day"]},
+                            ]},
+                            "full_date",
+                        ]},
+                        {"literal": "Y"},
+                        {"literal": "N"},
+                    ]},
+                    "name": "is_last_day_of_month",
+                },
+                {
+                    "value": {"extract": ["quarter", "full_date"]},
+                    "name": "calendar_quarter",
+                },
+                {"value": {"extract": ["year", "full_date"]}, "name": "calendar_year"},
+                {
+                    "value": {"format_datetime": [
+                        {"literal": "%Y-%m"},
+                        {"datetime": "full_date"},
+                    ]},
+                    "name": "calendar_year_month",
+                },
+                {
+                    "value": {"concat": [
+                        {"extract": ["year", "full_date"]},
+                        {"literal": "Q"},
+                        {"extract": ["quarter", "full_date"]},
+                    ]},
+                    "name": "calendar_year_qtr",
+                },
+                {"value": 20170921, "name": "insert_audit_key"},
+                {"value": 20170921, "name": "update_audit_key"},
+                {
+                    "value": {"if": [{"eq": ["full_date", "holiday.date"]}, 1, 0]},
+                    "name": "is_national_holiday",
+                },
+                {"value": 1, "name": "filter"},
+                {
+                    "value": {"date_sub": [
+                        {"date_trunc": [
+                            {"date_add": ["full_date", {"interval": [1, "month"]}]},
+                            "month",
+                        ]},
+                        {"interval": [1, "day"]},
+                    ]},
+                    "name": "last_day_of_month",
+                },
+                {
+                    "value": {"format_datetime": [
+                        {"literal": "%Y%m%d"},
+                        {"datetime": {"date_sub": [
+                            {"date_trunc": [
+                                {"date_add": ["full_date", {"interval": [1, "month"]}]},
+                                "month",
+                            ]},
+                            {"interval": [1, "day"]},
+                        ]}},
+                    ]},
+                    "name": "last_day_of_month_key",
+                },
+                {
+                    "value": {"date_trunc": ["full_date", "month"]},
+                    "name": "first_day_of_month",
+                },
+                {
+                    "value": {"format_datetime": [
+                        {"literal": "%Y%m%d"},
+                        {"datetime": {"date_trunc": ["full_date", "month"]}},
+                    ]},
+                    "name": "first_day_of_month_key",
+                },
+            ],
+            "from": [
+                {
+                    "value": {"unnest": {"generate_date_array": [
+                        {"literal": "2000-01-01"},
+                        {"date_add": [
+                            {"last_day": ["current_date", "YEAR"]},
+                            {"interval": [5, "year"]},
+                        ]},
+                        {"interval": [1, "day"]},
+                    ]}},
+                    "name": "full_date",
+                },
+                {
+                    "left join": {"value": "financial_holiday", "name": "holiday"},
+                    "on": {"eq": ["holiday.date", "full_date"]},
                 },
             ],
         }
