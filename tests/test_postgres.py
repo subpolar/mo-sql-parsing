@@ -34,11 +34,11 @@ class TestPostgres(TestCase):
                     {"value": "id"},
                     {
                         "name": "created_at",
-                        "value": {"": ["create_date", {"literal": "UTC"}]},
+                        "value": {"at_time_zone": ["create_date", {"literal": "UTC"}]},
                     },
                     {
                         "name": "updated_at",
-                        "value": {"": ["write_date", {"literal": "UTC"}]},
+                        "value": {"at_time_zone": ["write_date", {"literal": "UTC"}]},
                     },
                 ],
             },
