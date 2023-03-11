@@ -245,6 +245,8 @@ RESERVED = MatchFirst([
 
 LB = Literal("(").suppress()
 RB = Literal(")").suppress()
+LK = Literal("[").suppress()
+RK = Literal("]").suppress()
 EQ = Char("=").suppress()
 comma = Optional(",").suppress()
 

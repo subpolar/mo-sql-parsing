@@ -10,13 +10,15 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase, skip
 
-from mo_parsing.debug import Debugger
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_sql_parsing import parse_bigquery as parse
 
 
 class TestBigQuery(TestCase):
+
+    maxDiff = None
+
     def test_with_expression(self):
         # https://github.com/pyparsing/pyparsing/issues/291
         sql = """with t as (CASE EXTRACT(dayofweek FROM CURRENT_DATETIME()) when 1 then "S" end) select * from t"""
@@ -1225,6 +1227,251 @@ class TestBigQuery(TestCase):
                     ]},
                 },
             ],
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_issue_165_select_as(self):
+        result = parse(
+            """
+        SELECT
+           ee.a_id AS id,
+           CASE
+            WHEN ee._id = 'flow2222222222222' THEN 'flow 2'
+            WHEN ee._id = 'flow1111111111111' THEN 'flow 1'
+            ELSE NULL
+            END AS flow_name,
+            array(
+                SELECT AS STRUCT CASE
+                                WHEN ee.step_started = TRUE THEN 'avisos'ELSE NULL END AS step_name,
+                                ee.ws_status AS ws_status,
+                                UNION ALL
+                                SELECT AS STRUCT CASE
+                                WHEN ee.dg_step_started = TRUE THEN 'dg' ELSE NULL END AS dg_step,
+                                ee.dg_status AS dg_status,
+                                CASE
+                                WHEN cf.demand_informed = TRUE THEN 'informed'
+                                WHEN cf.demand_informed = FALSE THEN ' not informed' ELSE NULL END AS description,
+                                CASE WHEN cf.verification = TRUE THEN TRUE
+                                WHEN cf.verification = FALSE THEN TRUE
+                                WHEN cf.contact = TRUE THEN TRUE
+                                WHEN cf.verification_sent = FALSE THEN FALSE ELSE NULL END AS verification_sent,
+                                UNION ALL SELECT AS STRUCT
+                                CASE WHEN ee.df_step = TRUE THEN 'test_df' ELSE NULL END AS df_step,
+                                ee.df_status AS df_status,
+                                SAFE_CAST (NULL AS STRING) AS team,
+                                UNION ALL SELECT AS STRUCT
+                                CASE WHEN ee.ir_step = TRUE THEN 'test_ir' ELSE NULL END AS ir_step,
+                                ee.ir_status AS ir_status,
+                                SAFE_CAST (NULL AS STRING) AS team2,
+                                verification_sent) AS info,
+             COALESCE (ee.email, ee.engagement_email) AS email,
+             ee.synced_at
+        FROM `project_id.dataset.table_name_a` ee
+        LEFT JOIN `project_id.dataset.table_name_b` cf
+             ON cf.b_id = ee.a_id
+        WHERE ee._id <> 'flow333333333'
+        AND (ee.team_name <> 'temp' OR ee.team_name IS NULL)
+        """
+        )
+        expected = {
+            "select": [
+                {"name": "id", "value": "ee.a_id"},
+                {
+                    "name": "flow_name",
+                    "value": {"case": [
+                        {
+                            "then": {"literal": "flow 2"},
+                            "when": {"eq": [
+                                "ee._id",
+                                {"literal": "flow2222222222222"},
+                            ]},
+                        },
+                        {
+                            "then": {"literal": "flow 1"},
+                            "when": {"eq": [
+                                "ee._id",
+                                {"literal": "flow1111111111111"},
+                            ]},
+                        },
+                        {"null": {}},
+                    ]},
+                },
+                {
+                    "name": "info",
+                    "value": {"create_array": {"union_all": [
+                        {"select_as_struct": [
+                            {
+                                "name": "step_name",
+                                "value": {"case": [
+                                    {
+                                        "then": {"literal": "avisos"},
+                                        "when": {"eq": ["ee.step_started", True]},
+                                    },
+                                    {"null": {}},
+                                ]},
+                            },
+                            {"name": "ws_status", "value": "ee.ws_status"},
+                        ]},
+                        {"select_as_struct": [
+                            {
+                                "name": "dg_step",
+                                "value": {"case": [
+                                    {
+                                        "then": {"literal": "dg"},
+                                        "when": {"eq": ["ee.dg_step_started", True,]},
+                                    },
+                                    {"null": {}},
+                                ]},
+                            },
+                            {"name": "dg_status", "value": "ee.dg_status"},
+                            {
+                                "name": "description",
+                                "value": {"case": [
+                                    {
+                                        "then": {"literal": "informed"},
+                                        "when": {"eq": ["cf.demand_informed", True,]},
+                                    },
+                                    {
+                                        "then": {"literal": " not informed"},
+                                        "when": {"eq": ["cf.demand_informed", False,]},
+                                    },
+                                    {"null": {}},
+                                ]},
+                            },
+                            {
+                                "name": "verification_sent",
+                                "value": {"case": [
+                                    {
+                                        "then": True,
+                                        "when": {"eq": ["cf.verification", True]},
+                                    },
+                                    {
+                                        "then": True,
+                                        "when": {"eq": ["cf.verification", False]},
+                                    },
+                                    {
+                                        "then": True,
+                                        "when": {"eq": ["cf.contact", True]},
+                                    },
+                                    {
+                                        "then": False,
+                                        "when": {"eq": [
+                                            "cf.verification_sent",
+                                            False,
+                                        ]},
+                                    },
+                                    {"null": {}},
+                                ]},
+                            },
+                        ]},
+                        {"select_as_struct": [
+                            {
+                                "name": "df_step",
+                                "value": {"case": [
+                                    {
+                                        "then": {"literal": "test_df"},
+                                        "when": {"eq": ["ee.df_step", True]},
+                                    },
+                                    {"null": {}},
+                                ]},
+                            },
+                            {"name": "df_status", "value": "ee.df_status"},
+                            {
+                                "name": "team",
+                                "value": {"safe_cast": [{"null": {}}, {"string": {}},]},
+                            },
+                        ]},
+                        {"select_as_struct": [
+                            {
+                                "name": "ir_step",
+                                "value": {"case": [
+                                    {
+                                        "then": {"literal": "test_ir"},
+                                        "when": {"eq": ["ee.ir_step", True]},
+                                    },
+                                    {"null": {}},
+                                ]},
+                            },
+                            {"name": "ir_status", "value": "ee.ir_status"},
+                            {
+                                "name": "team2",
+                                "value": {"safe_cast": [{"null": {}}, {"string": {}},]},
+                            },
+                            {"value": "verification_sent"},
+                        ]},
+                    ]}},
+                },
+                {
+                    "name": "email",
+                    "value": {"coalesce": ["ee.email", "ee.engagement_email"]},
+                },
+                {"value": "ee.synced_at"},
+            ],
+            "from": [
+                {"name": "ee", "value": "project_id..dataset..table_name_a"},
+                {
+                    "left join": {
+                        "name": "cf",
+                        "value": "project_id..dataset..table_name_b",
+                    },
+                    "on": {"eq": ["cf.b_id", "ee.a_id"]},
+                },
+            ],
+            "where": {"and": [
+                {"neq": ["ee._id", {"literal": "flow333333333"}]},
+                {"or": [
+                    {"neq": ["ee.team_name", {"literal": "temp"}]},
+                    {"missing": "ee.team_name"},
+                ]},
+            ]},
+        }
+        self.assertEqual(result, expected)
+        #         WHERE ee._id <> 'flow333333333'
+        #         AND (ee.team_name <> 'temp' OR ee.team_name IS NULL)
+
+    def test_issue_165_select_as2(self):
+        result = parse(
+            """
+        SELECT
+            array(
+                SELECT AS STRUCT 
+                    CASE WHEN ee.step_started = TRUE THEN 'avisos'ELSE NULL END AS step_name,
+                    ee.ws_status AS ws_status,
+                UNION ALL
+                SELECT AS STRUCT 
+                    value1 AS a,
+                    value2 AS b,
+                    value3 AS c,
+            ) AS info,
+        FROM ee
+        """
+        )
+        expected = {
+            "from": "ee",
+            "select": {
+                "name": "info",
+                "value": {"create_array": {"union_all": [
+                    {"select_as_struct": [
+                        {
+                            "name": "step_name",
+                            "value": {"case": [
+                                {
+                                    "then": {"literal": "avisos"},
+                                    "when": {"eq": ["ee.step_started", True]},
+                                },
+                                {"null": {}},
+                            ]},
+                        },
+                        {"name": "ws_status", "value": "ee.ws_status"},
+                    ]},
+                    {"select_as_struct": [
+                        {"name": "a", "value": "value1"},
+                        {"name": "b", "value": "value2"},
+                        {"name": "c", "value": "value3"},
+                    ]},
+                ]}},
+            },
         }
 
         self.assertEqual(result, expected)

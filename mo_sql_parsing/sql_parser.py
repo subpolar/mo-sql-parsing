@@ -74,7 +74,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         with whitespaces.NO_WHITESPACE:
             identifier = ~RESERVED + ident
-        function_name = ~(FROM | WHERE) + ident
+        function_name = ~(UNION | FROM | WHERE) + ident
 
         # EXPRESSIONS
         expression = Forward()
@@ -289,6 +289,8 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + RB
         ) / to_stack
 
+        query = Forward()
+
         # ARRAY[foo],
         # ARRAY < STRING > [foo, bar], INVALID
         # ARRAY < STRING > [foo, bar],
@@ -296,31 +298,21 @@ def parser(literal_string, simple_ident, sqlserver=False):
             keyword("array")("op")
             + Optional(LT.suppress() + column_type("type") + GT.suppress())
             + (
-                LB + delimited_list(Group(expression))("args") + RB
-                | (
-                    Literal("[")
-                    + Optional(delimited_list(Group(expression))("args"))
-                    + Literal("]")
-                )
+                LB + (query | delimited_list(Group(expression)))("args") + RB
+                | LK + Optional(delimited_list(Group(expression))("args")) + RK
             )
         )
 
         if not sqlserver:
             # SQL SERVER DOES NOT SUPPORT [] FOR ARRAY CONSTRUCTION (USED FOR IDENTIFIERS)
             create_array = (
-                Literal("[") + delimited_list(Group(expression))("args") + Literal("]")
-                | create_array
+                LK + delimited_list(Group(expression))("args") + RK | create_array
             )
 
         create_array = create_array / to_array
 
         create_map = (
-            keyword("map")
-            + Literal("[")
-            + expression("keys")
-            + ","
-            + expression("values")
-            + Literal("]")
+            keyword("map") + LK + expression("keys") + "," + expression("values") + RK
         ) / to_map
 
         create_struct = (
@@ -338,8 +330,6 @@ def parser(literal_string, simple_ident, sqlserver=False):
         distinct = (
             DISTINCT("op") + delimited_list(named_column)("params")
         ) / to_json_call
-
-        query = Forward()
 
         sort_column = (
             expression("value").set_parser_name("sort1")
@@ -369,9 +359,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + RB
         ) / to_json_call
 
-        dynamic_accessor = (
-            Literal("[").suppress() + expression + Literal("]").suppress()
-        )
+        dynamic_accessor = LK + expression + RK
         simple_accessor = Literal(".").suppress() + simple_ident / to_literal
         accessor = (
             Literal(":").suppress()

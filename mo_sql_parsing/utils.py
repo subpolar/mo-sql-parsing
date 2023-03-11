@@ -602,7 +602,7 @@ def to_stack(tokens):
 
 def to_array(tokens):
     types = list(tokens["type"])
-    args = list(tokens["args"])
+    args = listwrap(tokens["args"])
     output = Call("create_array", args, {})
     if types:
         output = Call("cast", [output, Call("array", types, {})], {})
@@ -642,7 +642,7 @@ def to_union_call(tokens):
     if isinstance(unions, dict):
         return unions
     elif unions.type.parser_name == "unordered_sql":
-        output = {k: v for k, v in unions.items()}  # REMOVE THE Group()
+        output = dict(unions)  # REMOVE THE Group()
     else:
         unions = list(unions)
         sources = [unions[i] for i in range(0, len(unions), 2)]
@@ -651,7 +651,7 @@ def to_union_call(tokens):
         last_union = None
         for op, so in list(zip(operators, sources[1:])):
             if op == last_union and "union" in op:
-                acc[op] = acc[op] + [so]
+                acc[op].append(so)
             else:
                 acc = {op: [acc, so]}
             last_union = op
