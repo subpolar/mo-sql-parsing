@@ -128,3 +128,77 @@ class TestMySql(TestCase):
         result = parse(sql)
         expected = {"explain": {"from": "temp", "select": "*"}, "format": "json"}
         self.assertEqual(result, expected)
+
+    def test_merge_into(self):
+        sql ="""
+            MERGE INTO TMP_TABLE1 TMP1
+            USING TMP_TABLE1 TMP2
+            ON TMP1.col1 =TMP2.col1
+            AND TMP1.col2=TMP2.col2
+            AND TMP1.col3=TMP2.col3
+            AND (TMP2.col4 - 1) = TMP1.col4
+            WHEN MATCHED THEN
+            UPDATE SET ZTAGG_END = TMP2.ZTAGG"""
+        result = parse(sql)
+        expected={}
+        self.assertEqual(result, expected)
+
+    def test_merge1(self):
+        # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
+        sql = """
+            MERGE TargetProducts AS Target
+            USING SourceProducts	AS Source
+            ON Source.ProductID = Target.ProductID
+            WHEN NOT MATCHED BY Target THEN
+                INSERT (ProductID,ProductName, Price) 
+                VALUES (Source.ProductID,Source.ProductName, Source.Price);
+        """
+        result = parse(sql)
+        expected={}
+        self.assertEqual(result, expected)
+
+    def test_merge2(self):
+        # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
+        sql ="""
+            MERGE TargetProducts AS Target
+            USING SourceProducts	AS Source
+            ON Source.ProductID = Target.ProductID
+            
+            -- For Inserts
+            WHEN NOT MATCHED BY Target THEN
+                INSERT (ProductID,ProductName, Price) 
+                VALUES (Source.ProductID,Source.ProductName, Source.Price)
+            
+            -- For Updates
+            WHEN MATCHED THEN UPDATE SET
+                Target.ProductName	= Source.ProductName,
+                Target.Price		= Source.Price;
+        """
+        result = parse(sql)
+        expected={}
+        self.assertEqual(result, expected)
+
+    def test_merge3(self):
+        # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
+        sql = """ 
+            MERGE TargetProducts AS Target
+            USING SourceProducts	AS Source
+            ON Source.ProductID = Target.ProductID
+                
+            -- For Inserts
+            WHEN NOT MATCHED BY Target THEN
+                INSERT (ProductID,ProductName, Price) 
+                VALUES (Source.ProductID,Source.ProductName, Source.Price)
+                
+            -- For Updates
+            WHEN MATCHED THEN UPDATE SET
+                Target.ProductName	= Source.ProductName,
+                Target.Price		= Source.Price
+                
+            -- For Deletes
+            WHEN NOT MATCHED BY Source THEN
+                DELETE;        
+        """
+        result = parse(sql)
+        expected={}
+        self.assertEqual(result, expected)
