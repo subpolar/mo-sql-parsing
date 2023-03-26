@@ -20,10 +20,7 @@ except ImportError:
 
 class TestNull(TestCase):
     def test_default_null_value(self):
-        result = parse(
-            "create table student (name varchar default null, sunny int primary key)",
-            null=None,
-        )
+        result = parse("create table student (name varchar default null, sunny int primary key)", null=None,)
         expected = {"create table": {
             "name": "student",
             "columns": [
@@ -34,10 +31,7 @@ class TestNull(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue18(self):
-        sql = (
-            "SELECT a, CASE WHEN some_columns = 'Bob' THEN NULL ELSE 'helloworld' END"
-            " AS some_columns FROM mytable"
-        )
+        sql = "SELECT a, CASE WHEN some_columns = 'Bob' THEN NULL ELSE 'helloworld' END AS some_columns FROM mytable"
         result = parse(sql, null=None)
         expected = {
             "from": "mytable",
@@ -46,10 +40,7 @@ class TestNull(TestCase):
                 {
                     "name": "some_columns",
                     "value": {"case": [
-                        {
-                            "when": {"eq": ["some_columns", {"literal": "Bob"}]},
-                            "then": None,
-                        },
+                        {"when": {"eq": ["some_columns", {"literal": "Bob"}]}, "then": None},
                         {"literal": "helloworld"},
                     ]},
                 },

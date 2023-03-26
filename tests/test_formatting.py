@@ -37,10 +37,7 @@ class TestSimple(TestCase):
 
     def test_select_quoted_name(self):
         result = format({
-            "select": [
-                {"name": "@*#&", "value": "a"},
-                {"name": "test.g.g.c", "value": "b"},
-            ],
+            "select": [{"name": "@*#&", "value": "a"}, {"name": "test.g.g.c", "value": "b"}],
             "from": "dual",
         })
         expected = 'SELECT a AS "@*#&", b AS test.g.g.c FROM dual'
@@ -48,12 +45,7 @@ class TestSimple(TestCase):
 
     def test_select_expression(self):
         result = format({
-            "select": {"value": {"add": [
-                "a",
-                {"div": ["b", 2]},
-                {"mul": [45, "c"]},
-                {"div": [2, "d"]},
-            ]}},
+            "select": {"value": {"add": ["a", {"div": ["b", 2]}, {"mul": [45, "c"]}, {"div": [2, "d"]}]}},
             "from": "dual",
         })
         expected = "SELECT a + b / 2 + 45 * c + 2 / d FROM dual"
@@ -70,19 +62,12 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def select_many_column(self):
-        result = format({
-            "select": [{"value": "a"}, {"value": "b"}, {"value": "c"}],
-            "from": ["dual"],
-        })
+        result = format({"select": [{"value": "a"}, {"value": "b"}, {"value": "c"}], "from": ["dual"]})
         expected = "SELECT a, b, c FROM dual"
         self.assertEqual(result, expected)
 
     def test_where_neq(self):
-        result = format({
-            "select": "*",
-            "from": "dual",
-            "where": {"neq": ["a", {"literal": "test"}]},
-        })
+        result = format({"select": "*", "from": "dual", "where": {"neq": ["a", {"literal": "test"}]}})
         expected = "SELECT * FROM dual WHERE a <> 'test'"
         self.assertEqual(result, expected)
 
@@ -99,10 +84,7 @@ class TestSimple(TestCase):
         result = format({
             "select": {"value": "a"},
             "from": "dual",
-            "where": {"and": [
-                {"in": ["a", {"literal": ["r", "g", "b"]}]},
-                {"in": ["b", [10, 11, 12],]},
-            ]},
+            "where": {"and": [{"in": ["a", {"literal": ["r", "g", "b"]}]}, {"in": ["b", [10, 11, 12]]}]},
         })
         expected = "SELECT a FROM dual WHERE a IN ('r', 'g', 'b') AND b IN (10, 11, 12)"
         self.assertEqual(result, expected)
@@ -117,20 +99,12 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_is_null(self):
-        result = format({
-            "select": [{"value": "a"}, {"value": "b"}],
-            "from": "t1",
-            "where": {"missing": "t1.a"},
-        })
+        result = format({"select": [{"value": "a"}, {"value": "b"}], "from": "t1", "where": {"missing": "t1.a"}})
         expected = "SELECT a, b FROM t1 WHERE t1.a IS NULL"
         self.assertEqual(result, expected)
 
     def test_is_not_null(self):
-        result = format({
-            "select": [{"value": "a"}, {"value": "b"}],
-            "from": "t1",
-            "where": {"exists": "t1.a"},
-        })
+        result = format({"select": [{"value": "a"}, {"value": "b"}], "from": "t1", "where": {"exists": "t1.a"}})
         expected = "SELECT a, b FROM t1 WHERE t1.a IS NOT NULL"
         self.assertEqual(result, expected)
 
@@ -149,20 +123,12 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_order_by(self):
-        result = format({
-            "select": {"value": {"count": 1}},
-            "from": "dual",
-            "orderby": {"value": "a"},
-        })
+        result = format({"select": {"value": {"count": 1}}, "from": "dual", "orderby": {"value": "a"}})
         expected = "SELECT COUNT(1) FROM dual ORDER BY a"
         self.assertEqual(result, expected)
 
     def test_order_by_asc(self):
-        result = format({
-            "select": {"value": {"count": 1}},
-            "from": "dual",
-            "orderby": {"value": "a", "sort": "asc"},
-        })
+        result = format({"select": {"value": {"count": 1}}, "from": "dual", "orderby": {"value": "a", "sort": "asc"}})
         expected = "SELECT COUNT(1) FROM dual ORDER BY a ASC"
         self.assertEqual(result, expected)
 
@@ -185,20 +151,12 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_negative_number(self):
-        result = format({
-            "from": "table1",
-            "where": {"eq": ["A", -900]},
-            "select": {"value": "a"},
-        })
+        result = format({"from": "table1", "where": {"eq": ["A", -900]}, "select": {"value": "a"}})
         expected = "SELECT a FROM table1 WHERE A = -900"
         self.assertEqual(result, expected)
 
     def test_like_in_where(self):
-        result = format({
-            "from": "table1",
-            "where": {"like": ["A", {"literal": "%20%"}]},
-            "select": {"value": "a"},
-        })
+        result = format({"from": "table1", "where": {"like": ["A", {"literal": "%20%"}]}, "select": {"value": "a"}})
         expected = "SELECT a FROM table1 WHERE A LIKE '%20%'"
         self.assertEqual(result, expected)
 
@@ -207,10 +165,7 @@ class TestSimple(TestCase):
             "from": "table1",
             "select": {
                 "name": "bb",
-                "value": {"case": [
-                    {"when": {"like": ["A", {"literal": "bb%"}]}, "then": 1},
-                    0,
-                ]},
+                "value": {"case": [{"when": {"like": ["A", {"literal": "bb%"}]}, "then": 1}, 0]},
             },
         })
         expected = "SELECT CASE WHEN A LIKE 'bb%' THEN 1 ELSE 0 END AS bb FROM table1"
@@ -226,10 +181,7 @@ class TestSimple(TestCase):
             ]},
             "select": "*",
         })
-        expected = (
-            "SELECT * FROM trade WHERE school LIKE '%shool' AND name = 'abc' AND id IN"
-            " ('1', '2')"
-        )
+        expected = "SELECT * FROM trade WHERE school LIKE '%shool' AND name = 'abc' AND id IN ('1', '2')"
         self.assertEqual(result, expected)
 
     def test_rlike_in_where(self):
@@ -246,10 +198,7 @@ class TestSimple(TestCase):
             "from": "table1",
             "select": {
                 "name": "bb",
-                "value": {"case": [
-                    {"when": {"rlike": ["A", {"literal": "bb.*"}]}, "then": 1},
-                    0,
-                ]},
+                "value": {"case": [{"when": {"rlike": ["A", {"literal": "bb.*"}]}, "then": 1}, 0]},
             },
         })
         expected = "SELECT CASE WHEN A RLIKE 'bb.*' THEN 1 ELSE 0 END AS bb FROM table1"
@@ -259,24 +208,16 @@ class TestSimple(TestCase):
         result = format({
             "from": "task",
             "select": "*",
-            "where": {"in": [
-                "repo.branch.name",
-                {"literal": ["try", "mozilla-central"]},
-            ]},
+            "where": {"in": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}]},
         })
-        expected = (
-            "SELECT * FROM task WHERE repo.branch.name IN ('try', 'mozilla-central')"
-        )
+        expected = "SELECT * FROM task WHERE repo.branch.name IN ('try', 'mozilla-central')"
         self.assertEqual(result, expected)
 
     def test_joined_table_name(self):
         result = format({
             "from": [
                 {"name": "t1", "value": "table1"},
-                {
-                    "on": {"eq": ["t1.id", "t3.id"]},
-                    "join": {"name": "t3", "value": "table3"},
-                },
+                {"on": {"eq": ["t1.id", "t3.id"]}, "join": {"name": "t3", "value": "table3"}},
             ],
             "select": "*",
         })
@@ -287,21 +228,13 @@ class TestSimple(TestCase):
         result = format({
             "select": "*",
             "from": "task",
-            "where": {"and": [
-                {"exists": "build.product"},
-                {"neq": ["build.product", {"literal": "firefox"}]},
-            ]},
+            "where": {"and": [{"exists": "build.product"}, {"neq": ["build.product", {"literal": "firefox"}]}]},
         })
-        expected = (
-            "SELECT * FROM task WHERE build.product IS NOT NULL AND build.product <>"
-            " 'firefox'"
-        )
+        expected = "SELECT * FROM task WHERE build.product IS NOT NULL AND build.product <> 'firefox'"
         self.assertEqual(result, expected)
 
     def test_union(self):
-        result = format({
-            "union": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"}],
-        })
+        result = format({"union": [{"select": "*", "from": "a"}, {"select": "*", "from": "b"}]})
         expected = "SELECT * FROM a UNION SELECT * FROM b"
         self.assertEqual(result, expected)
 
@@ -316,10 +249,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_count_literal(self):
-        result = format({
-            "select": {"value": {"count": {"literal": "literal"}}},
-            "from": "a",
-        })
+        result = format({"select": {"value": {"count": {"literal": "literal"}}}, "from": "a"})
         expected = "SELECT COUNT('literal') FROM a"
         self.assertEqual(result, expected)
 
@@ -363,14 +293,8 @@ class TestSimple(TestCase):
         result = format({
             "select": [
                 {"value": "NomPropriete", "name": "Categorie"},
-                {
-                    "value": {"round": [{"avg": "NotePonderee"}, 2]},
-                    "name": "Moyenne des notes",
-                },
-                {
-                    "value": {"round": [{"avg": "Complexite"}, 2]},
-                    "name": "Complexite moyenne",
-                },
+                {"value": {"round": [{"avg": "NotePonderee"}, 2]}, "name": "Moyenne des notes"},
+                {"value": {"round": [{"avg": "Complexite"}, 2]}, "name": "Complexite moyenne"},
             ],
             "from": ["Propriete", "Categorie", "Jeu"],
             "where": {"and": [
@@ -396,9 +320,7 @@ class TestSimple(TestCase):
         self.assertEqual(result, expected)
 
     def test_with_cte_various(self):
-        expected = (
-            "WITH t1 AS (SELECT a FROM table), t2 AS (SELECT 1) SELECT * FROM t1, t2"
-        )
+        expected = "WITH t1 AS (SELECT a FROM table), t2 AS (SELECT 1) SELECT * FROM t1, t2"
         result = format({
             "select": "*",
             "from": ["t1", "t2"],
@@ -411,10 +333,7 @@ class TestSimple(TestCase):
 
     def test_concat(self):
         expected = "SELECT CONCAT('a', 'a')"
-        result = format({"select": {"value": {"concat": [
-            {"literal": "a"},
-            {"literal": "a"},
-        ]}}})
+        result = format({"select": {"value": {"concat": [{"literal": "a"}, {"literal": "a"}]}}})
         self.assertEqual(result, expected)
 
     def test_issue_28(self):
@@ -423,7 +342,7 @@ class TestSimple(TestCase):
         expected_result = {
             "select": "*",
             "from": "T",
-            "where": {"in": [["a", "b"], {"literal": [["a", "b"], ["c", "d"]]},]},
+            "where": {"in": [["a", "b"], {"literal": [["a", "b"], ["c", "d"]]}]},
         }
         self.assertEqual(parse_result, expected_result)
 
@@ -462,7 +381,9 @@ class TestSimple(TestCase):
         self.assertEqual(format_result, query)
 
     def test_issue_37_parenthesis2(self):
-        query = """SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE country = 'United States')"""
+        query = (
+            """SELECT rid FROM routes WHERE dst_apid IN (SELECT apid FROM airports WHERE country = 'United States')"""
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -480,7 +401,9 @@ class TestSimple(TestCase):
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
-        query = """SELECT first_name FROM Professionals UNION SELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
+        query = (
+            """SELECT first_name FROM Professionals UNION SELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"""
+        )
         parse_result = parse(query)
         format_result = format(parse_result)
         self.assertEqual(format_result, query)
@@ -588,13 +511,7 @@ class TestSimple(TestCase):
             "select": [{"value": "node"}, {"value": "datetime"}],
             "where": {"lt": [
                 {"div": [
-                    {"sub": [
-                        900,
-                        {"add": [
-                            {"cast": ["p", {"float": {}}]},
-                            {"cast": ["p", {"float": {}}]},
-                        ]},
-                    ]},
+                    {"sub": [900, {"add": [{"cast": ["p", {"float": {}}]}, {"cast": ["p", {"float": {}}]}]}]},
                     900,
                 ]},
                 0.9,
@@ -620,13 +537,7 @@ class TestSimple(TestCase):
             "select": [{"value": "c1"}, {"value": "c2"}],
             "where": {"lt": [
                 {"div": [
-                    {"sub": [
-                        900,
-                        {"add": [
-                            {"cast": ["c3", {"float": {}}]},
-                            {"cast": ["c4", {"float": {}}]},
-                        ]},
-                    ]},
+                    {"sub": [900, {"add": [{"cast": ["c3", {"float": {}}]}, {"cast": ["c4", {"float": {}}]}]}]},
                     900,
                 ]},
                 0.9,
@@ -688,12 +599,7 @@ class TestSimple(TestCase):
         p = parse(sql)
         s = format(p)
         self.assertEqual(
-            p,
-            {
-                "from": "mytable",
-                "select": "*",
-                "where": {"in": [["a", "b"], [[1, 2], [3, 4]]]},
-            },
+            p, {"from": "mytable", "select": "*", "where": {"in": [["a", "b"], [[1, 2], [3, 4]]]}},
         )
         self.assertEqual(s, "SELECT * FROM mytable WHERE (a, b) IN ((1, 2), (3, 4))")
 
@@ -706,23 +612,18 @@ class TestSimple(TestCase):
             {
                 "from": "AirlineFlights",
                 "select": "*",
-                "where": {"in": [
-                    ["origin", "dest"],
-                    {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]},
-                ]},
+                "where": {"in": [["origin", "dest"], {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]}]},
             },
         )
         self.assertEqual(
-            s,
-            """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))""",
+            s, """SELECT * FROM AirlineFlights WHERE (origin, dest) IN (('ATL', 'ABE'), ('DFW', 'ABI'))""",
         )
 
     def test_issue_69_format_array_access(self):
         sql = """SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols"""
         s = format(parse(sql))
         self.assertEqual(
-            s,
-            """SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols""",
+            s, """SELECT nested_0.parentsList.datasetPathList[2] FROM mytable_with_complex_cols""",
         )
 
     def test_issue_73_extract_formatting(self):
@@ -730,19 +631,13 @@ class TestSimple(TestCase):
         self.assertEqual(s, """SELECT EXTRACT(DAY FROM DATE('2019-08-17'))""")
 
     def test_issue_81_concat(self):
-        new_sql = format(parse(
-            "SELECT 'str1' || 'str2' || my_int_field from testtable"
-        ))
+        new_sql = format(parse("SELECT 'str1' || 'str2' || my_int_field from testtable"))
         self.assertEqual(
             new_sql, "SELECT CONCAT('str1', 'str2', my_int_field) FROM testtable",
         )
 
-        new_sql = format(parse(
-            "SELECT concat('str1', 'str2', my_int_field) from testtable"
-        ))
-        self.assertEqual(
-            new_sql, "SELECT CONCAT('str1', 'str2', my_int_field) FROM testtable"
-        )
+        new_sql = format(parse("SELECT concat('str1', 'str2', my_int_field) from testtable"))
+        self.assertEqual(new_sql, "SELECT CONCAT('str1', 'str2', my_int_field) FROM testtable")
 
     def test_isssue_82_partition_list(self):
         sql = """SELECT FIELD1, RANK() OVER (PARTITION BY "FIELD2", "FIELD3" ORDER BY FIELD5, FIELD6) AS NEWFIELD from testtable"""
@@ -756,8 +651,7 @@ class TestSimple(TestCase):
         sql = """SELECT (SELECT COUNT(result) FROM dbo.b AS B) as attr FROM dbo.table"""
         new_sql = format(parse(sql))
         self.assertEqual(
-            new_sql,
-            """SELECT (SELECT COUNT(result) FROM dbo.b AS B) AS attr FROM dbo.table""",
+            new_sql, """SELECT (SELECT COUNT(result) FROM dbo.b AS B) AS attr FROM dbo.table""",
         )
 
     def test_table_sample1(self):
@@ -767,9 +661,7 @@ class TestSimple(TestCase):
 
         sql = "SELECT * FROM foo SAMPLE(1) WHERE a < 42"
         new_sql = format(parse(sql))
-        self.assertEqual(
-            new_sql, "SELECT * FROM foo TABLESAMPLE (1 PERCENT) WHERE a < 42"
-        )
+        self.assertEqual(new_sql, "SELECT * FROM foo TABLESAMPLE (1 PERCENT) WHERE a < 42")
 
         sql = "SELECT * FROM foo TABLESAMPLE bernoulli (1)"
         new_sql = format(parse(sql))
@@ -778,8 +670,7 @@ class TestSimple(TestCase):
         sql = "SELECT * FROM foo f TABLESAMPLE bernoulli (1) WHERE f.a < 42"
         new_sql = format(parse(sql))
         self.assertEqual(
-            new_sql,
-            "SELECT * FROM foo AS f TABLESAMPLE bernoulli (1 PERCENT) WHERE f.a < 42",
+            new_sql, "SELECT * FROM foo AS f TABLESAMPLE bernoulli (1 PERCENT) WHERE f.a < 42",
         )
 
     def test_table_sample2(self):
@@ -809,7 +700,7 @@ class TestSimple(TestCase):
             "from": "customer",
             "where": {"in": [
                 {"from": 1, "for": 2, "substring": "c_phone"},
-                {"literal": ["28", "27", "17", "10", "14", "34", "15",]},
+                {"literal": ["28", "27", "17", "10", "14", "34", "15"]},
             ]},
         }
         sql = format(parsed)
@@ -823,8 +714,7 @@ class TestSimple(TestCase):
         result = parse(sql)
         new_sql = format(result)
         self.assertEqual(
-            new_sql,
-            """SELECT * FROM T1 WHERE NOT EXISTS (SELECT * FROM T1, T2 WHERE T1.C1 = T2.C2)""",
+            new_sql, """SELECT * FROM T1 WHERE NOT EXISTS (SELECT * FROM T1, T2 WHERE T1.C1 = T2.C2)""",
         )
 
     def test_issue_137_delete(self):
@@ -839,11 +729,7 @@ class TestSimple(TestCase):
     def test_issue_148_filter_format(self):
         sql = """SELECT MAX(1) FILTER (WHERE 1 = 1) AS foo"""
         result = parse(sql)
-        expected = {"select": {
-            "filter": {"eq": [1, 1]},
-            "name": "foo",
-            "value": {"max": 1},
-        }}
+        expected = {"select": {"filter": {"eq": [1, 1]}, "name": "foo", "value": {"max": 1},}}
         self.assertEqual(result, expected)
         formatted = format(parse(sql))
         self.assertEqual(formatted, sql)

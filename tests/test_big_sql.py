@@ -188,60 +188,30 @@ class TestBigSql(TestCase):
                         "from": "ssr",
                         "select": [
                             {"name": "channel", "value": {"literal": "store channel"}},
-                            {
-                                "name": "id",
-                                "value": {"concat": [
-                                    {"literal": "store"},
-                                    "s_store_id",
-                                ]},
-                            },
+                            {"name": "id", "value": {"concat": [{"literal": "store"}, "s_store_id"]}},
                             {"value": "sales"},
                             {"value": "RETURNS"},
-                            {
-                                "name": "profit",
-                                "value": {"sub": ["profit", "profit_loss"]},
-                            },
+                            {"name": "profit", "value": {"sub": ["profit", "profit_loss"]}},
                         ],
                     },
                     {
                         "from": "csr",
                         "select": [
-                            {
-                                "name": "channel",
-                                "value": {"literal": "catalog channel"},
-                            },
-                            {
-                                "name": "id",
-                                "value": {"concat": [
-                                    {"literal": "catalog_page"},
-                                    "cp_catalog_page_id",
-                                ]},
-                            },
+                            {"name": "channel", "value": {"literal": "catalog channel"}},
+                            {"name": "id", "value": {"concat": [{"literal": "catalog_page"}, "cp_catalog_page_id"]}},
                             {"value": "sales"},
                             {"value": "RETURNS"},
-                            {
-                                "name": "profit",
-                                "value": {"sub": ["profit", "profit_loss"]},
-                            },
+                            {"name": "profit", "value": {"sub": ["profit", "profit_loss"]}},
                         ],
                     },
                     {
                         "from": "wsr",
                         "select": [
                             {"name": "channel", "value": {"literal": "web channel"}},
-                            {
-                                "name": "id",
-                                "value": {"concat": [
-                                    {"literal": "web_site"},
-                                    "web_site_id",
-                                ]},
-                            },
+                            {"name": "id", "value": {"concat": [{"literal": "web_site"}, "web_site_id"]}},
                             {"value": "sales"},
                             {"value": "RETURNS"},
-                            {
-                                "name": "profit",
-                                "value": {"sub": ["profit", "profit_loss"]},
-                            },
+                            {"name": "profit", "value": {"sub": ["profit", "profit_loss"]}},
                         ],
                     },
                 ]},
@@ -267,71 +237,23 @@ class TestBigSql(TestCase):
                                     {
                                         "from": "store_sales",
                                         "select": [
-                                            {
-                                                "name": "store_sk",
-                                                "value": "ss_store_sk",
-                                            },
-                                            {
-                                                "name": "date_sk",
-                                                "value": "ss_sold_date_sk",
-                                            },
-                                            {
-                                                "name": "sales_price",
-                                                "value": "ss_ext_sales_price",
-                                            },
-                                            {
-                                                "name": "profit",
-                                                "value": "ss_net_profit",
-                                            },
-                                            {
-                                                "name": "return_amt",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "net_loss",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
+                                            {"name": "store_sk", "value": "ss_store_sk"},
+                                            {"name": "date_sk", "value": "ss_sold_date_sk"},
+                                            {"name": "sales_price", "value": "ss_ext_sales_price"},
+                                            {"name": "profit", "value": "ss_net_profit"},
+                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                         ],
                                     },
                                     {
                                         "from": "store_returns",
                                         "select": [
-                                            {
-                                                "name": "store_sk",
-                                                "value": "sr_store_sk",
-                                            },
-                                            {
-                                                "name": "date_sk",
-                                                "value": "sr_returned_date_sk",
-                                            },
-                                            {
-                                                "name": "sales_price",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "profit",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "return_amt",
-                                                "value": "sr_return_amt",
-                                            },
-                                            {
-                                                "name": "net_loss",
-                                                "value": "sr_net_loss",
-                                            },
+                                            {"name": "store_sk", "value": "sr_store_sk"},
+                                            {"name": "date_sk", "value": "sr_returned_date_sk"},
+                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "return_amt", "value": "sr_return_amt"},
+                                            {"name": "net_loss", "value": "sr_net_loss"},
                                         ],
                                     },
                                 ]},
@@ -352,11 +274,7 @@ class TestBigSql(TestCase):
                             {"between": [
                                 "d_date",
                                 {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                {"dateadd": [
-                                    "day",
-                                    14,
-                                    {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                ]},
+                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]}]},
                             ]},
                             {"eq": ["store_sk", "s_store_sk"]},
                         ]},
@@ -372,71 +290,23 @@ class TestBigSql(TestCase):
                                     {
                                         "from": "catalog_sales",
                                         "select": [
-                                            {
-                                                "name": "page_sk",
-                                                "value": "cs_catalog_page_sk",
-                                            },
-                                            {
-                                                "name": "date_sk",
-                                                "value": "cs_sold_date_sk",
-                                            },
-                                            {
-                                                "name": "sales_price",
-                                                "value": "cs_ext_sales_price",
-                                            },
-                                            {
-                                                "name": "profit",
-                                                "value": "cs_net_profit",
-                                            },
-                                            {
-                                                "name": "return_amt",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "net_loss",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
+                                            {"name": "page_sk", "value": "cs_catalog_page_sk"},
+                                            {"name": "date_sk", "value": "cs_sold_date_sk"},
+                                            {"name": "sales_price", "value": "cs_ext_sales_price"},
+                                            {"name": "profit", "value": "cs_net_profit"},
+                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                         ],
                                     },
                                     {
                                         "from": "catalog_returns",
                                         "select": [
-                                            {
-                                                "name": "page_sk",
-                                                "value": "cr_catalog_page_sk",
-                                            },
-                                            {
-                                                "name": "date_sk",
-                                                "value": "cr_returned_date_sk",
-                                            },
-                                            {
-                                                "name": "sales_price",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "profit",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "return_amt",
-                                                "value": "cr_return_amount",
-                                            },
-                                            {
-                                                "name": "net_loss",
-                                                "value": "cr_net_loss",
-                                            },
+                                            {"name": "page_sk", "value": "cr_catalog_page_sk"},
+                                            {"name": "date_sk", "value": "cr_returned_date_sk"},
+                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "return_amt", "value": "cr_return_amount"},
+                                            {"name": "net_loss", "value": "cr_net_loss"},
                                         ],
                                     },
                                 ]},
@@ -457,11 +327,7 @@ class TestBigSql(TestCase):
                             {"between": [
                                 "d_date",
                                 {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                {"dateadd": [
-                                    "day",
-                                    14,
-                                    {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                ]},
+                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]}]},
                             ]},
                             {"eq": ["page_sk", "cp_catalog_page_sk"]},
                         ]},
@@ -477,36 +343,12 @@ class TestBigSql(TestCase):
                                     {
                                         "from": "web_sales",
                                         "select": [
-                                            {
-                                                "name": "wsr_web_site_sk",
-                                                "value": "ws_web_site_sk",
-                                            },
-                                            {
-                                                "name": "date_sk",
-                                                "value": "ws_sold_date_sk",
-                                            },
-                                            {
-                                                "name": "sales_price",
-                                                "value": "ws_ext_sales_price",
-                                            },
-                                            {
-                                                "name": "profit",
-                                                "value": "ws_net_profit",
-                                            },
-                                            {
-                                                "name": "return_amt",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "net_loss",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
+                                            {"name": "wsr_web_site_sk", "value": "ws_web_site_sk"},
+                                            {"name": "date_sk", "value": "ws_sold_date_sk"},
+                                            {"name": "sales_price", "value": "ws_ext_sales_price"},
+                                            {"name": "profit", "value": "ws_net_profit"},
+                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                         ],
                                     },
                                     {
@@ -515,48 +357,18 @@ class TestBigSql(TestCase):
                                             {
                                                 "left outer join": "web_sales",
                                                 "on": {"and": [
-                                                    {"eq": [
-                                                        "wr_item_sk",
-                                                        "ws_item_sk",
-                                                    ]},
-                                                    {"eq": [
-                                                        "wr_order_number",
-                                                        "ws_order_number",
-                                                    ]},
+                                                    {"eq": ["wr_item_sk", "ws_item_sk"]},
+                                                    {"eq": ["wr_order_number", "ws_order_number"]},
                                                 ]},
                                             },
                                         ],
                                         "select": [
-                                            {
-                                                "name": "wsr_web_site_sk",
-                                                "value": "ws_web_site_sk",
-                                            },
-                                            {
-                                                "name": "date_sk",
-                                                "value": "wr_returned_date_sk",
-                                            },
-                                            {
-                                                "name": "sales_price",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "profit",
-                                                "value": {"cast": [
-                                                    0,
-                                                    {"decimal": [7, 2]},
-                                                ]},
-                                            },
-                                            {
-                                                "name": "return_amt",
-                                                "value": "wr_return_amt",
-                                            },
-                                            {
-                                                "name": "net_loss",
-                                                "value": "wr_net_loss",
-                                            },
+                                            {"name": "wsr_web_site_sk", "value": "ws_web_site_sk"},
+                                            {"name": "date_sk", "value": "wr_returned_date_sk"},
+                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "return_amt", "value": "wr_return_amt"},
+                                            {"name": "net_loss", "value": "wr_net_loss"},
                                         ],
                                     },
                                 ]},
@@ -577,11 +389,7 @@ class TestBigSql(TestCase):
                             {"between": [
                                 "d_date",
                                 {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                {"dateadd": [
-                                    "day",
-                                    14,
-                                    {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                ]},
+                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]}]},
                             ]},
                             {"eq": ["wsr_web_site_sk", "web_site_sk"]},
                         ]},
@@ -732,15 +540,9 @@ FROM (
                         "from": [
                             {"name": "bal", "value": "balance"},
                             {
-                                "full join": {
-                                    "name": "bstd",
-                                    "value": "balance_settled_to_disregard",
-                                },
+                                "full join": {"name": "bstd", "value": "balance_settled_to_disregard"},
                                 "on": {"and": [
-                                    {"eq": [
-                                        {"date": "bal.age"},
-                                        {"date": "bstd.datinha_marota"},
-                                    ]},
+                                    {"eq": [{"date": "bal.age"}, {"date": "bstd.datinha_marota"}]},
                                     {"eq": ["bal.babala_id", "bstd.babala_id"]},
                                     {"eq": ["bal.beyblade_id", "bstd.beyblade_id"]},
                                 ]},
@@ -758,10 +560,7 @@ FROM (
                             {"name": "reference_date", "value": "_reference_date"},
                             {
                                 "name": "babala_id",
-                                "value": {"ifnull": [
-                                    {"ifnull": ["bal.babala_id", "bstd.babala_id"]},
-                                    "t.babala_id",
-                                ]},
+                                "value": {"ifnull": [{"ifnull": ["bal.babala_id", "bstd.babala_id"]}, "t.babala_id"]},
                             },
                             {
                                 "name": "beyblade_id",
@@ -770,20 +569,11 @@ FROM (
                                     "t.beyblade_id",
                                 ]},
                             },
-                            {
-                                "name": "age",
-                                "value": {"coalesce": [
-                                    {"date": "t.age"},
-                                    {"date": "bal.age"},
-                                ]},
-                            },
+                            {"name": "age", "value": {"coalesce": [{"date": "t.age"}, {"date": "bal.age"}]}},
                             {
                                 "name": "hugo_boss",
                                 "value": {"add": [
-                                    {"sub": [
-                                        {"ifnull": ["bal.hugo_boss", 0]},
-                                        {"ifnull": ["bstd.hugo_boss", 0]},
-                                    ]},
+                                    {"sub": [{"ifnull": ["bal.hugo_boss", 0]}, {"ifnull": ["bstd.hugo_boss", 0]}]},
                                     {"ifnull": ["t.hugo_boss", 0]},
                                 ]},
                             },
@@ -840,37 +630,19 @@ FROM (
                             {
                                 "name": "age",
                                 "value": {"case": [
-                                    {
-                                        "then": "due_date",
-                                        "when": {"eq": [
-                                            "datinha_marota",
-                                            "9999-12-31",
-                                        ]},
-                                    },
+                                    {"then": "due_date", "when": {"eq": ["datinha_marota", "9999-12-31"]}},
                                     "datinha_marota",
                                 ]},
                             },
                             {"name": "hugo_boss", "value": {"sum": "hugo_boss"}},
-                            {
-                                "name": "net_dos_milagres",
-                                "value": {"sum": "net_dos_milagres"},
-                            },
+                            {"name": "net_dos_milagres", "value": {"sum": "net_dos_milagres"}},
                         ],
                         "where": {"and": [
-                            {"lte": [
-                                "reference_date",
-                                {"date_sub": [
-                                    "_reference_date",
-                                    {"interval": [2, "day"]},
-                                ]},
-                            ]},
+                            {"lte": ["reference_date", {"date_sub": ["_reference_date", {"interval": [2, "day"]}]}]},
                             {"or": [
                                 {"gt": [
                                     "datinha_marota",
-                                    {"date_sub": [
-                                        "_reference_date",
-                                        {"interval": [2, "day"]},
-                                    ]},
+                                    {"date_sub": ["_reference_date", {"interval": [2, "day"]}]},
                                 ]},
                                 {"missing": "datinha_marota"},
                             ]},
@@ -890,27 +662,12 @@ FROM (
                             {"value": "babala_id"},
                             {"value": "datinha_marota"},
                             {"name": "hugo_boss", "value": {"sum": "hugo_boss"}},
-                            {
-                                "name": "net_dos_milagres",
-                                "value": {"sum": "net_dos_milagres"},
-                            },
+                            {"name": "net_dos_milagres", "value": {"sum": "net_dos_milagres"}},
                         ],
                         "where": {"and": [
-                            {"gte": [
-                                "datinha_marota",
-                                {"date_sub": [
-                                    "_reference_date",
-                                    {"interval": [1, "day"]},
-                                ]},
-                            ]},
+                            {"gte": ["datinha_marota", {"date_sub": ["_reference_date", {"interval": [1, "day"]}]}]},
                             {"lte": ["datinha_marota", "_reference_date"]},
-                            {"lte": [
-                                "reference_date",
-                                {"date_sub": [
-                                    "_reference_date",
-                                    {"interval": [2, "day"]},
-                                ]},
-                            ]},
+                            {"lte": ["reference_date", {"date_sub": ["_reference_date", {"interval": [2, "day"]}]}]},
                         ]},
                     },
                 },
@@ -929,34 +686,19 @@ FROM (
                                     {"eq": ["teraband_discreto", {"literal": "VISA"}]},
                                     10,
                                     {"if": [
-                                        {"eq": [
-                                            "teraband_discreto",
-                                            {"literal": "MasterCard"},
-                                        ]},
+                                        {"eq": ["teraband_discreto", {"literal": "MasterCard"}]},
                                         40,
                                         {"if": [
-                                            {"eq": [
-                                                "teraband_discreto",
-                                                {"literal": "Elo"},
-                                            ]},
+                                            {"eq": ["teraband_discreto", {"literal": "Elo"}]},
                                             20,
                                             {"if": [
-                                                {"eq": [
-                                                    "teraband_discreto",
-                                                    {"literal": "Hiper / HiperCard"},
-                                                ]},
+                                                {"eq": ["teraband_discreto", {"literal": "Hiper / HiperCard"}]},
                                                 78,
                                                 {"if": [
-                                                    {"eq": [
-                                                        "teraband_discreto",
-                                                        {"literal": "American Express"},
-                                                    ]},
+                                                    {"eq": ["teraband_discreto", {"literal": "American Express"}]},
                                                     23,
                                                     {"if": [
-                                                        {"eq": [
-                                                            "teraband_discreto",
-                                                            {"literal": "Cabal"},
-                                                        ]},
+                                                        {"eq": ["teraband_discreto", {"literal": "Cabal"}]},
                                                         1235,
                                                         1234,
                                                     ]},
@@ -970,21 +712,10 @@ FROM (
                                 "name": "babala_id",
                                 "value": {"case": [
                                     {
-                                        "then": {"if": [
-                                            {"eq": ["tipinho_maroto_id", 2]},
-                                            1234,
-                                            12354,
-                                        ]},
-                                        "when": {"eq": [
-                                            "teraband_discreto",
-                                            {"literal": "MasterCard"},
-                                        ]},
+                                        "then": {"if": [{"eq": ["tipinho_maroto_id", 2]}, 1234, 12354]},
+                                        "when": {"eq": ["teraband_discreto", {"literal": "MasterCard"}]},
                                     },
-                                    {"if": [
-                                        {"eq": ["tipinho_maroto_id", 10]},
-                                        123,
-                                        234,
-                                    ]},
+                                    {"if": [{"eq": ["tipinho_maroto_id", 10]}, 123, 234]},
                                 ]},
                             },
                             {
@@ -994,13 +725,7 @@ FROM (
                                     {"date_add": [
                                         "dia_da_apresentacaozinha",
                                         {"interval": [
-                                            {"add": [
-                                                28,
-                                                {"mul": [
-                                                    {"sub": ["installment_number", 1]},
-                                                    30,
-                                                ]},
-                                            ]},
+                                            {"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30]}]},
                                             "day",
                                         ]},
                                     ]},
@@ -1010,10 +735,7 @@ FROM (
                             {
                                 "name": "hugo_boss",
                                 "value": {"sum": {"case": [
-                                    {
-                                        "then": {"pos": "instagram_original"},
-                                        "when": {"eq": ["tx_type", 1]},
-                                    },
+                                    {"then": {"pos": "instagram_original"}, "when": {"eq": ["tx_type", 1]}},
                                     {"neg": "instagram_original"},
                                 ]}},
                             },
@@ -1021,17 +743,11 @@ FROM (
                                 "name": "net_dos_milagres",
                                 "value": {"sub": [
                                     {"sum": {"case": [
-                                        {
-                                            "then": {"pos": "instagram_original"},
-                                            "when": {"eq": ["tx_type", 1]},
-                                        },
+                                        {"then": {"pos": "instagram_original"}, "when": {"eq": ["tx_type", 1]}},
                                         {"neg": "instagram_original"},
                                     ]}},
                                     {"sum": {"case": [
-                                        {
-                                            "then": {"pos": "amount"},
-                                            "when": {"eq": ["tx_type", 1]},
-                                        },
+                                        {"then": {"pos": "amount"}, "when": {"eq": ["tx_type", 1]}},
                                         {"neg": "amount"},
                                     ]}},
                                 ]},
@@ -1041,18 +757,12 @@ FROM (
                             {
                                 "then": {"case": [
                                     {
-                                        "then": {"eq": [
-                                            {"date": "dia_da_apresentacaozinha"},
-                                            "_reference_date",
-                                        ]},
+                                        "then": {"eq": [{"date": "dia_da_apresentacaozinha"}, "_reference_date"]},
                                         "when": "is_week_day",
                                     },
                                     {"between": [
                                         {"date": "dia_da_apresentacaozinha"},
-                                        {"date_sub": [
-                                            "_reference_date",
-                                            {"interval": [1, "day"]},
-                                        ]},
+                                        {"date_sub": ["_reference_date", {"interval": [1, "day"]}]},
                                         "_reference_date",
                                     ]},
                                 ]},
@@ -1060,10 +770,7 @@ FROM (
                             },
                             {"between": [
                                 {"date": "dia_da_apresentacaozinha"},
-                                {"date_sub": [
-                                    "_reference_date",
-                                    {"interval": [1, "day"]},
-                                ]},
+                                {"date_sub": ["_reference_date", {"interval": [1, "day"]}]},
                                 "_reference_date",
                             ]},
                         ]},
@@ -1280,153 +987,395 @@ LIMIT 50000"""
         with Timer("parse big sql"):
             result = parse(sql)
         value2json(result)
-        expected = {'select': [{'value': 'sid', 'name': 'jaguaraquara_id'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_sid'}]},
-                                'name': 'task_id'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.channelSid'}]}, 'name': 'channel_id'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conversations.conversation_id'}]}, 'name': 'conversation_id'}, {
-                                   'value': {'json_extract_scalar': [
-                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                       {'literal': '$.call_sid'}]}, 'name': 'call_id'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conference.sid'}]}, 'name': 'call_conference_id'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.voiceType'}]}, 'name': 'call_type'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.from'}]}, 'name': 'call_from'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.to'}]}, 'name': 'call_to'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conversations.case'}]}, 'name': 'forcador_id'},
-                               {'value': 'continha_sid', 'name': 'twitter_conta_id'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.reservation_sid'}]},
-                                'name': 'reservation_id'}, {'value': 'resource_sid', 'name': 'resource_id'},
-                               {'value': 'resource_type', 'name': 'event_group'}, {'value': 'event_type'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.fup_project'}]}, 'name': 'fup_project'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.ja_vai_nego_velho_id'}]}, 'name': 'ja_vai_nego_velho_id'}, {
-                                   'value': {'json_extract_scalar': [
-                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                       {'literal': '$.fupMessage'}]}, 'name': 'fup_message'}, {'value': {
-                'json_value_array': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                     {'literal': '$.hora_de_mofar_ids'}]}, 'name': 'hora_de_mofar_ids'},
-                               {'value': {'safe_cast': [{'null': {}}, {'string': {}}]},
-                                'name': 'target_changed_reason'}, {'value': {
-                'safe_cast': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_age'}]},
-                              {'integer': {}}]}, 'name': 'task_age'},
-                               {'value': {'safe_cast': [{'null': {}}, {'integer': {}}]}, 'name': 'task_age_in_queue'}, {
-                                   'value': {'json_extract_scalar': ['balacobaco_data',
-                                                                     {'literal': '$.task_assignment_status'}]},
-                                   'name': 'task_assignment_status'}, {'value': {
-                'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_channel_unique_name'}]},
-                                                                       'name': 'task_channel_name'}, {'value': {
-                'datetime': [{'safe_cast': [
-                    {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_entered_date'}]},
-                    {'timestamp': {}}]}, 'America/Sao_Paulo']}, 'name': 'task_date_created_at'}, {'value': {
-                'safe_cast': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_priority'}]},
-                              {'integer': {}}]}, 'name': 'task_priority'}, {'value': {'datetime': [{'safe_cast': [
-                {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_entered_date'}]},
-                {'timestamp': {}}]}, 'America/Sao_Paulo']}, 'name': 'task_queue_entered_at'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_name'}]},
-                                'name': 'task_queue_name'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_sid'}]},
-                                'name': 'task_queue_id'}, {'value': {
-                'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_queue_target_expression'}]},
-                                                           'name': 'task_queue_target_expression'},
-                               {'value': {'safe_cast': [{'null': {}}, {'string': {}}]},
-                                'name': 'task_re_evaluated_reason'}, {'value': {
-                'safe_cast': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_version'}]},
-                              {'integer': {}}]}, 'name': 'task_version'}, {'value': {
-                'json_extract_scalar': ['balacobaco_data', {'literal': '$.task_completed_reason'}]},
-                                                                           'name': 'end_reason'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.endReason'}]}, 'name': 'end_reason_detailed'}, {'value': {
-                'datetime': [{'safe_cast': [{'json_extract_scalar': [
-                    {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                    {'literal': '$.transferInfo.date'}]}, {'timestamp': {}}]}, 'America/Sao_Paulo']},
-                                                                                                       'name': 'transfered_at'},
-                               {'value': {'json_extract_scalar': [
-                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                   {'literal': '$.papinhos.papinhos_atributos_1'}]},
-                                'name': 'conversation_attribute_1'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.papinhos.papinhos_atributos_2'}]},
-                                                                      'name': 'conversation_attribute_2'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.papinhos.papinhos_atributos_3'}]},
-                                                                                                            'name': 'conversation_attribute_3'},
-                               {'value': {'json_extract_scalar': [
-                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                   {'literal': '$.papinhos.papinhos_atributos_4'}]},
-                                'name': 'conversation_attribute_4'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.papinhos.papinhos_atributos_5'}]},
-                                                                      'name': 'conversation_attribute_5'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.papinhos.papinhos_atributos_6'}]},
-                                                                                                            'name': 'conversation_attribute_6'},
-                               {'value': {'json_extract_scalar': [
-                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                   {'literal': '$.papinhos.papinhos_atributos_7'}]},
-                                'name': 'conversation_attribute_7'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conversations.initiated_by'}]}, 'name': 'initiated_by'}, {
-                                   'value': {'json_extract_scalar': [
-                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                       {'literal': '$.conversations.canal_de_comunicacao'}]},
-                                   'name': 'canal_de_comunicacao'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.channelType'}]}, 'name': 'channel_type'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conversations.phone'}]}, 'name': 'customer_phone'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conversations.email'}]}, 'name': 'customer_email'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.conversations.outcome'}]}, 'name': 'conversation_outcome'}, {
-                                   'value': {'safe_cast': [{'json_extract_scalar': [
-                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                       {'literal': '$.isTransfered'}]}, {'bool': {}}]}, 'name': 'is_transfered'}, {
-                                   'value': {'json_extract_scalar': [
-                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                       {'literal': '$.teamOrigin'}]}, 'name': 'from_team_transfer'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.ignoreAgent'}]}, 'name': 'from_member_transfer'}, {'value': {
-                'json_extract_scalar': [{'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                        {'literal': '$.transferTargetType'}]}, 'name': 'transfer_target_type'}, {
-                                   'value': {'json_extract_scalar': [
-                                       {'json_extract_scalar': ['balacobaco_data', {'literal': '$.atributozinhos'}]},
-                                       {'literal': '$.annotation'}]}, 'name': 'annotation'}, {'value': {
-                'json_extract_scalar': ['balacobaco_data', {'literal': '$.trabalho_ativo_nome'}]},
-                                                                                              'name': 'member_status'},
-                               {'value': {
-                                   'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_activity_sid'}]},
-                                'name': 'member_activity_id'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_sid'}]},
-                                'name': 'member_twilio_id'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_name'}]},
-                                'name': 'member_email'}, {'value': {
-                'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_previous_activity_name'}]},
-                                                          'name': 'member_previous_status'}, {'value': {
-                'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_previous_activity_sid'}]},
-                                                                                              'name': 'member_previous_activity_id'},
-                               {'value': {'json_extract_scalar': [
-                                   {'json_extract_scalar': ['balacobaco_data', {'literal': '$.worker_attributes'}]},
-                                   {'literal': '$.user_role'}]}, 'name': 'member_role'}, {'value': {'safe_cast': [
-                {'json_extract_scalar': ['balacobaco_data', {'literal': '$.trabalho_tempo_em_proximos_ativos_sm'}]},
-                {'integer': {}}]}, 'name': 'member_time_in_previous_activity'},
-                               {'value': {'safe_cast': [{'null': {}}, {'string': {}}]}, 'name': 'workflow_filter_name'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.workflow_name'}]},
-                                'name': 'workflow_name'},
-                               {'value': {'json_extract_scalar': ['balacobaco_data', {'literal': '$.workflow_sid'}]},
-                                'name': 'workflow_id'},
-                               {'value': {'datetime': ['event_date', 'America/Sao_Paulo']}, 'name': 'created_at'}],
-                    'from': {'value': '**********..**********..*********',
-                             'tablesample': {'method': 'system', 'percent': 0.1}}, 'where': {
-                'and': [{'gt': ['event_date', 'checkpoint.start_date']},
-                        {'lte': ['event_date', 'checkpoint.end_date']}]}, 'qualify': {'eq': [
-                {'over': {'partitionby': 'sid', 'orderby': {'value': 'event_date', 'sort': 'desc'}},
-                 'value': {'row_number': {}}}, 1]}, 'limit': 50000}
+        expected = {
+            "select": [
+                {"value": "sid", "name": "jaguaraquara_id"},
+                {"value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_sid"}]}, "name": "task_id"},
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.channelSid"},
+                    ]},
+                    "name": "channel_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.conversation_id"},
+                    ]},
+                    "name": "conversation_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.call_sid"},
+                    ]},
+                    "name": "call_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conference.sid"},
+                    ]},
+                    "name": "call_conference_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.voiceType"},
+                    ]},
+                    "name": "call_type",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.from"},
+                    ]},
+                    "name": "call_from",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.to"},
+                    ]},
+                    "name": "call_to",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.case"},
+                    ]},
+                    "name": "forcador_id",
+                },
+                {"value": "continha_sid", "name": "twitter_conta_id"},
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.reservation_sid"}]},
+                    "name": "reservation_id",
+                },
+                {"value": "resource_sid", "name": "resource_id"},
+                {"value": "resource_type", "name": "event_group"},
+                {"value": "event_type"},
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.fup_project"},
+                    ]},
+                    "name": "fup_project",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.ja_vai_nego_velho_id"},
+                    ]},
+                    "name": "ja_vai_nego_velho_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.fupMessage"},
+                    ]},
+                    "name": "fup_message",
+                },
+                {
+                    "value": {"json_value_array": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.hora_de_mofar_ids"},
+                    ]},
+                    "name": "hora_de_mofar_ids",
+                },
+                {"value": {"safe_cast": [{"null": {}}, {"string": {}}]}, "name": "target_changed_reason"},
+                {
+                    "value": {"safe_cast": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_age"}]},
+                        {"integer": {}},
+                    ]},
+                    "name": "task_age",
+                },
+                {"value": {"safe_cast": [{"null": {}}, {"integer": {}}]}, "name": "task_age_in_queue"},
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_assignment_status"}]},
+                    "name": "task_assignment_status",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_channel_unique_name"}]},
+                    "name": "task_channel_name",
+                },
+                {
+                    "value": {"datetime": [
+                        {"safe_cast": [
+                            {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_queue_entered_date"}]},
+                            {"timestamp": {}},
+                        ]},
+                        "America/Sao_Paulo",
+                    ]},
+                    "name": "task_date_created_at",
+                },
+                {
+                    "value": {"safe_cast": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_priority"}]},
+                        {"integer": {}},
+                    ]},
+                    "name": "task_priority",
+                },
+                {
+                    "value": {"datetime": [
+                        {"safe_cast": [
+                            {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_queue_entered_date"}]},
+                            {"timestamp": {}},
+                        ]},
+                        "America/Sao_Paulo",
+                    ]},
+                    "name": "task_queue_entered_at",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_queue_name"}]},
+                    "name": "task_queue_name",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_queue_sid"}]},
+                    "name": "task_queue_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        "balacobaco_data",
+                        {"literal": "$.task_queue_target_expression"},
+                    ]},
+                    "name": "task_queue_target_expression",
+                },
+                {"value": {"safe_cast": [{"null": {}}, {"string": {}}]}, "name": "task_re_evaluated_reason"},
+                {
+                    "value": {"safe_cast": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_version"}]},
+                        {"integer": {}},
+                    ]},
+                    "name": "task_version",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.task_completed_reason"}]},
+                    "name": "end_reason",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.endReason"},
+                    ]},
+                    "name": "end_reason_detailed",
+                },
+                {
+                    "value": {"datetime": [
+                        {"safe_cast": [
+                            {"json_extract_scalar": [
+                                {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                                {"literal": "$.transferInfo.date"},
+                            ]},
+                            {"timestamp": {}},
+                        ]},
+                        "America/Sao_Paulo",
+                    ]},
+                    "name": "transfered_at",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_1"},
+                    ]},
+                    "name": "conversation_attribute_1",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_2"},
+                    ]},
+                    "name": "conversation_attribute_2",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_3"},
+                    ]},
+                    "name": "conversation_attribute_3",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_4"},
+                    ]},
+                    "name": "conversation_attribute_4",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_5"},
+                    ]},
+                    "name": "conversation_attribute_5",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_6"},
+                    ]},
+                    "name": "conversation_attribute_6",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.papinhos.papinhos_atributos_7"},
+                    ]},
+                    "name": "conversation_attribute_7",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.initiated_by"},
+                    ]},
+                    "name": "initiated_by",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.canal_de_comunicacao"},
+                    ]},
+                    "name": "canal_de_comunicacao",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.channelType"},
+                    ]},
+                    "name": "channel_type",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.phone"},
+                    ]},
+                    "name": "customer_phone",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.email"},
+                    ]},
+                    "name": "customer_email",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.conversations.outcome"},
+                    ]},
+                    "name": "conversation_outcome",
+                },
+                {
+                    "value": {"safe_cast": [
+                        {"json_extract_scalar": [
+                            {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                            {"literal": "$.isTransfered"},
+                        ]},
+                        {"bool": {}},
+                    ]},
+                    "name": "is_transfered",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.teamOrigin"},
+                    ]},
+                    "name": "from_team_transfer",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.ignoreAgent"},
+                    ]},
+                    "name": "from_member_transfer",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.transferTargetType"},
+                    ]},
+                    "name": "transfer_target_type",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.atributozinhos"}]},
+                        {"literal": "$.annotation"},
+                    ]},
+                    "name": "annotation",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.trabalho_ativo_nome"}]},
+                    "name": "member_status",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.worker_activity_sid"}]},
+                    "name": "member_activity_id",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.worker_sid"}]},
+                    "name": "member_twilio_id",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.worker_name"}]},
+                    "name": "member_email",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        "balacobaco_data",
+                        {"literal": "$.worker_previous_activity_name"},
+                    ]},
+                    "name": "member_previous_status",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        "balacobaco_data",
+                        {"literal": "$.worker_previous_activity_sid"},
+                    ]},
+                    "name": "member_previous_activity_id",
+                },
+                {
+                    "value": {"json_extract_scalar": [
+                        {"json_extract_scalar": ["balacobaco_data", {"literal": "$.worker_attributes"}]},
+                        {"literal": "$.user_role"},
+                    ]},
+                    "name": "member_role",
+                },
+                {
+                    "value": {"safe_cast": [
+                        {"json_extract_scalar": [
+                            "balacobaco_data",
+                            {"literal": "$.trabalho_tempo_em_proximos_ativos_sm"},
+                        ]},
+                        {"integer": {}},
+                    ]},
+                    "name": "member_time_in_previous_activity",
+                },
+                {"value": {"safe_cast": [{"null": {}}, {"string": {}}]}, "name": "workflow_filter_name"},
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.workflow_name"}]},
+                    "name": "workflow_name",
+                },
+                {
+                    "value": {"json_extract_scalar": ["balacobaco_data", {"literal": "$.workflow_sid"}]},
+                    "name": "workflow_id",
+                },
+                {"value": {"datetime": ["event_date", "America/Sao_Paulo"]}, "name": "created_at"},
+            ],
+            "from": {
+                "value": "**********..**********..*********",
+                "tablesample": {"method": "system", "percent": 0.1},
+            },
+            "where": {"and": [
+                {"gt": ["event_date", "checkpoint.start_date"]},
+                {"lte": ["event_date", "checkpoint.end_date"]},
+            ]},
+            "qualify": {"eq": [
+                {
+                    "over": {"partitionby": "sid", "orderby": {"value": "event_date", "sort": "desc"}},
+                    "value": {"row_number": {}},
+                },
+                1,
+            ]},
+            "limit": 50000,
+        }
         self.assertEqual(result, expected)

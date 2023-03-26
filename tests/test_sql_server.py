@@ -106,11 +106,7 @@ class TestSqlServer(TestCase):
         result = parse(sql)
         expected = {
             "from": "myDB.myTable",
-            "select": [
-                {"value": "Timestamp"},
-                {"value": "RowsCount"},
-                {"value": "DataName"},
-            ],
+            "select": [{"value": "Timestamp"}, {"value": "RowsCount"}, {"value": "DataName"}],
             "where": {"and": [
                 {"gte": ["Timestamp", {"literal": "2020-01-01"}]},
                 {"lt": ["Timestamp", {"literal": "2020-12-31"}]},
@@ -129,13 +125,7 @@ class TestSqlServer(TestCase):
         """
         result = parse(sql)
         expected = {
-            "from": {
-                "name": "X",
-                "value": {
-                    "from": {"name": "B", "value": "dbo.b"},
-                    "select": {"value": "result"},
-                },
-            },
+            "from": {"name": "X", "value": {"from": {"name": "B", "value": "dbo.b"}, "select": {"value": "result"}}},
             "select": "*",
             "top": 1000,
             "where": {"neq": ["expected", "result"]},
@@ -163,9 +153,7 @@ class TestSqlServer(TestCase):
         expected = {
             "from": [
                 {"name": "D", "value": "Department"},
-                {"cross apply": {
-                    "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
-                }},
+                {"cross apply": {"dbo.fn_getallemployeeofadepartment": "D.DepartmentID"}},
             ],
             "select": "*",
         }
@@ -180,9 +168,7 @@ class TestSqlServer(TestCase):
         expected = {
             "from": [
                 {"name": "D", "value": "Department"},
-                {"outer apply": {
-                    "dbo.fn_getallemployeeofadepartment": "D.DepartmentID"
-                }},
+                {"outer apply": {"dbo.fn_getallemployeeofadepartment": "D.DepartmentID"}},
             ],
             "select": "*",
         }
@@ -192,10 +178,7 @@ class TestSqlServer(TestCase):
         sql = "SELECT * FROM foo TABLESAMPLE bernoulli (1) WHERE a < 42"
         result = parse(sql)
         expected = {
-            "from": {
-                "tablesample": {"method": "bernoulli", "percent": 1},
-                "value": "foo",
-            },
+            "from": {"tablesample": {"method": "bernoulli", "percent": 1}, "value": "foo"},
             "select": "*",
             "where": {"lt": ["a", 42]},
         }
@@ -205,11 +188,7 @@ class TestSqlServer(TestCase):
         sql = "SELECT * FROM foo f TABLESAMPLE bernoulli (1) WHERE f.a < 42"
         result = parse(sql)
         expected = {
-            "from": {
-                "name": "f",
-                "tablesample": {"method": "bernoulli", "percent": 1},
-                "value": "foo",
-            },
+            "from": {"name": "f", "tablesample": {"method": "bernoulli", "percent": 1}, "value": "foo"},
             "select": "*",
             "where": {"lt": ["f.a", 42]},
         }
@@ -230,12 +209,7 @@ class TestSqlServer(TestCase):
             "select": "*",
             "from": [
                 "p",
-                {"pivot": {
-                    "name": "pvt",
-                    "aggregate": {"count": "id"},
-                    "for": "E",
-                    "in": [250, 251, 256, 257, 260],
-                }},
+                {"pivot": {"name": "pvt", "aggregate": {"count": "id"}, "for": "E", "in": [250, 251, 256, 257, 260],}},
             ],
         }
         self.assertEqual(result, expected)

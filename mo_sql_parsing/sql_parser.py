@@ -706,9 +706,9 @@ def parser(literal_string, simple_ident, sqlserver=False):
                     + assign(
                         "then",
                         (
-                            keyword("delete")("op")/to_json_call
+                            keyword("delete")("op") / to_json_call
                             | keyword("update set").suppress()
-                            + Dict(delimited_list(Group(identifier + EQ + expression))) / (lambda t: {"update":t})
+                            + Dict(delimited_list(Group(identifier + EQ + expression))) / (lambda t: {"update": t})
                         ),
                     )
                 )

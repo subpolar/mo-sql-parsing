@@ -59,12 +59,12 @@ class TestMySql(TestCase):
                                     "value": {
                                         "from": "t_dwd_tmp_wxpay_discount_model_score_hour",
                                         "select": "*",
-                                        "where": {"and": [{"gte": ["ds", 2022080300]}, {"lte": ["ds", 2022080323]},]},
+                                        "where": {"and": [{"gte": ["ds", 2022080300]}, {"lte": ["ds", 2022080323]}]},
                                     },
                                 },
                                 {"lateral view": {
                                     "name": {"temp": "item_result"},
-                                    "value": {"explode": {"split": ["scoreresult_", {"literal": "\\ | "},]}},
+                                    "value": {"explode": {"split": ["scoreresult_", {"literal": "\\ | "}]}},
                                 }},
                             ],
                             "select": [
@@ -79,13 +79,13 @@ class TestMySql(TestCase):
                         {"value": "ds"},
                         {"value": "algid"},
                         {"value": "uin"},
-                        {"name": "item_id", "value": {"get": [{"split": ["item_result", {"literal": ":"}]}, 0,]},},
-                        {"name": "score", "value": {"get": [{"split": ["item_result", {"literal": ": "}]}, 1,]},},
+                        {"name": "item_id", "value": {"get": [{"split": ["item_result", {"literal": ":"}]}, 0]}},
+                        {"name": "score", "value": {"get": [{"split": ["item_result", {"literal": ": "}]}, 1]}},
                     ],
                 },
             },
             "groupby": [{"value": "algid"}, {"value": "item_id"}],
-            "select": [{"value": "algid"}, {"value": "item_id"}, {"name": "avg_score", "value": {"avg": "score"}},],
+            "select": [{"value": "algid"}, {"value": "item_id"}, {"name": "avg_score", "value": {"avg": "score"}}],
         }
         self.assertEqual(result, expected)
 

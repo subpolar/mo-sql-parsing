@@ -281,9 +281,7 @@ class Formatter:
                 parts.append(f"({sampling_pct} PERCENT)")
             sampling_bucket = sample.get("bucket")
             if sampling_bucket:
-                bucket_parts = [
-                    f"BUCKET {sampling_bucket[0]} OUT OF {sampling_bucket[1]}"
-                ]
+                bucket_parts = [f"BUCKET {sampling_bucket[0]} OUT OF {sampling_bucket[1]}"]
                 sampling_on = sample.get("on")
                 if sampling_on:
                     bucket_parts.append(f"ON {self.format(sampling_on)}")
@@ -310,9 +308,7 @@ class Formatter:
 
         # treat as regular function call
         if isinstance(value, dict) and len(value) == 0:
-            return (
-                key.upper() + "()"
-            )  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.format()
+            return key.upper() + "()"  # NOT SURE IF AN EMPTY dict SHOULD BE DELT WITH HERE, OR IN self.format()
         else:
             params = ", ".join(self.dispatch(p) for p in listwrap(value))
             return f"{key.upper()}({params})"
@@ -337,15 +333,11 @@ class Formatter:
         return "{0} IS NULL".format(self.dispatch(value, precedence["is"]))
 
     def _collate(self, pair, prec):
-        return "{0} COLLATE {1}".format(
-            self.dispatch(pair[0], precedence["collate"]), pair[1]
-        )
+        return "{0} COLLATE {1}".format(self.dispatch(pair[0], precedence["collate"]), pair[1])
 
     def _substring(self, json, prec):
         if "from" in json.keys():
-            return (
-                f"SUBSTRING({json['substring']} FROM {json['from']} FOR {json['for']})"
-            )
+            return f"SUBSTRING({json['substring']} FROM {json['from']} FOR {json['for']})"
         else:
             # if substring does not contain from and for,  compose normal substring function
             params = ", ".join(self.dispatch(p) for p in json["substring"])
@@ -355,11 +347,7 @@ class Formatter:
         member, set = json
         if "literal" in set:
             set = {"literal": listwrap(set["literal"])}
-        sql = (
-            self.dispatch(member, precedence["in"])
-            + " IN "
-            + self.dispatch(set, precedence["in"])
-        )
+        sql = self.dispatch(member, precedence["in"]) + " IN " + self.dispatch(set, precedence["in"])
         if prec < precedence["in"]:
             sql = f"({sql})"
         return sql
@@ -368,11 +356,7 @@ class Formatter:
         member, set = json
         if "literal" in set:
             set = {"literal": listwrap(set["literal"])}
-        sql = (
-            self.dispatch(member, precedence["in"])
-            + " NOT IN "
-            + self.dispatch(set, precedence["in"])
-        )
+        sql = self.dispatch(member, precedence["in"]) + " NOT IN " + self.dispatch(set, precedence["in"])
         if prec < precedence["in"]:
             sql = f"({sql})"
         return sql
@@ -424,9 +408,7 @@ class Formatter:
 
     def _literal(self, json, prec=0):
         if isinstance(json, list):
-            return "({0})".format(", ".join(
-                self._literal(v, precedence["literal"]) for v in json
-            ))
+            return "({0})".format(", ".join(self._literal(v, precedence["literal"]) for v in json))
         elif isinstance(json, string_types):
             return "'{0}'".format(json.replace("'", "''"))
         else:
@@ -470,27 +452,20 @@ class Formatter:
         )
 
     def _distinct(self, json, prec):
-        return "DISTINCT " + ", ".join(
-            self.dispatch(v, precedence["select"]) for v in listwrap(json)
-        )
+        return "DISTINCT " + ", ".join(self.dispatch(v, precedence["select"]) for v in listwrap(json))
 
     def _select_distinct(self, json, prec):
         return "SELECT DISTINCT " + ", ".join(self.dispatch(v) for v in listwrap(json))
 
     def _distinct_on(self, json, prec):
-        return (
-            "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
-        )
+        return "DISTINCT ON (" + ", ".join(self.dispatch(v) for v in listwrap(json)) + ")"
 
     def _join_on(self, json, prec):
         detected_join = join_keywords & set(json.keys())
         if len(detected_join) == 0:
-            raise Exception(
-                'Fail to detect join type! Detected: "{}" Except one of: "{}"'.format(
-                    [on_keyword for on_keyword in json if on_keyword != "on"][0],
-                    '", "'.join(join_keywords),
-                )
-            )
+            raise Exception('Fail to detect join type! Detected: "{}" Except one of: "{}"'.format(
+                [on_keyword for on_keyword in json if on_keyword != "on"][0], '", "'.join(join_keywords),
+            ))
 
         join_keyword = detected_join.pop()
 
@@ -561,16 +536,11 @@ class Formatter:
             with_ = json["with"]
             if not isinstance(with_, list):
                 with_ = [with_]
-            parts = ", ".join(
-                "{0} AS ({1})".format(part["name"], self.dispatch(part["value"]))
-                for part in with_
-            )
+            parts = ", ".join("{0} AS ({1})".format(part["name"], self.dispatch(part["value"])) for part in with_)
             return "WITH {0}".format(parts)
 
     def select(self, json, prec):
-        param = ", ".join(
-            self.dispatch(s, precedence["select"]) for s in listwrap(json["select"])
-        )
+        param = ", ".join(self.dispatch(s, precedence["select"]) for s in listwrap(json["select"]))
         if "top" in json:
             top = self.dispatch(json["top"])
             return f"SELECT TOP ({top}) {param}"
@@ -619,19 +589,13 @@ class Formatter:
 
     def orderby(self, json, prec):
         param = ", ".join(
-            (
-                self.dispatch(s["value"], precedence["order"])
-                + " "
-                + s.get("sort", "").upper()
-            ).strip()
+            (self.dispatch(s["value"], precedence["order"]) + " " + s.get("sort", "").upper()).strip()
             for s in listwrap(json["orderby"])
         )
         return f"ORDER BY {param}"
 
     def partitionby(self, json, prec):
-        param = ", ".join(
-            self.dispatch(s, precedence["order"]) for s in listwrap(json["partitionby"])
-        )
+        param = ", ".join(self.dispatch(s, precedence["order"]) for s in listwrap(json["partitionby"]))
         return f"PARTITION BY {param}"
 
     def limit(self, json, prec):
@@ -672,10 +636,7 @@ class Formatter:
                 if "if exists" in json:
                     acc.append("IF EXISTS")
                 acc.append("VALUES")
-                acc.append(",\n".join(
-                    "(" + ", ".join(self._literal(row[c]) for c in columns) + ")"
-                    for row in values
-                ))
+                acc.append(",\n".join("(" + ", ".join(self._literal(row[c]) for c in columns) + ")" for row in values))
             else:
                 if "if exists" in json:
                     acc.append("IF EXISTS")

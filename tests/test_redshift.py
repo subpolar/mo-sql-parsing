@@ -22,10 +22,7 @@ class TestRedshift(TestCase):
             result,
             {
                 "from": "table",
-                "select": {
-                    "name": "placeholder",
-                    "value": {"cast": [{"literal": ""}, {"varchar": {}}]},
-                },
+                "select": {"name": "placeholder", "value": {"cast": [{"literal": ""}, {"varchar": {}}]}},
             },
         )
 
@@ -98,14 +95,8 @@ class TestRedshift(TestCase):
                 "select": {
                     "name": "quantitytext",
                     "value": {"case": [
-                        {
-                            "when": {"eq": ["quantity", 30]},
-                            "then": {"literal": "The quantity is 30"},
-                        },
-                        {
-                            "when": {"eq": ["quantity", 31]},
-                            "then": {"literal": "The quantity is 31"},
-                        },
+                        {"when": {"eq": ["quantity", 30]}, "then": {"literal": "The quantity is 30"}},
+                        {"when": {"eq": ["quantity", 31]}, "then": {"literal": "The quantity is 31"}},
                         {"literal": "The quantity is not 30 or 31"},
                     ]},
                 },
@@ -118,11 +109,7 @@ class TestRedshift(TestCase):
 
         self.assertEqual(
             result,
-            {"union_all": [
-                {"from": "a", "select": "*"},
-                {"from": "b", "select": "*"},
-                {"from": "c", "select": "*"},
-            ]},
+            {"union_all": [{"from": "a", "select": "*"}, {"from": "b", "select": "*"}, {"from": "c", "select": "*"}]},
         )
 
     def test_dates1(self):
@@ -176,13 +163,7 @@ class TestRedshift(TestCase):
             {
                 "from": [
                     "t",
-                    {
-                        "left join": "ex",
-                        "on": {"eq": [
-                            "t.date",
-                            {"cast": ["ex.date_at", {"date": ""}]},
-                        ]},
-                    },
+                    {"left join": "ex", "on": {"eq": ["t.date", {"cast": ["ex.date_at", {"date": ""}]}]}},
                 ],
                 "select": "*",
             },
@@ -193,13 +174,7 @@ class TestRedshift(TestCase):
         result = parse(sql)
         self.assertEqual(
             result,
-            {
-                "from": "t",
-                "select_distinct": {
-                    "name": "date_at",
-                    "value": {"cast": ["date_at", {"date": {}}]},
-                },
-            },
+            {"from": "t", "select_distinct": {"name": "date_at", "value": {"cast": ["date_at", {"date": {}}]}}},
         )
 
     def test_issue5c_of_fork_date_cast_as_date(self):
@@ -215,10 +190,7 @@ class TestRedshift(TestCase):
         self.assertEqual(
             result,
             {
-                "from": [
-                    {"name": "u", "value": "users"},
-                    {"inner join": {"name": "us", "value": "user_sessions"}},
-                ],
+                "from": [{"name": "u", "value": "users"}, {"inner join": {"name": "us", "value": "user_sessions"}}],
                 "select": {
                     "name": "day_diff",
                     "value": {"datediff": [
@@ -233,9 +205,7 @@ class TestRedshift(TestCase):
     def test_issue5d_of_fork_column_is_keyword(self):
         sql = "select date as date_at from t"
         result = parse(sql)
-        self.assertEqual(
-            result, {"from": "t", "select": {"name": "date_at", "value": "date"}}
-        )
+        self.assertEqual(result, {"from": "t", "select": {"name": "date_at", "value": "date"}})
 
     def test_issue5e_of_fork_column_is_keyword(self):
         sql = """
@@ -285,10 +255,7 @@ class TestRedshift(TestCase):
                 "orderby": [{"value": 2}, {"value": 1}],
                 "select": {
                     "name": "sum",
-                    "over": {
-                        "orderby": [{"value": "dateid"}, {"value": "salesid"}],
-                        "range": {"max": 0},
-                    },
+                    "over": {"orderby": [{"value": "dateid"}, {"value": "salesid"}], "range": {"max": 0}},
                     "value": {"sum": "qty"},
                 },
             },
@@ -299,17 +266,14 @@ class TestRedshift(TestCase):
         sql = "select extract('epoch' from occurred_at)"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"select": {"value": {"extract": [{"literal": "epoch"}, "occurred_at"]}}},
+            result, {"select": {"value": {"extract": [{"literal": "epoch"}, "occurred_at"]}}},
         )
 
     def test_issue5i_of_fork_extract(self):
         # Ref: https://docs.aws.amazon.com/redshift/latest/dg/r_EXTRACT_function.html#r_EXTRACT_function-examples
         sql = "select extract(epoch from occurred_at)"
         result = parse(sql)
-        self.assertEqual(
-            result, {"select": {"value": {"extract": ["epoch", "occurred_at"]}}}
-        )
+        self.assertEqual(result, {"select": {"value": {"extract": ["epoch", "occurred_at"]}}})
 
     def test_cast_char(self):
         sql = "select cast(2008 as char(4));"
@@ -319,14 +283,10 @@ class TestRedshift(TestCase):
     def test_cast_decimal(self):
         sql = "select cast(109.652 as decimal(4,1));"
         result = parse(sql)
-        self.assertEqual(
-            result, {"select": {"value": {"cast": [109.652, {"decimal": [4, 1]}]}}}
-        )
+        self.assertEqual(result, {"select": {"value": {"cast": [109.652, {"decimal": [4, 1]}]}}})
 
     def test_window_function1(self):
-        sql = (
-            "select sum(qty) over (order by a rows between 1 preceding and 2 following)"
-        )
+        sql = "select sum(qty) over (order by a rows between 1 preceding and 2 following)"
         result = parse(sql)
         self.assertEqual(
             result,
@@ -337,9 +297,7 @@ class TestRedshift(TestCase):
         )
 
     def test_window_function2(self):
-        sql = (
-            "select sum(qty) over (order by a rows between 3 preceding and 1 preceding)"
-        )
+        sql = "select sum(qty) over (order by a rows between 3 preceding and 1 preceding)"
         result = parse(sql)
         self.assertEqual(
             result,
@@ -350,30 +308,18 @@ class TestRedshift(TestCase):
         )
 
     def test_window_function3(self):
-        sql = (
-            "select sum(qty) over (order by a rows between 3 following and 5 following)"
-        )
+        sql = "select sum(qty) over (order by a rows between 3 following and 5 following)"
         result = parse(sql)
         self.assertEqual(
             result,
-            {"select": {
-                "over": {"orderby": {"value": "a"}, "range": {"min": 3, "max": 5}},
-                "value": {"sum": "qty"},
-            }},
+            {"select": {"over": {"orderby": {"value": "a"}, "range": {"min": 3, "max": 5}}, "value": {"sum": "qty"},}},
         )
 
     def test_window_function4(self):
-        sql = (
-            "select sum(qty) over (order by a rows between 3 following and unbounded"
-            " following)"
-        )
+        sql = "select sum(qty) over (order by a rows between 3 following and unbounded following)"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"select": {
-                "over": {"orderby": {"value": "a"}, "range": {"min": 3}},
-                "value": {"sum": "qty"},
-            }},
+            result, {"select": {"over": {"orderby": {"value": "a"}, "range": {"min": 3}}, "value": {"sum": "qty"},}},
         )
 
     def test_issue7a_first_value_ignore_nulls(self):
@@ -420,10 +366,7 @@ class TestRedshift(TestCase):
                     "value": {
                         "from": "inner_cte",
                         "select": {"value": {"cast": ["date_at", {"date": {}}]}},
-                        "with": {
-                            "name": "inner_cte",
-                            "value": {"from": "source", "select": "*"},
-                        },
+                        "with": {"name": "inner_cte", "value": {"from": "source", "select": "*"}},
                     },
                 },
             },
@@ -469,17 +412,10 @@ class TestRedshift(TestCase):
         )
 
     def test_issue7e_function_of_window(self):
-        sql = (
-            "select SUM(a) over (order by b rows between unbounded preceding and"
-            " unbounded following)"
-        )
+        sql = "select SUM(a) over (order by b rows between unbounded preceding and unbounded following)"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {"select": {
-                "over": {"orderby": {"value": "b"}, "range": {}},
-                "value": {"sum": "a"},
-            }},
+            result, {"select": {"over": {"orderby": {"value": "b"}, "range": {}}, "value": {"sum": "a"},}},
         )
 
     def test_issue7f_function_of_window(self):
@@ -514,10 +450,7 @@ class TestRedshift(TestCase):
             result,
             {
                 "from": "source",
-                "select": {
-                    "name": "revenue",
-                    "value": {"sum": {"cast": ["price", {"double_precision": {}}]}},
-                },
+                "select": {"name": "revenue", "value": {"sum": {"cast": ["price", {"double_precision": {}}]}}},
             },
         )
 
@@ -525,11 +458,7 @@ class TestRedshift(TestCase):
         sql = "select f_bigint_to_hhmmss(device_timezone) from t"
         result = parse(sql)
         self.assertEqual(
-            result,
-            {
-                "from": "t",
-                "select": {"value": {"f_bigint_to_hhmmss": "device_timezone"}},
-            },
+            result, {"from": "t", "select": {"value": {"f_bigint_to_hhmmss": "device_timezone"}}},
         )
 
     def test_issue_23_right(self):
