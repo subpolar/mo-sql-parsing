@@ -469,6 +469,12 @@ def to_when_call(tokens):
     return Call("when", [tok["when"]], {"then": tok["then"]})
 
 
+def to_match_expr(tokens):
+    if "expr" in tokens:
+        return Call("and", [tokens["cond"], tokens['expr']])
+    return tokens['cond']
+
+
 def to_join_call(tokens):
     op = " ".join(tokens["op"])
     if tokens["join"]["name"]:

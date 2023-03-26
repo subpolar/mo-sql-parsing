@@ -684,31 +684,43 @@ def parser(literal_string, simple_ident, sqlserver=False):
         ) / to_json_call
 
         MATCHED = Keyword("matched", caseless=True)
+        matched_when = assign(
+            "when",
+            (
+                (
+                    NOT.suppress()
+                    + MATCHED.suppress()
+                    + (
+                        keyword("by source") / "not_matched_by_source"
+                        | Optional(keyword("by target")) / "not_matched_by_target"
+                    )
+                    | MATCHED
+                )("cond")
+                + Optional(AND + expression("expr"))
+            )
+            / to_match_expr,
+        )
         merge = (
-            tops
-            + keyword("merge")("op")
+            keyword("merge")("op")
+            + tops
             + Optional(Keyword("into", caseless=True).suppress())
-            + Group(identifier("value") + alias)("into")
+            + Group(identifier("value") + alias)("target")
             + USING
-            + Group(identifier("value") + alias)("using")
+            + Group(identifier("value") + alias)("source")
             + ON
             + expression("on")
             + Many(
                 Group(
-                    assign("when", Group(LookAhead(NOT + MATCHED) + expression))
-                    + assign(
-                        "then",
-                        keyword("insert")
-                        + Optional(LB + delimited_list(identifier)("columns") + RB)
-                        + (keyword("default values") | values),
-                    )
-                    | assign("when", Group(LookAhead(MATCHED) + expression))
+                    matched_when
                     + assign(
                         "then",
                         (
-                            keyword("delete")("op") / to_json_call
+                            keyword("delete")/ {"delete": {}}
                             | keyword("update set").suppress()
                             + Dict(delimited_list(Group(identifier + EQ + expression))) / (lambda t: {"update": t})
+                            | (keyword("insert")
+                            + Optional(LB + delimited_list(identifier)("columns") + RB)
+                            + (keyword("default values") | VALUES + (LB + delimited_list(Group(expression)) + RB)("values"))) / to_insert_call
                         ),
                     )
                 )
