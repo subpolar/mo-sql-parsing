@@ -405,6 +405,16 @@ def parser(literal_string, simple_ident, sqlserver=False):
             / to_join_call
         )
 
+        tops = (
+            Optional(
+                TOP
+                + expression("value")
+                + Optional(keyword("percent"))("percent")
+                + Optional(WITH + keyword("ties"))("ties")
+            )("top")
+            / to_top_clause
+        )
+
         selection = (
             ((SELECT + "*" + EXCEPT.suppress()) + (LB + delimited_list(select_column)("select_except") + RB))
             | (SELECT + DISTINCT + ON)
@@ -413,17 +423,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
             | assign("select distinct", delimited_list(select_column))
             | assign("select as struct", delimited_list(select_column))
             | assign("select as value", delimited_list(select_column))
-            | (
-                SELECT
-                + Optional(
-                    TOP
-                    + expression("value")
-                    + Optional(keyword("percent"))("percent")
-                    + Optional(WITH + keyword("ties"))("ties")
-                )("top")
-                / to_top_clause
-                + delimited_list(select_column)("select")
-            )
+            | SELECT + tops + delimited_list(select_column)("select")
         ) + comma
 
         row = (LB + delimited_list(Group(expression)) + RB) / to_row
@@ -683,6 +683,51 @@ def parser(literal_string, simple_ident, sqlserver=False):
             + returning
         ) / to_json_call
 
+        MATCHED = Keyword("matched", caseless=True)
+        matched_when = assign(
+            "when",
+            (
+                (
+                    NOT.suppress()
+                    + MATCHED.suppress()
+                    + (
+                        keyword("by source") / "not_matched_by_source"
+                        | Optional(keyword("by target")) / "not_matched_by_target"
+                    )
+                    | MATCHED
+                )("cond")
+                + Optional(AND + expression("expr"))
+            )
+            / to_match_expr,
+        )
+        merge = (
+            keyword("merge")("op")
+            + tops
+            + Optional(Keyword("into", caseless=True).suppress())
+            + Group(identifier("value") + alias)("target")
+            + USING
+            + Group(identifier("value") + alias)("source")
+            + ON
+            + expression("on")
+            + Many(
+                Group(
+                    matched_when
+                    + assign(
+                        "then",
+                        (
+                            keyword("delete")/ {"delete": {}}
+                            | keyword("update set").suppress()
+                            + Dict(delimited_list(Group(identifier + EQ + expression))) / (lambda t: {"update": t})
+                            | (keyword("insert")
+                            + Optional(LB + delimited_list(identifier)("columns") + RB)
+                            + (keyword("default values") | VALUES + (LB + delimited_list(Group(expression)) + RB)("values"))) / to_insert_call
+                        ),
+                    )
+                )
+                / to_when_call
+            )("params")
+        ) / to_json_call
+
         #############################################################
         # PROCEDURAL
         #############################################################
@@ -826,7 +871,7 @@ def parser(literal_string, simple_ident, sqlserver=False):
 
         statement << (
             query
-            | (insert | update | delete)
+            | (insert | update | delete | merge)
             | (create_table | create_view | create_cache | create_index)
             | (drop_table | drop_view | drop_index)
             | (copy | alter)

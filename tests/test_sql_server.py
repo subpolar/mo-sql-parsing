@@ -18,12 +18,12 @@ from mo_sql_parsing import parse_sqlserver as parse
 class TestSqlServer(TestCase):
     def test_select_top_5(self):
         sql = """
-        select	TOP (5)
+        select TOP (5)
             country_code,
             impact_code,
             impact_description,
             number_sites
-        from	EUNIS.v1.BISE_Country_Threats_Pressures_Number_Sites
+        from EUNIS.v1.BISE_Country_Threats_Pressures_Number_Sites
         order by number_sites desc
         """
         result = parse(sql)

@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse_mysql, parse
 
 
@@ -116,28 +118,78 @@ class TestMySql(TestCase):
             WHEN MATCHED THEN
             UPDATE SET ZTAGG_END = TMP2.ZTAGG"""
         result = parse(sql)
-        expected = {}
+        expected = {
+            "merge": {"when": "matched", "then": {"update": {"ZTAGG_END": "TMP2.ZTAGG"}}},
+            "target": {"name": "TMP1", "value": "TMP_TABLE1"},
+            "source": {"name": "TMP2", "value": "TMP_TABLE1"},
+            "on": {"and": [
+                {"eq": ["TMP1.col1", "TMP2.col1"]},
+                {"eq": ["TMP1.col2", "TMP2.col2"]},
+                {"eq": ["TMP1.col3", "TMP2.col3"]},
+                {"eq": [{"sub": ["TMP2.col4", 1]}, "TMP1.col4"]},
+            ]},
+        }
         self.assertEqual(result, expected)
 
-    def test_merge1(self):
+    def test_merge_top(self):
         # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
         sql = """
-            MERGE TargetProducts AS Target
-            USING SourceProducts	AS Source
+            MERGE  TOP 10 percent
+            TargetProducts AS Target
+            USING SourceProducts AS Source
             ON Source.ProductID = Target.ProductID
             WHEN NOT MATCHED BY Target THEN
                 INSERT (ProductID,ProductName, Price) 
                 VALUES (Source.ProductID,Source.ProductName, Source.Price);
         """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "merge": {
+                "then": {
+                    "insert": {},
+                    "columns": ["ProductID", "ProductName", "Price"],
+                    "values": ["Source.ProductID", "Source.ProductName", "Source.Price"],
+                },
+                "when": "not_matched_by_target",
+            },
+            "top": {"percent": 10},
+            "on": {"eq": ["Source.ProductID", "Target.ProductID"]},
+            "source": {"name": "Source", "value": "SourceProducts"},
+            "target": {"name": "Target", "value": "TargetProducts"},
+        }
+        self.assertEqual(result, expected)
+
+    def test_merge1(self):
+        # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
+        sql = """
+            MERGE TargetProducts AS Target
+            USING SourceProducts AS Source
+            ON Source.ProductID = Target.ProductID
+            WHEN NOT MATCHED BY Target THEN
+                INSERT (ProductID,ProductName, Price) 
+                VALUES (Source.ProductID,Source.ProductName, Source.Price);
+        """
+        result = parse(sql)
+        expected = {
+            "merge": {
+                "then": {
+                    "insert": {},
+                    "columns": ["ProductID", "ProductName", "Price"],
+                    "values": ["Source.ProductID", "Source.ProductName", "Source.Price"],
+                },
+                "when": "not_matched_by_target",
+            },
+            "on": {"eq": ["Source.ProductID", "Target.ProductID"]},
+            "source": {"name": "Source", "value": "SourceProducts"},
+            "target": {"name": "Target", "value": "TargetProducts"},
+        }
         self.assertEqual(result, expected)
 
     def test_merge2(self):
         # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
         sql = """
             MERGE TargetProducts AS Target
-            USING SourceProducts	AS Source
+            USING SourceProducts AS Source
             ON Source.ProductID = Target.ProductID
             
             -- For Inserts
@@ -147,18 +199,36 @@ class TestMySql(TestCase):
             
             -- For Updates
             WHEN MATCHED THEN UPDATE SET
-                Target.ProductName	= Source.ProductName,
-                Target.Price		= Source.Price;
+                Target.ProductName = Source.ProductName,
+                Target.Price  = Source.Price;
         """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "merge": [
+                {
+                    "then": {
+                        "columns": ["ProductID", "ProductName", "Price"],
+                        "insert": {},
+                        "values": ["Source.ProductID", "Source.ProductName", "Source.Price"],
+                    },
+                    "when": "not_matched_by_target",
+                },
+                {
+                    "then": {"update": {"Target.Price": "Source.Price", "Target.ProductName": "Source.ProductName"}},
+                    "when": "matched",
+                },
+            ],
+            "on": {"eq": ["Source.ProductID", "Target.ProductID"]},
+            "source": {"name": "Source", "value": "SourceProducts"},
+            "target": {"name": "Target", "value": "TargetProducts"},
+        }
         self.assertEqual(result, expected)
 
     def test_merge3(self):
         # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
         sql = """ 
             MERGE TargetProducts AS Target
-            USING SourceProducts	AS Source
+            USING SourceProducts AS Source
             ON Source.ProductID = Target.ProductID
                 
             -- For Inserts
@@ -168,13 +238,32 @@ class TestMySql(TestCase):
                 
             -- For Updates
             WHEN MATCHED THEN UPDATE SET
-                Target.ProductName	= Source.ProductName,
-                Target.Price		= Source.Price
+                Target.ProductName = Source.ProductName,
+                Target.Price  = Source.Price
                 
             -- For Deletes
             WHEN NOT MATCHED BY Source THEN
                 DELETE;        
         """
         result = parse(sql)
-        expected = {}
+        expected = {
+            "merge": [
+                {
+                    "then": {
+                        "columns": ["ProductID", "ProductName", "Price"],
+                        "insert": {},
+                        "values": ["Source.ProductID", "Source.ProductName", "Source.Price"],
+                    },
+                    "when": "not_matched_by_target",
+                },
+                {
+                    "then": {"update": {"Target.Price": "Source.Price", "Target.ProductName": "Source.ProductName"}},
+                    "when": "matched",
+                },
+                {"then": {"delete": {}}, "when": "not_matched_by_source"},
+            ],
+            "on": {"eq": ["Source.ProductID", "Target.ProductID"]},
+            "source": {"name": "Source", "value": "SourceProducts"},
+            "target": {"name": "Target", "value": "TargetProducts"},
+        }
         self.assertEqual(result, expected)

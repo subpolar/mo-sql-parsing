@@ -256,12 +256,12 @@ from benn.college_football_players
 
     def test_select_top_format(self):
         sql = """
-select	TOP (5)
-	country_code,
-	impact_code,
-	impact_description,
-	number_sites
-from	EUNIS.v1.BISE_Country_Threats_Pressures_Number_Sites
+select TOP (5)
+    country_code,
+    impact_code,
+    impact_description,
+    number_sites
+from EUNIS.v1.BISE_Country_Threats_Pressures_Number_Sites
 order by number_sites desc"""
         result = parse(sql)
         expected_sql = """SELECT TOP (5) country_code, impact_code,
