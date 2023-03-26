@@ -82,16 +82,12 @@ class TestErrors(FuzzyTestCase):
 
     def test_issue_90_tablesample_error1(self):
         sql = "SELECT * FROM foo TABLESAMPLE(bernoulli) WHERE a < 42"
-        with self.assertRaises(
-            'Expecting {bytes_constraint} | {bucket} | {int}, found "bernoulli'
-        ):
+        with self.assertRaises('Expecting {bytes_constraint} | {bucket} | {int}, found "bernoulli'):
             parse(sql)
 
     def test_issue_90_tablesample_error2(self):
         sql = "SELECT * FROM foo f TABLESAMPLE(bernoulli) WHERE f.a < 42"
-        with self.assertRaises(
-            'Expecting {bytes_constraint} | {bucket} | {int}, found "bernoulli'
-        ):
+        with self.assertRaises('Expecting {bytes_constraint} | {bucket} | {int}, found "bernoulli'):
             parse(sql)
 
     def test_issue_143(self):

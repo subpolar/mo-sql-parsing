@@ -58,9 +58,7 @@ class TestSoQueries(TestCase):
                 .to_list()
             )
             Log.info(
-                "{{num}} results in {{seconds|round(1)}} seconds",
-                num=len(results),
-                seconds=timer.duration.seconds,
+                "{{num}} results in {{seconds|round(1)}} seconds", num=len(results), seconds=timer.duration.seconds,
             )
 
 
