@@ -76,7 +76,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_8(self):
         sql = """SELECT TRANSFORM(a, (b) -> b) AS x"""
         result = parse(sql)
-        expected = {"select": {"name": "x", "value": {"transform": ["a", {"lambda": "b", "params": "b"}]},}}
+        expected = {"select": {"name": "x", "value": {"transform": ["a", {"lambda": "b", "params": "b"}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_9(self):
@@ -100,7 +100,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_11(self):
         sql = """SELECT X((a) -> "a" + ("z" - 1))"""
         result = parse(sql)
-        expected = {"select": {"value": {"x": {"lambda": {"add": ["a", {"sub": ["z", 1]}]}, "params": "a",}}}}
+        expected = {"select": {"value": {"x": {"lambda": {"add": ["a", {"sub": ["z", 1]}]}, "params": "a"}}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_12(self):
@@ -317,7 +317,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_33(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"""
         result = parse(sql)
-        expected = {"select": {"over": {"partitionby": "a", "range": {"max": 0}}, "value": {"sum": "x"},}}
+        expected = {"select": {"over": {"partitionby": "a", "range": {"max": 0}}, "value": {"sum": "x"}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_34(self):
@@ -369,19 +369,19 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_38(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {"select": {"over": {"partitionby": "a", "range": {}}, "value": {"sum": "x"},}}
+        expected = {"select": {"over": {"partitionby": "a", "range": {}}, "value": {"sum": "x"}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_39(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {"select": {"over": {"partitionby": "a", "range": {"min": 0}}, "value": {"sum": "x"},}}
+        expected = {"select": {"over": {"partitionby": "a", "range": {"min": 0}}, "value": {"sum": "x"}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_40(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"""
         result = parse(sql)
-        expected = {"select": {"over": {"partitionby": "a", "range": {"max": 0}}, "value": {"sum": "x"},}}
+        expected = {"select": {"over": {"partitionby": "a", "range": {"max": 0}}, "value": {"sum": "x"}}}
         self.assertEqual(result, expected)
 
     @skip("values must be qualified with preceding/following https://www.sqlite.org/windowfunctions.html")
@@ -401,7 +401,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_43(self):
         sql = """SELECT SUM(x) OVER(PARTITION BY a RANGE BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING)"""
         result = parse(sql)
-        expected = {"select": {"over": {"partitionby": "a", "range": {"min": 1}}, "value": {"sum": "x"},}}
+        expected = {"select": {"over": {"partitionby": "a", "range": {"min": 1}}, "value": {"sum": "x"}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_44(self):
@@ -429,7 +429,7 @@ class TestSqlGlot(TestCase):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score"""
         result = parse(sql)
         expected = {
-            "from": ["tests", {"lateral view": {"name": {"t": "score"}, "value": {"explode": "scores"},}}],
+            "from": ["tests", {"lateral view": {"name": {"t": "score"}, "value": {"explode": "scores"}}}],
             "select": [{"value": "student"}, {"value": "score"}],
         }
         self.assertEqual(result, expected)
@@ -438,7 +438,7 @@ class TestSqlGlot(TestCase):
         sql = """SELECT student, score FROM tests LATERAL VIEW EXPLODE(scores) t AS score, name"""
         result = parse(sql)
         expected = {
-            "from": ["tests", {"lateral view": {"name": {"t": ["score", "name"]}, "value": {"explode": "scores"},}}],
+            "from": ["tests", {"lateral view": {"name": {"t": ["score", "name"]}, "value": {"explode": "scores"}}}],
             "select": [{"value": "student"}, {"value": "score"}],
         }
         self.assertEqual(result, expected)
@@ -449,7 +449,7 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": [
                 "tests",
-                {"lateral view outer": {"name": {"t": ["score", "name"]}, "value": {"explode": "scores"},}},
+                {"lateral view outer": {"name": {"t": ["score", "name"]}, "value": {"explode": "scores"}}},
             ],
             "select": [{"value": "student"}, {"value": "score"}],
         }
@@ -474,7 +474,7 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": [
                 {"name": "t", "value": {"select": {"value": 0}}},
-                {"lateral view": {"name": {"tf": ["col0", "col1", "col2"]}, "value": {"stack": 2, "width": 1},}},
+                {"lateral view": {"name": {"tf": ["col0", "col1", "col2"]}, "value": {"stack": 2, "width": 1}}},
             ],
             "select": {"value": "tf.*"},
         }
@@ -486,7 +486,7 @@ class TestSqlGlot(TestCase):
         expected = {
             "from": [
                 "tests",
-                {"cross join": {"name": {"t": ["a", "b"]}, "value": {"unnest": "scores"}, "with_ordinality": True,}},
+                {"cross join": {"name": {"t": ["a", "b"]}, "value": {"unnest": "scores"}, "with_ordinality": True}},
             ],
             "select": [{"value": "student"}, {"value": "score"}],
         }
@@ -501,13 +501,13 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_53(self):
         sql = """CREATE TABLE a.b AS SELECT a FROM a.c"""
         result = parse(sql)
-        expected = {"create table": {"name": "a.b", "query": {"from": "a.c", "select": {"value": "a"}},}}
+        expected = {"create table": {"name": "a.b", "query": {"from": "a.c", "select": {"value": "a"}}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_54(self):
         sql = """CREATE TABLE IF NOT EXISTS x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {"create table": {"name": "x", "query": {"from": "d", "select": {"value": "a"}}, "replace": False,}}
+        expected = {"create table": {"name": "x", "query": {"from": "d", "select": {"value": "a"}}, "replace": False}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_55(self):
@@ -534,31 +534,31 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_57(self):
         sql = """CREATE VIEW x AS SELECT a FROM b"""
         result = parse(sql)
-        expected = {"create view": {"name": "x", "query": {"from": "b", "select": {"value": "a"}},}}
+        expected = {"create view": {"name": "x", "query": {"from": "b", "select": {"value": "a"}}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_58(self):
         sql = """CREATE VIEW IF NOT EXISTS x AS SELECT a FROM b"""
         result = parse(sql)
-        expected = {"create view": {"name": "x", "query": {"from": "b", "select": {"value": "a"}}, "replace": False,}}
+        expected = {"create view": {"name": "x", "query": {"from": "b", "select": {"value": "a"}}, "replace": False}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_59(self):
         sql = """CREATE OR REPLACE VIEW x AS SELECT *"""
         result = parse(sql)
-        expected = {"create view": {"name": "x", "query": {"select": "*"}, "replace": True,}}
+        expected = {"create view": {"name": "x", "query": {"select": "*"}, "replace": True}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_60(self):
         sql = """CREATE OR REPLACE TEMPORARY VIEW x AS SELECT *"""
         result = parse(sql)
-        expected = {"create view": {"name": "x", "query": {"select": "*"}, "replace": True, "temporary": True,}}
+        expected = {"create view": {"name": "x", "query": {"select": "*"}, "replace": True, "temporary": True}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_61(self):
         sql = """CREATE TEMPORARY VIEW x AS SELECT a FROM d"""
         result = parse(sql)
-        expected = {"create view": {"name": "x", "query": {"from": "d", "select": {"value": "a"}}, "temporary": True,}}
+        expected = {"create view": {"name": "x", "query": {"from": "d", "select": {"value": "a"}}, "temporary": True}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_62(self):
@@ -698,7 +698,7 @@ class TestSqlGlot(TestCase):
     def test_issue_46_sqlglot_74(self):
         sql = """CACHE LAZY TABLE x OPTIONS('storageLevel' = value)"""
         result = parse(sql)
-        expected = {"cache": {"lazy": True, "name": "x", "options": {"storageLevel": "value"},}}
+        expected = {"cache": {"lazy": True, "name": "x", "options": {"storageLevel": "value"}}}
         self.assertEqual(result, expected)
 
     def test_issue_46_sqlglot_75(self):

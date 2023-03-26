@@ -988,7 +988,7 @@ class TestSimple(TestCase):
     def test_issue119(self):
         sql = "SELECT 1 + CAST(1 AS INT) result"
         result = parse(sql)
-        expected = {"select": {"value": {"add": [1, {"cast": [1, {"int": {}}]}]}, "name": "result",}}
+        expected = {"select": {"value": {"add": [1, {"cast": [1, {"int": {}}]}]}, "name": "result"}}
         self.assertEqual(result, expected)
 
     def test_issue120(self):
@@ -1317,7 +1317,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"direction": "trailing", "characters": {"literal": ".1"}, "trim": "column1",}},
+                "select": {"value": {"direction": "trailing", "characters": {"literal": ".1"}, "trim": "column1"}},
             },
         )
         self.assertEqual(s, "SELECT TRIM(TRAILING '.1' FROM column1) FROM my_table")
@@ -1330,7 +1330,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"direction": "leading", "characters": {"literal": ".1"}, "trim": "column1",}},
+                "select": {"value": {"direction": "leading", "characters": {"literal": ".1"}, "trim": "column1"}},
             },
         )
         self.assertEqual(s, "SELECT TRIM(LEADING '.1' FROM column1) FROM my_table")
@@ -1343,7 +1343,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"direction": "both", "characters": {"literal": ".1"}, "trim": "column1",}},
+                "select": {"value": {"direction": "both", "characters": {"literal": ".1"}, "trim": "column1"}},
             },
         )
         self.assertEqual(s, "SELECT TRIM(BOTH '.1' FROM column1) FROM my_table")
@@ -1357,7 +1357,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"characters": {"literal": ".1"}, "trim": {"trim": "column1"},}},
+                "select": {"value": {"characters": {"literal": ".1"}, "trim": {"trim": "column1"}}},
             },
         )
         self.assertEqual(s, """SELECT TRIM(\'.1\' FROM TRIM(column1)) FROM my_table""")

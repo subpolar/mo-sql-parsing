@@ -39,7 +39,7 @@ class TestBigQuery(TestCase):
     def testA(self):
         sql = """SELECT FIRST_VALUE(finish_time) OVER w1 AS fastest_time"""
         result = parse(sql)
-        expected = {"select": {"name": "fastest_time", "over": "w1", "value": {"first_value": "finish_time"},}}
+        expected = {"select": {"name": "fastest_time", "over": "w1", "value": {"first_value": "finish_time"}}}
         self.assertEqual(result, expected)
 
     def testB(self):
@@ -132,7 +132,7 @@ class TestBigQuery(TestCase):
     def testL(self):
         sql = """SELECT PERCENTILE_DISC(x, 0) OVER() AS min"""
         result = parse(sql)
-        expected = {"select": {"name": "min", "value": {"percentile_disc": ["x", 0]}, "over": {},}}
+        expected = {"select": {"name": "min", "value": {"percentile_disc": ["x", 0]}, "over": {}}}
         self.assertEqual(result, expected)
 
     def testI(self):
@@ -498,7 +498,7 @@ class TestBigQuery(TestCase):
     def test_issue_142_array_agg(self):
         sql = """SELECT ARRAY_AGG(DISTINCT email IGNORE NULLS) AS email"""
         result = parse(sql)
-        expect = {"select": {"name": "email", "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"},}}
+        expect = {"select": {"name": "email", "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"}}}
         self.assertEqual(result, expect)
 
     def test_issue_145(self):

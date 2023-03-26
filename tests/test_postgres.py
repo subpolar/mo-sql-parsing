@@ -53,7 +53,7 @@ class TestPostgres(TestCase):
         result = parse(sql)
         expected = {
             "from": "dual",
-            "select": {"value": {"trim": {"literal": " This is a test"}, "characters": {"literal": " "},}},
+            "select": {"value": {"trim": {"literal": " This is a test"}, "characters": {"literal": " "}}},
         }
         self.assertEqual(result, expected)
 
@@ -175,7 +175,7 @@ class TestPostgres(TestCase):
         expected = {
             "from": [
                 {"name": "d", "value": "departments"},
-                {"lateral": {"name": "iv2", "value": {"from": "employees", "select": "*"},}},
+                {"lateral": {"name": "iv2", "value": {"from": "employees", "select": "*"}}},
             ],
             "select": "*",
         }
@@ -193,7 +193,7 @@ class TestPostgres(TestCase):
                 {
                     "join lateral": {
                         "name": "t3",
-                        "value": {"select": {"name": "up_pct", "value": {"div": ["up_seconds", "cal_seconds"]},}},
+                        "value": {"select": {"name": "up_pct", "value": {"div": ["up_seconds", "cal_seconds"]}}},
                     },
                     "on": True,
                 },
@@ -460,7 +460,7 @@ class TestPostgres(TestCase):
     def test_issue_157_describe5(self):
         sql = """EXPLAIN SELECT * FROM foo, bar WHERE id = fkey"""
         result = parse(sql)
-        expected = {"explain": {"from": ["foo", "bar"], "select": "*", "where": {"eq": ["id", "fkey"]},}}
+        expected = {"explain": {"from": ["foo", "bar"], "select": "*", "where": {"eq": ["id", "fkey"]}}}
         self.assertEqual(result, expected)
 
     def test_issue_157_describe6(self):

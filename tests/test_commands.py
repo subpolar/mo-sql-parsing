@@ -19,7 +19,7 @@ class TestCreateSimple(TestCase):
 
     def test_one_column(self):
         result = parse("create table student (name varchar2)")
-        expected = {"create table": {"name": "student", "columns": {"name": "name", "type": {"varchar2": {}}},}}
+        expected = {"create table": {"name": "student", "columns": {"name": "name", "type": {"varchar2": {}}}}}
         self.assertEqual(result, expected)
 
     def test_two_columns(self):
@@ -337,7 +337,7 @@ class TestTableConstraint(TestCase):
         expected = {"create table": {
             "name": "student",
             "columns": {"name": "name", "type": {"varchar": {}}},
-            "constraint": {"index": {"name": "unique_student", "columns": "name", "unique": True,}},
+            "constraint": {"index": {"name": "unique_student", "columns": "name", "unique": True}},
         }}
         self.assertEqual(result, expected)
 
@@ -351,7 +351,7 @@ class TestTableConstraint(TestCase):
                 {"name": "name", "type": {"varchar": {}}, "nullable": False},
                 {"name": "id", "type": {"varchar": {}}, "nullable": False},
             ],
-            "constraint": {"index": {"name": "unique_student", "columns": ["name", "id"], "unique": True,}},
+            "constraint": {"index": {"name": "unique_student", "columns": ["name", "id"], "unique": True}},
         }}
         self.assertEqual(result, expected)
 
@@ -458,12 +458,12 @@ class TestTableConstraint(TestCase):
 class TestCreateSelect(TestCase):
     def test_select(self):
         result = parse("create table student as select * from XYZZY, ABC")
-        expected = {"create table": {"name": "student", "query": {"select": "*", "from": ["XYZZY", "ABC"]},}}
+        expected = {"create table": {"name": "student", "query": {"select": "*", "from": ["XYZZY", "ABC"]}}}
         self.assertEqual(result, expected)
 
     def test_paren_select(self):
         result = parse("create table student as ( select * from XYZZY )")
-        expected = {"create table": {"name": "student", "query": {"select": "*", "from": "XYZZY"},}}
+        expected = {"create table": {"name": "student", "query": {"select": "*", "from": "XYZZY"}}}
         self.assertEqual(result, expected)
 
     def test_with_select(self):
@@ -527,7 +527,7 @@ class TestCreateForBigQuery(TestCase):
             "name": "student",
             "columns": {
                 "name": "name",
-                "type": {"array": {"struct": {"name": "child", "type": {"array": {"int": {}}},}}},
+                "type": {"array": {"struct": {"name": "child", "type": {"array": {"int": {}}}}}},
             },
         }}
         self.assertEqual(result, expected)
@@ -589,7 +589,7 @@ class TestCreateForBigQuery(TestCase):
             CREATE INDEX a ON u USING btree (e);
         """
         result = parse(sql)
-        expected = {"create index": {"columns": "e", "name": "a", "table": "u", "using": "btree",}}
+        expected = {"create index": {"columns": "e", "name": "a", "table": "u", "using": "btree"}}
         self.assertEqual(result, expected)
 
     def test_issue_64_table(self):

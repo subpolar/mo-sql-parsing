@@ -312,14 +312,14 @@ class TestRedshift(TestCase):
         result = parse(sql)
         self.assertEqual(
             result,
-            {"select": {"over": {"orderby": {"value": "a"}, "range": {"min": 3, "max": 5}}, "value": {"sum": "qty"},}},
+            {"select": {"over": {"orderby": {"value": "a"}, "range": {"min": 3, "max": 5}}, "value": {"sum": "qty"}}},
         )
 
     def test_window_function4(self):
         sql = "select sum(qty) over (order by a rows between 3 following and unbounded following)"
         result = parse(sql)
         self.assertEqual(
-            result, {"select": {"over": {"orderby": {"value": "a"}, "range": {"min": 3}}, "value": {"sum": "qty"},}},
+            result, {"select": {"over": {"orderby": {"value": "a"}, "range": {"min": 3}}, "value": {"sum": "qty"}}},
         )
 
     def test_issue7a_first_value_ignore_nulls(self):
@@ -415,7 +415,7 @@ class TestRedshift(TestCase):
         sql = "select SUM(a) over (order by b rows between unbounded preceding and unbounded following)"
         result = parse(sql)
         self.assertEqual(
-            result, {"select": {"over": {"orderby": {"value": "b"}, "range": {}}, "value": {"sum": "a"},}},
+            result, {"select": {"over": {"orderby": {"value": "b"}, "range": {}}, "value": {"sum": "a"}}},
         )
 
     def test_issue7f_function_of_window(self):
