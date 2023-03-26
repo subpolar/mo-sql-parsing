@@ -10,6 +10,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 from unittest import TestCase
 
+from mo_parsing.debug import Debugger
+
 from mo_sql_parsing import parse_mysql, parse
 
 
@@ -55,22 +57,14 @@ class TestMySql(TestCase):
                                 {
                                     "name": "day_tbl",
                                     "value": {
-                                        "from": (
-                                            "t_dwd_tmp_wxpay_discount_model_score_hour"
-                                        ),
+                                        "from": "t_dwd_tmp_wxpay_discount_model_score_hour",
                                         "select": "*",
-                                        "where": {"and": [
-                                            {"gte": ["ds", 2022080300]},
-                                            {"lte": ["ds", 2022080323]},
-                                        ]},
+                                        "where": {"and": [{"gte": ["ds", 2022080300]}, {"lte": ["ds", 2022080323]},]},
                                     },
                                 },
                                 {"lateral view": {
                                     "name": {"temp": "item_result"},
-                                    "value": {"explode": {"split": [
-                                        "scoreresult_",
-                                        {"literal": "\\ | "},
-                                    ]}},
+                                    "value": {"explode": {"split": ["scoreresult_", {"literal": "\\ | "},]}},
                                 }},
                             ],
                             "select": [
@@ -85,29 +79,13 @@ class TestMySql(TestCase):
                         {"value": "ds"},
                         {"value": "algid"},
                         {"value": "uin"},
-                        {
-                            "name": "item_id",
-                            "value": {"get": [
-                                {"split": ["item_result", {"literal": ":"}]},
-                                0,
-                            ]},
-                        },
-                        {
-                            "name": "score",
-                            "value": {"get": [
-                                {"split": ["item_result", {"literal": ": "}]},
-                                1,
-                            ]},
-                        },
+                        {"name": "item_id", "value": {"get": [{"split": ["item_result", {"literal": ":"}]}, 0,]},},
+                        {"name": "score", "value": {"get": [{"split": ["item_result", {"literal": ": "}]}, 1,]},},
                     ],
                 },
             },
             "groupby": [{"value": "algid"}, {"value": "item_id"}],
-            "select": [
-                {"value": "algid"},
-                {"value": "item_id"},
-                {"name": "avg_score", "value": {"avg": "score"}},
-            ],
+            "select": [{"value": "algid"}, {"value": "item_id"}, {"name": "avg_score", "value": {"avg": "score"}},],
         }
         self.assertEqual(result, expected)
 
@@ -130,7 +108,7 @@ class TestMySql(TestCase):
         self.assertEqual(result, expected)
 
     def test_merge_into(self):
-        sql ="""
+        sql = """
             MERGE INTO TMP_TABLE1 TMP1
             USING TMP_TABLE1 TMP2
             ON TMP1.col1 =TMP2.col1
@@ -140,28 +118,38 @@ class TestMySql(TestCase):
             WHEN MATCHED THEN
             UPDATE SET ZTAGG_END = TMP2.ZTAGG"""
         result = parse(sql)
-        expected={}
+        expected = {
+            "merge": {"when": "MATCHED", "then": {"update": {"ZTAGG_END": "TMP2.ZTAGG"}}},
+            "into": {"name": "TMP1", "value": "TMP_TABLE1"},
+            "using": {"name": "TMP2", "value": "TMP_TABLE1"},
+            "on": {"and": [
+                {"eq": ["TMP1.col1", "TMP2.col1"]},
+                {"eq": ["TMP1.col2", "TMP2.col2"]},
+                {"eq": ["TMP1.col3", "TMP2.col3"]},
+                {"eq": [{"sub": ["TMP2.col4", 1]}, "TMP1.col4"]},
+            ]},
+        }
         self.assertEqual(result, expected)
 
     def test_merge1(self):
         # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
         sql = """
             MERGE TargetProducts AS Target
-            USING SourceProducts	AS Source
+            USING SourceProducts AS Source
             ON Source.ProductID = Target.ProductID
             WHEN NOT MATCHED BY Target THEN
                 INSERT (ProductID,ProductName, Price) 
                 VALUES (Source.ProductID,Source.ProductName, Source.Price);
         """
         result = parse(sql)
-        expected={}
+        expected = {}
         self.assertEqual(result, expected)
 
     def test_merge2(self):
         # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
-        sql ="""
+        sql = """
             MERGE TargetProducts AS Target
-            USING SourceProducts	AS Source
+            USING SourceProducts AS Source
             ON Source.ProductID = Target.ProductID
             
             -- For Inserts
@@ -171,18 +159,18 @@ class TestMySql(TestCase):
             
             -- For Updates
             WHEN MATCHED THEN UPDATE SET
-                Target.ProductName	= Source.ProductName,
-                Target.Price		= Source.Price;
+                Target.ProductName = Source.ProductName,
+                Target.Price  = Source.Price;
         """
         result = parse(sql)
-        expected={}
+        expected = {}
         self.assertEqual(result, expected)
 
     def test_merge3(self):
         # from https://www.sqlshack.com/understanding-the-sql-merge-statement/
         sql = """ 
             MERGE TargetProducts AS Target
-            USING SourceProducts	AS Source
+            USING SourceProducts AS Source
             ON Source.ProductID = Target.ProductID
                 
             -- For Inserts
@@ -192,13 +180,13 @@ class TestMySql(TestCase):
                 
             -- For Updates
             WHEN MATCHED THEN UPDATE SET
-                Target.ProductName	= Source.ProductName,
-                Target.Price		= Source.Price
+                Target.ProductName = Source.ProductName,
+                Target.Price  = Source.Price
                 
             -- For Deletes
             WHEN NOT MATCHED BY Source THEN
                 DELETE;        
         """
         result = parse(sql)
-        expected={}
+        expected = {}
         self.assertEqual(result, expected)
