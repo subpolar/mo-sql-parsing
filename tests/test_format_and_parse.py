@@ -410,7 +410,7 @@ order by number_sites desc"""
         expected_sql = "SELECT 'one', *, 'two', * FROM test1, test2"
         expected_json = {
             "from": ["test1", "test2"],
-            "select": [{"value": {"literal": "one"}}, "*", {"value": {"literal": "two"}}, "*",],
+            "select": [{"value": {"literal": "one"}}, "*", {"value": {"literal": "two"}}, "*"],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -442,7 +442,7 @@ order by number_sites desc"""
         expected_sql = "SELECT max(test1.f1,test2.r1), min(test1.f2,test2.r2) FROM test2, test1"
         expected_json = {
             "from": ["test2", "test1"],
-            "select": [{"value": {"max": ["test1.f1", "test2.r1"]}}, {"value": {"min": ["test1.f2", "test2.r2"]}},],
+            "select": [{"value": {"max": ["test1.f1", "test2.r1"]}}, {"value": {"min": ["test1.f2", "test2.r2"]}}],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -450,7 +450,7 @@ order by number_sites desc"""
         expected_sql = "SELECT min(test1.f1,test2.r1), max(test1.f2,test2.r2) FROM test1, test2"
         expected_json = {
             "from": ["test1", "test2"],
-            "select": [{"value": {"min": ["test1.f1", "test2.r1"]}}, {"value": {"max": ["test1.f2", "test2.r2"]}},],
+            "select": [{"value": {"min": ["test1.f1", "test2.r1"]}}, {"value": {"max": ["test1.f2", "test2.r2"]}}],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -486,7 +486,7 @@ order by number_sites desc"""
         expected_sql = "SELECT count(*),count(a),count(b) FROM t3"
         expected_json = {
             "from": "t3",
-            "select": [{"value": {"count": "*"}}, {"value": {"count": "a"}}, {"value": {"count": "b"}},],
+            "select": [{"value": {"count": "*"}}, {"value": {"count": "a"}}, {"value": {"count": "b"}}],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -494,7 +494,7 @@ order by number_sites desc"""
         expected_sql = "SELECT count(*),count(a),count(b) FROM t4"
         expected_json = {
             "from": "t4",
-            "select": [{"value": {"count": "*"}}, {"value": {"count": "a"}}, {"value": {"count": "b"}},],
+            "select": [{"value": {"count": "*"}}, {"value": {"count": "a"}}, {"value": {"count": "b"}}],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -502,7 +502,7 @@ order by number_sites desc"""
         expected_sql = "SELECT count(*),count(a),count(b) FROM t4 WHERE b=5"
         expected_json = {
             "from": "t4",
-            "select": [{"value": {"count": "*"}}, {"value": {"count": "a"}}, {"value": {"count": "b"}},],
+            "select": [{"value": {"count": "*"}}, {"value": {"count": "a"}}, {"value": {"count": "b"}}],
             "where": {"eq": ["b", 5]},
         }
         self.verify_formatting(expected_sql, expected_json)
@@ -953,7 +953,7 @@ order by number_sites desc"""
         expected_json = {
             "from": "test1",
             "select": {"value": "f1"},
-            "where": {"between": [{"concat": [{"literal": "x"}, "f1"]}, {"literal": "x10"}, {"literal": "x20"},]},
+            "where": {"between": [{"concat": [{"literal": "x"}, "f1"]}, {"literal": "x10"}, {"literal": "x20"}]},
             "orderby": {"value": "f1"},
         }
         self.verify_formatting(expected_sql, expected_json)
@@ -963,7 +963,7 @@ order by number_sites desc"""
         expected_json = {
             "from": "test1",
             "select": {"value": "f1"},
-            "where": {"not_between": [{"concat": [{"literal": "x"}, "f1"]}, {"literal": "x10"}, {"literal": "x20"},]},
+            "where": {"not_between": [{"concat": [{"literal": "x"}, "f1"]}, {"literal": "x10"}, {"literal": "x20"}]},
             "orderby": {"value": "f1"},
         }
         self.verify_formatting(expected_sql, expected_json)
@@ -987,9 +987,9 @@ order by number_sites desc"""
             "from": "test1",
             "orderby": {"value": "f1"},
             "select": [
-                {"value": {"coalesce": [{"div": ["f1", {"sub": ["f1", 11]}]}, {"literal": "x"},]}},
-                {"value": {"coalesce": [{"min": [{"div": ["f1", {"sub": ["f1", 11]}]}, 5]}, {"literal": "y"},]}},
-                {"value": {"coalesce": [{"max": [{"div": ["f1", {"sub": ["f1", 33]}]}, 6]}, {"literal": "z"},]}},
+                {"value": {"coalesce": [{"div": ["f1", {"sub": ["f1", 11]}]}, {"literal": "x"}]}},
+                {"value": {"coalesce": [{"min": [{"div": ["f1", {"sub": ["f1", 11]}]}, 5]}, {"literal": "y"}]}},
+                {"value": {"coalesce": [{"max": [{"div": ["f1", {"sub": ["f1", 33]}]}, 6]}, {"literal": "z"}]}},
             ],
         }
         self.verify_formatting(expected_sql, expected_json)
@@ -999,7 +999,7 @@ order by number_sites desc"""
         expected_json = {
             "from": "test1",
             "orderby": {"value": "f1"},
-            "select": [{"value": {"min": [1, 2, 3]}}, {"value": {"neg": {"max": [1, 2, 3]}}},],
+            "select": [{"value": {"min": [1, 2, 3]}}, {"value": {"neg": {"max": [1, 2, 3]}}}],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -1013,7 +1013,7 @@ order by number_sites desc"""
         expected_json = {
             "from": "test1",
             "select": "*",
-            "where": {"lt": ["f1", {"from": "test2", "select": {"value": {"count": "*"}}},]},
+            "where": {"lt": ["f1", {"from": "test2", "select": {"value": {"count": "*"}}}]},
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -1072,7 +1072,7 @@ order by number_sites desc"""
         expected_sql = "SELECT f1-22 AS x, f2-22 as y FROM test1"
         expected_json = {
             "from": "test1",
-            "select": [{"value": {"sub": ["f1", 22]}, "name": "x"}, {"value": {"sub": ["f2", 22]}, "name": "y"},],
+            "select": [{"value": {"sub": ["f1", 22]}, "name": "x"}, {"value": {"sub": ["f2", 22]}, "name": "y"}],
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -1080,7 +1080,7 @@ order by number_sites desc"""
         expected_sql = "SELECT f1-22 AS x, f2-22 as y FROM test1 WHERE x>0 AND y<50"
         expected_json = {
             "from": "test1",
-            "select": [{"value": {"sub": ["f1", 22]}, "name": "x"}, {"value": {"sub": ["f2", 22]}, "name": "y"},],
+            "select": [{"value": {"sub": ["f1", 22]}, "name": "x"}, {"value": {"sub": ["f2", 22]}, "name": "y"}],
             "where": {"and": [{"gt": ["x", 0]}, {"lt": ["y", 50]}]},
         }
         self.verify_formatting(expected_sql, expected_json)
@@ -1126,7 +1126,7 @@ order by number_sites desc"""
     def test_118b(self):
         expected_sql = "SELECT * FROM t3 UNION SELECT 3 AS a, 4 ORDER BY a"
         expected_json = {
-            "from": {"union": [{"from": "t3", "select": "*"}, {"select": [{"value": 3, "name": "a"}, {"value": 4}]},]},
+            "from": {"union": [{"from": "t3", "select": "*"}, {"select": [{"value": 3, "name": "a"}, {"value": 4}]}]},
             "orderby": {"value": "a"},
         }
         self.verify_formatting(expected_sql, expected_json)
@@ -1134,14 +1134,14 @@ order by number_sites desc"""
     def test_118c(self):
         expected_sql = "SELECT * FROM t3 UNION SELECT 3 AS a, 4 ORDER BY a"
         expected_json = {
-            "from": {"union": [{"from": "t3", "select": "*"}, {"select": [{"value": 3, "name": "a"}, {"value": 4}]},]},
+            "from": {"union": [{"from": "t3", "select": "*"}, {"select": [{"value": 3, "name": "a"}, {"value": 4}]}]},
             "orderby": {"value": "a"},
         }
         self.verify_formatting(expected_sql, expected_json)
 
     def test_119(self):
         expected_sql = "SELECT 3, 4 UNION SELECT * FROM t3"
-        expected_json = {"union": [{"select": [{"value": 3}, {"value": 4}]}, {"from": "t3", "select": "*"},]}
+        expected_json = {"union": [{"select": [{"value": 3}, {"value": 4}]}, {"from": "t3", "select": "*"}]}
         self.verify_formatting(expected_sql, expected_json)
 
     def test_120(self):
@@ -1185,12 +1185,12 @@ order by number_sites desc"""
 
     def test_128(self):
         expected_sql = "SELECT 10 IN (SELECT rowid FROM sqlite_master)"
-        expected_json = {"select": {"value": {"in": [10, {"from": "sqlite_master", "select": {"value": "rowid"}},]}}}
+        expected_json = {"select": {"value": {"in": [10, {"from": "sqlite_master", "select": {"value": "rowid"}}]}}}
         self.verify_formatting(expected_sql, expected_json)
 
     def test_131(self):
         expected_sql = "SELECT 2 IN (SELECT a FROM t1)"
-        expected_json = {"select": {"value": {"in": [2, {"from": "t1", "select": {"value": "a"}},]}}}
+        expected_json = {"select": {"value": {"in": [2, {"from": "t1", "select": {"value": "a"}}]}}}
         self.verify_formatting(expected_sql, expected_json)
 
     def test_139(self):
@@ -1294,7 +1294,7 @@ order by number_sites desc"""
         expected_json = {
             "from": ["aa", "bb"],
             "select": "*",
-            "where": {"case": [{"when": {"eq": ["a", {"sub": ["b", 1]}]}, "then": 0}, 1,]},
+            "where": {"case": [{"when": {"eq": ["a", {"sub": ["b", 1]}]}, "then": 0}, 1]},
         }
         self.verify_formatting(expected_sql, expected_json)
 
@@ -1379,7 +1379,7 @@ order by number_sites desc"""
         expected_sql = "SELECT log, avg(n)-min(n) FROM t1 GROUP BY log ORDER BY log"
         expected_json = {
             "from": "t1",
-            "select": [{"value": "log"}, {"value": {"sub": [{"avg": "n"}, {"min": "n"}]}},],
+            "select": [{"value": "log"}, {"value": {"sub": [{"avg": "n"}, {"min": "n"}]}}],
             "groupby": {"value": "log"},
             "orderby": {"value": "log"},
         }
@@ -1402,7 +1402,7 @@ order by number_sites desc"""
         expected_sql = "SELECT log*2+1 as x, count(*) FROM t1 GROUP BY x ORDER BY x"
         expected_json = {
             "from": "t1",
-            "select": [{"value": {"add": [{"mul": ["log", 2]}, 1]}, "name": "x"}, {"value": {"count": "*"}},],
+            "select": [{"value": {"add": [{"mul": ["log", 2]}, 1]}, "name": "x"}, {"value": {"count": "*"}}],
             "groupby": {"value": "x"},
             "orderby": {"value": "x"},
         }
@@ -1486,7 +1486,7 @@ order by number_sites desc"""
         expected_sql = "SELECT log AS x, count(*) AS y FROM t1 GROUP BY x HAVING y>=4 ORDER BY max(n)+0"
         expected_json = {
             "from": "t1",
-            "select": [{"value": "log", "name": "x"}, {"value": {"count": "*"}, "name": "y"},],
+            "select": [{"value": "log", "name": "x"}, {"value": {"count": "*"}, "name": "y"}],
             "groupby": {"value": "x"},
             "having": {"gte": ["y", 4]},
             "orderby": {"value": {"add": [{"max": "n"}, 0]}},
@@ -1725,5 +1725,5 @@ order by number_sites desc"""
 
     def test_concat(self):
         expected_sql = "SELECT 'a' || 'a'"
-        expected_json = {"select": {"value": {"concat": [{"literal": "a"}, {"literal": "a"},]}}}
+        expected_json = {"select": {"value": {"concat": [{"literal": "a"}, {"literal": "a"}]}}}
         self.verify_formatting(expected_sql, expected_json)

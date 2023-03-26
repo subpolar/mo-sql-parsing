@@ -988,14 +988,14 @@ class TestSimple(TestCase):
     def test_issue119(self):
         sql = "SELECT 1 + CAST(1 AS INT) result"
         result = parse(sql)
-        expected = {"select": {"value": {"add": [1, {"cast": [1, {"int": {}}]}]}, "name": "result",}}
+        expected = {"select": {"value": {"add": [1, {"cast": [1, {"int": {}}]}]}, "name": "result"}}
         self.assertEqual(result, expected)
 
     def test_issue120(self):
         sql = "SELECT DISTINCT Country, City FROM Customers"
         result = parse(sql)
         expected = {
-            "select_distinct": [{"value": "Country"}, {"value": "City"},],
+            "select_distinct": [{"value": "Country"}, {"value": "City"}],
             "from": "Customers",
         }
         self.assertEqual(result, expected)
@@ -1021,7 +1021,7 @@ class TestSimple(TestCase):
             result,
             {
                 "from": "C",
-                "select": [{"value": {"count": ["B", "E"], "distinct": True}}, {"value": "A"},],
+                "select": [{"value": {"count": ["B", "E"], "distinct": True}}, {"value": "A"}],
                 "where": {"eq": ["D", "X"]},
                 "groupby": {"value": "A"},
             },
@@ -1079,11 +1079,11 @@ class TestSimple(TestCase):
                     {"neq": [{"binary_and": ["flags_r", {"hex": "10000000"}]}, 0]},
                     {"eq": [{"binary_and": ["flags_r", {"hex": "8100000c00a4"}]}, 0]},
                     {"or": [
-                        {"eq": [{"binary_and": ["flags_r", {"hex": "400000000000"}]}, 0,]},
+                        {"eq": [{"binary_and": ["flags_r", {"hex": "400000000000"}]}, 0]},
                         {"lte": ["psfmagerr_r", 0.2]},
                     ]},
                     {"or": [
-                        {"eq": [{"binary_and": ["flags_r", {"hex": "100000000000"}]}, 0,]},
+                        {"eq": [{"binary_and": ["flags_r", {"hex": "100000000000"}]}, 0]},
                         {"eq": [{"binary_and": ["flags_r", {"hex": "1000"}]}, 0]},
                     ]},
                 ]},
@@ -1132,7 +1132,7 @@ class TestSimple(TestCase):
                                     "name": "avg_sky_muJy",
                                     "value": {"mul": [
                                         3631000000,
-                                        {"avg": {"power": [{"cast": [10, {"float": {}}]}, {"mul": [-0.4, "sky_r"]},]}},
+                                        {"avg": {"power": [{"cast": [10, {"float": {}}]}, {"mul": [-0.4, "sky_r"]}]}},
                                     ]},
                                 },
                             ],
@@ -1144,7 +1144,7 @@ class TestSimple(TestCase):
                         "left outer join": {
                             "name": "fp",
                             "value": {
-                                "select": [{"value": "p.run"}, {"name": "nfirstmatch", "value": {"count": "*"}},],
+                                "select": [{"value": "p.run"}, {"name": "nfirstmatch", "value": {"count": "*"}}],
                                 "from": [
                                     {"name": "fm", "value": "FIRST"},
                                     {
@@ -1219,7 +1219,7 @@ class TestSimple(TestCase):
                         "left outer join": {
                             "name": "fp",
                             "value": {
-                                "select": [{"value": "p.run"}, {"name": "nfirstmatch", "value": {"count": "*"}},],
+                                "select": [{"value": "p.run"}, {"name": "nfirstmatch", "value": {"count": "*"}}],
                                 "from": [
                                     {"name": "fm", "value": "FIRST"},
                                     {
@@ -1317,7 +1317,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"direction": "trailing", "characters": {"literal": ".1"}, "trim": "column1",}},
+                "select": {"value": {"direction": "trailing", "characters": {"literal": ".1"}, "trim": "column1"}},
             },
         )
         self.assertEqual(s, "SELECT TRIM(TRAILING '.1' FROM column1) FROM my_table")
@@ -1330,7 +1330,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"direction": "leading", "characters": {"literal": ".1"}, "trim": "column1",}},
+                "select": {"value": {"direction": "leading", "characters": {"literal": ".1"}, "trim": "column1"}},
             },
         )
         self.assertEqual(s, "SELECT TRIM(LEADING '.1' FROM column1) FROM my_table")
@@ -1343,7 +1343,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"direction": "both", "characters": {"literal": ".1"}, "trim": "column1",}},
+                "select": {"value": {"direction": "both", "characters": {"literal": ".1"}, "trim": "column1"}},
             },
         )
         self.assertEqual(s, "SELECT TRIM(BOTH '.1' FROM column1) FROM my_table")
@@ -1357,7 +1357,7 @@ class TestSimple(TestCase):
             p,
             {
                 "from": "my_table",
-                "select": {"value": {"characters": {"literal": ".1"}, "trim": {"trim": "column1"},}},
+                "select": {"value": {"characters": {"literal": ".1"}, "trim": {"trim": "column1"}}},
             },
         )
         self.assertEqual(s, """SELECT TRIM(\'.1\' FROM TRIM(column1)) FROM my_table""")
@@ -1370,7 +1370,7 @@ class TestSimple(TestCase):
             {
                 "from": "AirlineFlights",
                 "select": "*",
-                "where": {"in": [["origin", "dest"], {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]},]},
+                "where": {"in": [["origin", "dest"], {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]}]},
             },
         )
 
@@ -1420,7 +1420,7 @@ class TestSimple(TestCase):
         sql = """select * FROM (t1 INNER JOIN t2 ON t1.c1 = t2.c2)"""
         result = parse(sql)
         expected = {
-            "from": ["t1", {"inner join": "t2", "on": {"eq": ["t1.c1", "t2.c2"]}},],
+            "from": ["t1", {"inner join": "t2", "on": {"eq": ["t1.c1", "t2.c2"]}}],
             "select": "*",
         }
         self.assertEqual(result, expected)

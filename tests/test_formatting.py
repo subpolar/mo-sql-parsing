@@ -511,7 +511,7 @@ class TestSimple(TestCase):
             "select": [{"value": "node"}, {"value": "datetime"}],
             "where": {"lt": [
                 {"div": [
-                    {"sub": [900, {"add": [{"cast": ["p", {"float": {}}]}, {"cast": ["p", {"float": {}}]}]},]},
+                    {"sub": [900, {"add": [{"cast": ["p", {"float": {}}]}, {"cast": ["p", {"float": {}}]}]}]},
                     900,
                 ]},
                 0.9,
@@ -537,7 +537,7 @@ class TestSimple(TestCase):
             "select": [{"value": "c1"}, {"value": "c2"}],
             "where": {"lt": [
                 {"div": [
-                    {"sub": [900, {"add": [{"cast": ["c3", {"float": {}}]}, {"cast": ["c4", {"float": {}}]},]},]},
+                    {"sub": [900, {"add": [{"cast": ["c3", {"float": {}}]}, {"cast": ["c4", {"float": {}}]}]}]},
                     900,
                 ]},
                 0.9,
@@ -612,7 +612,7 @@ class TestSimple(TestCase):
             {
                 "from": "AirlineFlights",
                 "select": "*",
-                "where": {"in": [["origin", "dest"], {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]},]},
+                "where": {"in": [["origin", "dest"], {"literal": [["ATL", "ABE"], ["DFW", "ABI"]]}]},
             },
         )
         self.assertEqual(
@@ -700,7 +700,7 @@ class TestSimple(TestCase):
             "from": "customer",
             "where": {"in": [
                 {"from": 1, "for": 2, "substring": "c_phone"},
-                {"literal": ["28", "27", "17", "10", "14", "34", "15",]},
+                {"literal": ["28", "27", "17", "10", "14", "34", "15"]},
             ]},
         }
         sql = format(parsed)
@@ -729,7 +729,7 @@ class TestSimple(TestCase):
     def test_issue_148_filter_format(self):
         sql = """SELECT MAX(1) FILTER (WHERE 1 = 1) AS foo"""
         result = parse(sql)
-        expected = {"select": {"filter": {"eq": [1, 1]}, "name": "foo", "value": {"max": 1},}}
+        expected = {"select": {"filter": {"eq": [1, 1]}, "name": "foo", "value": {"max": 1}}}
         self.assertEqual(result, expected)
         formatted = format(parse(sql))
         self.assertEqual(formatted, sql)

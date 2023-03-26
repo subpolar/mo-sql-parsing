@@ -53,7 +53,7 @@ class TestPostgres(TestCase):
         result = parse(sql)
         expected = {
             "from": "dual",
-            "select": {"value": {"trim": {"literal": " This is a test"}, "characters": {"literal": " "},}},
+            "select": {"value": {"trim": {"literal": " This is a test"}, "characters": {"literal": " "}}},
         }
         self.assertEqual(result, expected)
 
@@ -175,7 +175,7 @@ class TestPostgres(TestCase):
         expected = {
             "from": [
                 {"name": "d", "value": "departments"},
-                {"lateral": {"name": "iv2", "value": {"from": "employees", "select": "*"},}},
+                {"lateral": {"name": "iv2", "value": {"from": "employees", "select": "*"}}},
             ],
             "select": "*",
         }
@@ -193,7 +193,7 @@ class TestPostgres(TestCase):
                 {
                     "join lateral": {
                         "name": "t3",
-                        "value": {"select": {"name": "up_pct", "value": {"div": ["up_seconds", "cal_seconds"]},}},
+                        "value": {"select": {"name": "up_pct", "value": {"div": ["up_seconds", "cal_seconds"]}}},
                     },
                     "on": True,
                 },
@@ -208,7 +208,7 @@ class TestPostgres(TestCase):
         expected = {
             "insert": "some_table",
             "columns": ["some_A", "some_B"],
-            "query": {"select": [{"value": {"literal": "Foo"}}, {"value": {"literal": "Bar"}},]},
+            "query": {"select": [{"value": {"literal": "Foo"}}, {"value": {"literal": "Bar"}}]},
             "returning": {"name": "some_table.id", "value": "RETURNING"},
         }
         self.assertEqual(result, expected)
@@ -244,7 +244,7 @@ class TestPostgres(TestCase):
         # https://www.ibm.com/docs/en/informix-servers/12.10?topic=types-interval-data-type
         sql = """SELECT interval ':1' day (3)"""
         result = parse(sql)
-        expect = {"select": {"value": {"cast": [{"interval": [1, "minute"]}, {"day": 3},]}}}
+        expect = {"select": {"value": {"cast": [{"interval": [1, "minute"]}, {"day": 3}]}}}
         self.assertEqual(result, expect)
 
     def test_issue_134b(self):
@@ -252,7 +252,7 @@ class TestPostgres(TestCase):
         sql = """SELECT interval '1:1' minute to second"""
         result = parse(sql)
         expect = {"select": {"value": {"cast": [
-            {"add": [{"interval": [1, "hour"]}, {"interval": [1, "minute"]},]},
+            {"add": [{"interval": [1, "hour"]}, {"interval": [1, "minute"]}]},
             {"minute": {}, "second": {}},
         ]}}}
         self.assertEqual(result, expect)
@@ -262,7 +262,7 @@ class TestPostgres(TestCase):
         sql = """SELECT interval '1-1' month to second"""
         result = parse(sql)
         expect = {"select": {"value": {"cast": [
-            {"add": [{"interval": [1, "year"]}, {"interval": [1, "month"]},]},
+            {"add": [{"interval": [1, "year"]}, {"interval": [1, "month"]}]},
             {"month": {}, "second": {}},
         ]}}}
         self.assertEqual(result, expect)
@@ -270,13 +270,13 @@ class TestPostgres(TestCase):
     def test_issue_140_interval_cast1(self):
         sql = """SELECT '2 months'::interval"""
         result = parse(sql)
-        expect = {"select": {"value": {"cast": [{"literal": "2 months"}, {"interval": {}},]}}}
+        expect = {"select": {"value": {"cast": [{"literal": "2 months"}, {"interval": {}}]}}}
         self.assertEqual(result, expect)
 
     def test_issue_140_interval_cast2(self):
         sql = """SELECT CAST('2 months' AS INTERVAL)"""
         result = parse(sql)
-        expect = {"select": {"value": {"cast": [{"literal": "2 months"}, {"interval": {}},]}}}
+        expect = {"select": {"value": {"cast": [{"literal": "2 months"}, {"interval": {}}]}}}
         self.assertEqual(result, expect)
 
     def test_issue_144_interval(self):
@@ -284,7 +284,7 @@ class TestPostgres(TestCase):
         result = parse(sql)
         expect = {"select": {"value": {"date_add": [
             "ha",
-            {"interval": [{"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30]}]}, "day",]},
+            {"interval": [{"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30]}]}, "day"]},
         ]}}}
         self.assertEqual(result, expect)
 
@@ -404,14 +404,14 @@ class TestPostgres(TestCase):
         expect = {
             "from": {"tablesample": {"method": "system", "percent": 0.1}, "value": "projeto..dataset..tabela"},
             "limit": 50000,
-            "qualify": {"eq": [{"over": {"partitionby": ["id", "systema"]}, "value": {"row_number": {}}}, 1,]},
+            "qualify": {"eq": [{"over": {"partitionby": ["id", "systema"]}, "value": {"row_number": {}}}, 1]},
             "select_distinct": [
                 {"name": "mesa", "value": "m"},
                 {
                     "name": "end_at",
                     "value": {"coalesce": [
                         {
-                            "value": {"lead": {"timestamp_sub": ["systema", {"interval": [1, "millisecond"]},]}},
+                            "value": {"lead": {"timestamp_sub": ["systema", {"interval": [1, "millisecond"]}]}},
                             "over": {"orderby": {"sort": "asc", "value": "systema"}, "partitionby": "id"},
                         },
                         {"timestamp": {"literal": "9999-12-31 23:59:59.999"}},
@@ -460,7 +460,7 @@ class TestPostgres(TestCase):
     def test_issue_157_describe5(self):
         sql = """EXPLAIN SELECT * FROM foo, bar WHERE id = fkey"""
         result = parse(sql)
-        expected = {"explain": {"from": ["foo", "bar"], "select": "*", "where": {"eq": ["id", "fkey"]},}}
+        expected = {"explain": {"from": ["foo", "bar"], "select": "*", "where": {"eq": ["id", "fkey"]}}}
         self.assertEqual(result, expected)
 
     def test_issue_157_describe6(self):

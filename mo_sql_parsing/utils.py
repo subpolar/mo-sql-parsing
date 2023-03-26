@@ -472,7 +472,7 @@ def to_when_call(tokens):
 def to_join_call(tokens):
     op = " ".join(tokens["op"])
     if tokens["join"]["name"]:
-        output = {op: {"name": tokens["join"]["name"], "value": tokens["join"]["value"],}}
+        output = {op: {"name": tokens["join"]["name"], "value": tokens["join"]["value"]}}
     else:
         output = {op: tokens["join"]}
 

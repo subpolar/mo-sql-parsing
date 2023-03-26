@@ -188,7 +188,7 @@ class TestBigSql(TestCase):
                         "from": "ssr",
                         "select": [
                             {"name": "channel", "value": {"literal": "store channel"}},
-                            {"name": "id", "value": {"concat": [{"literal": "store"}, "s_store_id",]}},
+                            {"name": "id", "value": {"concat": [{"literal": "store"}, "s_store_id"]}},
                             {"value": "sales"},
                             {"value": "RETURNS"},
                             {"name": "profit", "value": {"sub": ["profit", "profit_loss"]}},
@@ -198,7 +198,7 @@ class TestBigSql(TestCase):
                         "from": "csr",
                         "select": [
                             {"name": "channel", "value": {"literal": "catalog channel"}},
-                            {"name": "id", "value": {"concat": [{"literal": "catalog_page"}, "cp_catalog_page_id",]}},
+                            {"name": "id", "value": {"concat": [{"literal": "catalog_page"}, "cp_catalog_page_id"]}},
                             {"value": "sales"},
                             {"value": "RETURNS"},
                             {"name": "profit", "value": {"sub": ["profit", "profit_loss"]}},
@@ -208,7 +208,7 @@ class TestBigSql(TestCase):
                         "from": "wsr",
                         "select": [
                             {"name": "channel", "value": {"literal": "web channel"}},
-                            {"name": "id", "value": {"concat": [{"literal": "web_site"}, "web_site_id",]}},
+                            {"name": "id", "value": {"concat": [{"literal": "web_site"}, "web_site_id"]}},
                             {"value": "sales"},
                             {"value": "RETURNS"},
                             {"name": "profit", "value": {"sub": ["profit", "profit_loss"]}},
@@ -241,8 +241,8 @@ class TestBigSql(TestCase):
                                             {"name": "date_sk", "value": "ss_sold_date_sk"},
                                             {"name": "sales_price", "value": "ss_ext_sales_price"},
                                             {"name": "profit", "value": "ss_net_profit"},
-                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]},]}},
-                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]},]}},
+                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                         ],
                                     },
                                     {
@@ -250,8 +250,8 @@ class TestBigSql(TestCase):
                                         "select": [
                                             {"name": "store_sk", "value": "sr_store_sk"},
                                             {"name": "date_sk", "value": "sr_returned_date_sk"},
-                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]},]}},
-                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]},]}},
+                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                             {"name": "return_amt", "value": "sr_return_amt"},
                                             {"name": "net_loss", "value": "sr_net_loss"},
                                         ],
@@ -274,7 +274,7 @@ class TestBigSql(TestCase):
                             {"between": [
                                 "d_date",
                                 {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},]},
+                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]}]},
                             ]},
                             {"eq": ["store_sk", "s_store_sk"]},
                         ]},
@@ -294,8 +294,8 @@ class TestBigSql(TestCase):
                                             {"name": "date_sk", "value": "cs_sold_date_sk"},
                                             {"name": "sales_price", "value": "cs_ext_sales_price"},
                                             {"name": "profit", "value": "cs_net_profit"},
-                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]},]}},
-                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]},]}},
+                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                         ],
                                     },
                                     {
@@ -303,8 +303,8 @@ class TestBigSql(TestCase):
                                         "select": [
                                             {"name": "page_sk", "value": "cr_catalog_page_sk"},
                                             {"name": "date_sk", "value": "cr_returned_date_sk"},
-                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]},]}},
-                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]},]}},
+                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                             {"name": "return_amt", "value": "cr_return_amount"},
                                             {"name": "net_loss", "value": "cr_net_loss"},
                                         ],
@@ -327,7 +327,7 @@ class TestBigSql(TestCase):
                             {"between": [
                                 "d_date",
                                 {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},]},
+                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]}]},
                             ]},
                             {"eq": ["page_sk", "cp_catalog_page_sk"]},
                         ]},
@@ -347,8 +347,8 @@ class TestBigSql(TestCase):
                                             {"name": "date_sk", "value": "ws_sold_date_sk"},
                                             {"name": "sales_price", "value": "ws_ext_sales_price"},
                                             {"name": "profit", "value": "ws_net_profit"},
-                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]},]}},
-                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]},]}},
+                                            {"name": "return_amt", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "net_loss", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                         ],
                                     },
                                     {
@@ -357,16 +357,16 @@ class TestBigSql(TestCase):
                                             {
                                                 "left outer join": "web_sales",
                                                 "on": {"and": [
-                                                    {"eq": ["wr_item_sk", "ws_item_sk",]},
-                                                    {"eq": ["wr_order_number", "ws_order_number",]},
+                                                    {"eq": ["wr_item_sk", "ws_item_sk"]},
+                                                    {"eq": ["wr_order_number", "ws_order_number"]},
                                                 ]},
                                             },
                                         ],
                                         "select": [
                                             {"name": "wsr_web_site_sk", "value": "ws_web_site_sk"},
                                             {"name": "date_sk", "value": "wr_returned_date_sk"},
-                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]},]}},
-                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]},]}},
+                                            {"name": "sales_price", "value": {"cast": [0, {"decimal": [7, 2]}]}},
+                                            {"name": "profit", "value": {"cast": [0, {"decimal": [7, 2]}]}},
                                             {"name": "return_amt", "value": "wr_return_amt"},
                                             {"name": "net_loss", "value": "wr_net_loss"},
                                         ],
@@ -389,7 +389,7 @@ class TestBigSql(TestCase):
                             {"between": [
                                 "d_date",
                                 {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},
-                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]},]},
+                                {"dateadd": ["day", 14, {"cast": [{"literal": "1998-08-18"}, {"date": {}}]}]},
                             ]},
                             {"eq": ["wsr_web_site_sk", "web_site_sk"]},
                         ]},
@@ -542,7 +542,7 @@ FROM (
                             {
                                 "full join": {"name": "bstd", "value": "balance_settled_to_disregard"},
                                 "on": {"and": [
-                                    {"eq": [{"date": "bal.age"}, {"date": "bstd.datinha_marota"},]},
+                                    {"eq": [{"date": "bal.age"}, {"date": "bstd.datinha_marota"}]},
                                     {"eq": ["bal.babala_id", "bstd.babala_id"]},
                                     {"eq": ["bal.beyblade_id", "bstd.beyblade_id"]},
                                 ]},
@@ -560,7 +560,7 @@ FROM (
                             {"name": "reference_date", "value": "_reference_date"},
                             {
                                 "name": "babala_id",
-                                "value": {"ifnull": [{"ifnull": ["bal.babala_id", "bstd.babala_id"]}, "t.babala_id",]},
+                                "value": {"ifnull": [{"ifnull": ["bal.babala_id", "bstd.babala_id"]}, "t.babala_id"]},
                             },
                             {
                                 "name": "beyblade_id",
@@ -569,11 +569,11 @@ FROM (
                                     "t.beyblade_id",
                                 ]},
                             },
-                            {"name": "age", "value": {"coalesce": [{"date": "t.age"}, {"date": "bal.age"},]}},
+                            {"name": "age", "value": {"coalesce": [{"date": "t.age"}, {"date": "bal.age"}]}},
                             {
                                 "name": "hugo_boss",
                                 "value": {"add": [
-                                    {"sub": [{"ifnull": ["bal.hugo_boss", 0]}, {"ifnull": ["bstd.hugo_boss", 0]},]},
+                                    {"sub": [{"ifnull": ["bal.hugo_boss", 0]}, {"ifnull": ["bstd.hugo_boss", 0]}]},
                                     {"ifnull": ["t.hugo_boss", 0]},
                                 ]},
                             },
@@ -630,7 +630,7 @@ FROM (
                             {
                                 "name": "age",
                                 "value": {"case": [
-                                    {"then": "due_date", "when": {"eq": ["datinha_marota", "9999-12-31",]}},
+                                    {"then": "due_date", "when": {"eq": ["datinha_marota", "9999-12-31"]}},
                                     "datinha_marota",
                                 ]},
                             },
@@ -638,11 +638,11 @@ FROM (
                             {"name": "net_dos_milagres", "value": {"sum": "net_dos_milagres"}},
                         ],
                         "where": {"and": [
-                            {"lte": ["reference_date", {"date_sub": ["_reference_date", {"interval": [2, "day"]},]},]},
+                            {"lte": ["reference_date", {"date_sub": ["_reference_date", {"interval": [2, "day"]}]}]},
                             {"or": [
                                 {"gt": [
                                     "datinha_marota",
-                                    {"date_sub": ["_reference_date", {"interval": [2, "day"]},]},
+                                    {"date_sub": ["_reference_date", {"interval": [2, "day"]}]},
                                 ]},
                                 {"missing": "datinha_marota"},
                             ]},
@@ -665,9 +665,9 @@ FROM (
                             {"name": "net_dos_milagres", "value": {"sum": "net_dos_milagres"}},
                         ],
                         "where": {"and": [
-                            {"gte": ["datinha_marota", {"date_sub": ["_reference_date", {"interval": [1, "day"]},]},]},
+                            {"gte": ["datinha_marota", {"date_sub": ["_reference_date", {"interval": [1, "day"]}]}]},
                             {"lte": ["datinha_marota", "_reference_date"]},
-                            {"lte": ["reference_date", {"date_sub": ["_reference_date", {"interval": [2, "day"]},]},]},
+                            {"lte": ["reference_date", {"date_sub": ["_reference_date", {"interval": [2, "day"]}]}]},
                         ]},
                     },
                 },
@@ -686,19 +686,19 @@ FROM (
                                     {"eq": ["teraband_discreto", {"literal": "VISA"}]},
                                     10,
                                     {"if": [
-                                        {"eq": ["teraband_discreto", {"literal": "MasterCard"},]},
+                                        {"eq": ["teraband_discreto", {"literal": "MasterCard"}]},
                                         40,
                                         {"if": [
-                                            {"eq": ["teraband_discreto", {"literal": "Elo"},]},
+                                            {"eq": ["teraband_discreto", {"literal": "Elo"}]},
                                             20,
                                             {"if": [
-                                                {"eq": ["teraband_discreto", {"literal": "Hiper / HiperCard"},]},
+                                                {"eq": ["teraband_discreto", {"literal": "Hiper / HiperCard"}]},
                                                 78,
                                                 {"if": [
-                                                    {"eq": ["teraband_discreto", {"literal": "American Express"},]},
+                                                    {"eq": ["teraband_discreto", {"literal": "American Express"}]},
                                                     23,
                                                     {"if": [
-                                                        {"eq": ["teraband_discreto", {"literal": "Cabal"},]},
+                                                        {"eq": ["teraband_discreto", {"literal": "Cabal"}]},
                                                         1235,
                                                         1234,
                                                     ]},
@@ -712,10 +712,10 @@ FROM (
                                 "name": "babala_id",
                                 "value": {"case": [
                                     {
-                                        "then": {"if": [{"eq": ["tipinho_maroto_id", 2]}, 1234, 12354,]},
-                                        "when": {"eq": ["teraband_discreto", {"literal": "MasterCard"},]},
+                                        "then": {"if": [{"eq": ["tipinho_maroto_id", 2]}, 1234, 12354]},
+                                        "when": {"eq": ["teraband_discreto", {"literal": "MasterCard"}]},
                                     },
-                                    {"if": [{"eq": ["tipinho_maroto_id", 10]}, 123, 234,]},
+                                    {"if": [{"eq": ["tipinho_maroto_id", 10]}, 123, 234]},
                                 ]},
                             },
                             {
@@ -725,7 +725,7 @@ FROM (
                                     {"date_add": [
                                         "dia_da_apresentacaozinha",
                                         {"interval": [
-                                            {"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30,]},]},
+                                            {"add": [28, {"mul": [{"sub": ["installment_number", 1]}, 30]}]},
                                             "day",
                                         ]},
                                     ]},
@@ -757,12 +757,12 @@ FROM (
                             {
                                 "then": {"case": [
                                     {
-                                        "then": {"eq": [{"date": "dia_da_apresentacaozinha"}, "_reference_date",]},
+                                        "then": {"eq": [{"date": "dia_da_apresentacaozinha"}, "_reference_date"]},
                                         "when": "is_week_day",
                                     },
                                     {"between": [
                                         {"date": "dia_da_apresentacaozinha"},
-                                        {"date_sub": ["_reference_date", {"interval": [1, "day"]},]},
+                                        {"date_sub": ["_reference_date", {"interval": [1, "day"]}]},
                                         "_reference_date",
                                     ]},
                                 ]},
@@ -770,7 +770,7 @@ FROM (
                             },
                             {"between": [
                                 {"date": "dia_da_apresentacaozinha"},
-                                {"date_sub": ["_reference_date", {"interval": [1, "day"]},]},
+                                {"date_sub": ["_reference_date", {"interval": [1, "day"]}]},
                                 "_reference_date",
                             ]},
                         ]},

@@ -39,7 +39,7 @@ class TestBigQuery(TestCase):
     def testA(self):
         sql = """SELECT FIRST_VALUE(finish_time) OVER w1 AS fastest_time"""
         result = parse(sql)
-        expected = {"select": {"name": "fastest_time", "over": "w1", "value": {"first_value": "finish_time"},}}
+        expected = {"select": {"name": "fastest_time", "over": "w1", "value": {"first_value": "finish_time"}}}
         self.assertEqual(result, expected)
 
     def testB(self):
@@ -132,7 +132,7 @@ class TestBigQuery(TestCase):
     def testL(self):
         sql = """SELECT PERCENTILE_DISC(x, 0) OVER() AS min"""
         result = parse(sql)
-        expected = {"select": {"name": "min", "value": {"percentile_disc": ["x", 0]}, "over": {},}}
+        expected = {"select": {"name": "min", "value": {"percentile_disc": ["x", 0]}, "over": {}}}
         self.assertEqual(result, expected)
 
     def testI(self):
@@ -401,7 +401,7 @@ class TestBigQuery(TestCase):
         result = parse('SELECT regex_extract(x, r"[a-z]"), value FROM `a.b.c`')
         expected = {
             "from": "a..b..c",
-            "select": [{"value": {"regex_extract": ["x", {"regex": "[a-z]"}]}}, {"value": "value"},],
+            "select": [{"value": {"regex_extract": ["x", {"regex": "[a-z]"}]}}, {"value": "value"}],
         }
         self.assertEqual(result, expected)
 
@@ -498,7 +498,7 @@ class TestBigQuery(TestCase):
     def test_issue_142_array_agg(self):
         sql = """SELECT ARRAY_AGG(DISTINCT email IGNORE NULLS) AS email"""
         result = parse(sql)
-        expect = {"select": {"name": "email", "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"},}}
+        expect = {"select": {"name": "email", "value": {"array_agg": "email", "distinct": True, "nulls": "ignore"}}}
         self.assertEqual(result, expect)
 
     def test_issue_145(self):
@@ -661,12 +661,12 @@ class TestBigQuery(TestCase):
         expected = {
             "select": [
                 {
-                    "value": {"format_datetime": [{"literal": "%Y%m%d"}, {"datetime": "full_date"},]},
+                    "value": {"format_datetime": [{"literal": "%Y%m%d"}, {"datetime": "full_date"}]},
                     "name": "date_key",
                 },
                 {"value": "full_date"},
                 {
-                    "value": {"format_datetime": [{"literal": "%Y/%m/%d"}, {"datetime": "full_date"},]},
+                    "value": {"format_datetime": [{"literal": "%Y/%m/%d"}, {"datetime": "full_date"}]},
                     "name": "date_name",
                 },
                 {"value": {"extract": ["dow", "full_date"]}, "name": "day_of_week"},
@@ -675,49 +675,49 @@ class TestBigQuery(TestCase):
                         {
                             "then": {"literal": "Domingo"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Sunday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Segunda-feira"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Monday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Terça-feira"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Tuesday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Quarta-feira"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Wednesday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Quinta-feira"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Thursday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Sexta-feira"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Friday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Sábado"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Saturday"},
                             ]},
                         },
@@ -725,7 +725,7 @@ class TestBigQuery(TestCase):
                     "name": "day_name_of_week",
                 },
                 {
-                    "value": {"format_datetime": [{"literal": "%d"}, {"datetime": "full_date"},]},
+                    "value": {"format_datetime": [{"literal": "%d"}, {"datetime": "full_date"}]},
                     "name": "day_of_month",
                 },
                 {"value": {"extract": ["doy", "full_date"]}, "name": "day_of_year"},
@@ -734,14 +734,14 @@ class TestBigQuery(TestCase):
                         {
                             "then": {"literal": "Final de Semana"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Saturday"},
                             ]},
                         },
                         {
                             "then": {"literal": "Final de Semana"},
                             "when": {"eq": [
-                                {"format_date": [{"literal": "%A"}, {"date": "full_date"},]},
+                                {"format_date": [{"literal": "%A"}, {"date": "full_date"}]},
                                 {"literal": "Sunday"},
                             ]},
                         },
@@ -755,84 +755,84 @@ class TestBigQuery(TestCase):
                         {
                             "then": {"literal": "Janeiro"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "January"},
                             ]},
                         },
                         {
                             "then": {"literal": "Fevereiro"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "February"},
                             ]},
                         },
                         {
                             "then": {"literal": "Março"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "March"},
                             ]},
                         },
                         {
                             "then": {"literal": "Abril"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "April"},
                             ]},
                         },
                         {
                             "then": {"literal": "Maio"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "May"},
                             ]},
                         },
                         {
                             "then": {"literal": "Junho"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "June"},
                             ]},
                         },
                         {
                             "then": {"literal": "Julho"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "July"},
                             ]},
                         },
                         {
                             "then": {"literal": "Agosto"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "August"},
                             ]},
                         },
                         {
                             "then": {"literal": "Setembro"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "September"},
                             ]},
                         },
                         {
                             "then": {"literal": "Outubro"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "October"},
                             ]},
                         },
                         {
                             "then": {"literal": "Novembro"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "November"},
                             ]},
                         },
                         {
                             "then": {"literal": "Dezembro"},
                             "when": {"eq": [
-                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"},]},
+                                {"format_datetime": [{"literal": "%B"}, {"datetime": "full_date"}]},
                                 {"literal": "December"},
                             ]},
                         },
@@ -844,7 +844,7 @@ class TestBigQuery(TestCase):
                     "value": {"if": [
                         {"eq": [
                             {"date_sub": [
-                                {"date_trunc": [{"date_add": ["full_date", {"interval": [1, "month"]},]}, "MONTH",]},
+                                {"date_trunc": [{"date_add": ["full_date", {"interval": [1, "month"]}]}, "MONTH"]},
                                 {"interval": [1, "day"]},
                             ]},
                             "full_date",
@@ -857,7 +857,7 @@ class TestBigQuery(TestCase):
                 {"value": {"extract": ["quarter", "full_date"]}, "name": "calendar_quarter"},
                 {"value": {"extract": ["year", "full_date"]}, "name": "calendar_year"},
                 {
-                    "value": {"format_datetime": [{"literal": "%Y-%m"}, {"datetime": "full_date"},]},
+                    "value": {"format_datetime": [{"literal": "%Y-%m"}, {"datetime": "full_date"}]},
                     "name": "calendar_year_month",
                 },
                 {
@@ -874,7 +874,7 @@ class TestBigQuery(TestCase):
                 {"value": 1, "name": "filter"},
                 {
                     "value": {"date_sub": [
-                        {"date_trunc": [{"date_add": ["full_date", {"interval": [1, "month"]}]}, "month",]},
+                        {"date_trunc": [{"date_add": ["full_date", {"interval": [1, "month"]}]}, "month"]},
                         {"interval": [1, "day"]},
                     ]},
                     "name": "last_day_of_month",
@@ -883,7 +883,7 @@ class TestBigQuery(TestCase):
                     "value": {"format_datetime": [
                         {"literal": "%Y%m%d"},
                         {"datetime": {"date_sub": [
-                            {"date_trunc": [{"date_add": ["full_date", {"interval": [1, "month"]}]}, "month",]},
+                            {"date_trunc": [{"date_add": ["full_date", {"interval": [1, "month"]}]}, "month"]},
                             {"interval": [1, "day"]},
                         ]}},
                     ]},
@@ -902,7 +902,7 @@ class TestBigQuery(TestCase):
                 {
                     "value": {"unnest": {"generate_date_array": [
                         {"literal": "2000-01-01"},
-                        {"date_add": [{"last_day": ["current_date", "YEAR"]}, {"interval": [5, "year"]},]},
+                        {"date_add": [{"last_day": ["current_date", "YEAR"]}, {"interval": [5, "year"]}]},
                         {"interval": [1, "day"]},
                     ]}},
                     "name": "full_date",
@@ -931,7 +931,7 @@ class TestBigQuery(TestCase):
                     {"cast": [
                         {"extract": [
                             "date",
-                            {"at_time_zone": ["last_modified_date", {"literal": "America/Sao_Paulo"},]},
+                            {"at_time_zone": ["last_modified_date", {"literal": "America/Sao_Paulo"}]},
                         ]},
                         {"string": {}},
                     ]},
@@ -993,7 +993,7 @@ class TestBigQuery(TestCase):
                         {"cast": [
                             {"extract": [
                                 "date",
-                                {"at_time_zone": ["last_login_date", {"literal": "America/Sao_Paulo"},]},
+                                {"at_time_zone": ["last_login_date", {"literal": "America/Sao_Paulo"}]},
                             ]},
                             {"string": {}},
                         ]},
@@ -1007,7 +1007,7 @@ class TestBigQuery(TestCase):
                         {"cast": [
                             {"extract": [
                                 "date",
-                                {"at_time_zone": ["last_modified_date", {"literal": "America/Sao_Paulo"},]},
+                                {"at_time_zone": ["last_modified_date", {"literal": "America/Sao_Paulo"}]},
                             ]},
                             {"string": {}},
                         ]},
@@ -1021,7 +1021,7 @@ class TestBigQuery(TestCase):
                         {"cast": [
                             {"extract": [
                                 "date",
-                                {"at_time_zone": ["last_viewed_date", {"literal": "America/Sao_Paulo"},]},
+                                {"at_time_zone": ["last_viewed_date", {"literal": "America/Sao_Paulo"}]},
                             ]},
                             {"string": {}},
                         ]},
@@ -1085,11 +1085,11 @@ class TestBigQuery(TestCase):
                     "value": {"case": [
                         {
                             "then": {"literal": "flow 2"},
-                            "when": {"eq": ["ee._id", {"literal": "flow2222222222222"},]},
+                            "when": {"eq": ["ee._id", {"literal": "flow2222222222222"}]},
                         },
                         {
                             "then": {"literal": "flow 1"},
-                            "when": {"eq": ["ee._id", {"literal": "flow1111111111111"},]},
+                            "when": {"eq": ["ee._id", {"literal": "flow1111111111111"}]},
                         },
                         {"null": {}},
                     ]},
@@ -1111,7 +1111,7 @@ class TestBigQuery(TestCase):
                             {
                                 "name": "dg_step",
                                 "value": {"case": [
-                                    {"then": {"literal": "dg"}, "when": {"eq": ["ee.dg_step_started", True,]}},
+                                    {"then": {"literal": "dg"}, "when": {"eq": ["ee.dg_step_started", True]}},
                                     {"null": {}},
                                 ]},
                             },
@@ -1119,10 +1119,10 @@ class TestBigQuery(TestCase):
                             {
                                 "name": "description",
                                 "value": {"case": [
-                                    {"then": {"literal": "informed"}, "when": {"eq": ["cf.demand_informed", True,]}},
+                                    {"then": {"literal": "informed"}, "when": {"eq": ["cf.demand_informed", True]}},
                                     {
                                         "then": {"literal": " not informed"},
-                                        "when": {"eq": ["cf.demand_informed", False,]},
+                                        "when": {"eq": ["cf.demand_informed", False]},
                                     },
                                     {"null": {}},
                                 ]},
@@ -1133,7 +1133,7 @@ class TestBigQuery(TestCase):
                                     {"then": True, "when": {"eq": ["cf.verification", True]}},
                                     {"then": True, "when": {"eq": ["cf.verification", False]}},
                                     {"then": True, "when": {"eq": ["cf.contact", True]}},
-                                    {"then": False, "when": {"eq": ["cf.verification_sent", False,]}},
+                                    {"then": False, "when": {"eq": ["cf.verification_sent", False]}},
                                     {"null": {}},
                                 ]},
                             },
@@ -1147,7 +1147,7 @@ class TestBigQuery(TestCase):
                                 ]},
                             },
                             {"name": "df_status", "value": "ee.df_status"},
-                            {"name": "team", "value": {"safe_cast": [{"null": {}}, {"string": {}},]}},
+                            {"name": "team", "value": {"safe_cast": [{"null": {}}, {"string": {}}]}},
                         ]},
                         {"select_as_struct": [
                             {
@@ -1158,7 +1158,7 @@ class TestBigQuery(TestCase):
                                 ]},
                             },
                             {"name": "ir_status", "value": "ee.ir_status"},
-                            {"name": "team2", "value": {"safe_cast": [{"null": {}}, {"string": {}},]}},
+                            {"name": "team2", "value": {"safe_cast": [{"null": {}}, {"string": {}}]}},
                             {"value": "verification_sent"},
                         ]},
                     ]}},
@@ -1175,7 +1175,7 @@ class TestBigQuery(TestCase):
             ],
             "where": {"and": [
                 {"neq": ["ee._id", {"literal": "flow333333333"}]},
-                {"or": [{"neq": ["ee.team_name", {"literal": "temp"}]}, {"missing": "ee.team_name"},]},
+                {"or": [{"neq": ["ee.team_name", {"literal": "temp"}]}, {"missing": "ee.team_name"}]},
             ]},
         }
         self.assertEqual(result, expected)

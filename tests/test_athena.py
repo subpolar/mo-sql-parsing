@@ -36,13 +36,13 @@ class TestAthena(TestCase):
     def test_issue_57_window_in_expression(self):
         sql = """SELECT X() OVER () = 1 AS is_true"""
         result = parse(sql)
-        expected = {"select": {"name": "is_true", "value": {"eq": [{"over": {}, "value": {"x": {}}}, 1]},}}
+        expected = {"select": {"name": "is_true", "value": {"eq": [{"over": {}, "value": {"x": {}}}, 1]}}}
         self.assertEqual(result, expected)
 
     def test_issue_58_filter_on_aggregate(self):
         sql = """SELECT MAX(1) FILTER (WHERE 1=1) AS foo"""
         result = parse(sql)
-        expected = {"select": {"filter": {"eq": [1, 1]}, "name": "foo", "value": {"max": 1},}}
+        expected = {"select": {"filter": {"eq": [1, 1]}, "name": "foo", "value": {"max": 1}}}
         self.assertEqual(result, expected)
 
     def test_issue_60_row_type(self):
@@ -110,7 +110,7 @@ class TestAthena(TestCase):
     def test_issue_93_order_by_parameter2(self):
         sql = "SELECT FOO(a ORDER BY b)"
         result = parse(sql, calls=normal_op)  # normal_op FOR BETTER OUTPUT CLARITY
-        expected = {"select": {"value": {"op": "foo", "args": ["a"], "kwargs": {"orderby": {"value": "b"}},}}}
+        expected = {"select": {"value": {"op": "foo", "args": ["a"], "kwargs": {"orderby": {"value": "b"}}}}}
         self.assertEqual(result, expected)
 
     def test_issue_125_pivot_identifier1(self):

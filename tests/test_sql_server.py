@@ -209,7 +209,7 @@ class TestSqlServer(TestCase):
             "select": "*",
             "from": [
                 "p",
-                {"pivot": {"name": "pvt", "aggregate": {"count": "id"}, "for": "E", "in": [250, 251, 256, 257, 260],}},
+                {"pivot": {"name": "pvt", "aggregate": {"count": "id"}, "for": "E", "in": [250, 251, 256, 257, 260]}},
             ],
         }
         self.assertEqual(result, expected)
