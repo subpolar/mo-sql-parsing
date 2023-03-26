@@ -18,10 +18,7 @@ class TestOracle(TestCase):
         sql = "SELECT * FROM foo SAMPLE bernoulli (1) WHERE a < 42"
         result = parse(sql)
         expected = {
-            "from": {
-                "tablesample": {"method": "bernoulli", "percent": 1},
-                "value": "foo",
-            },
+            "from": {"tablesample": {"method": "bernoulli", "percent": 1}, "value": "foo"},
             "select": "*",
             "where": {"lt": ["a", 42]},
         }
@@ -31,7 +28,7 @@ class TestOracle(TestCase):
         sql = "SELECT * FROM foo SAMPLE(1) WHERE a < 42"
         result = parse(sql)
         expected = {
-            "from": {"tablesample": {"percent": 1}, "value": "foo",},
+            "from": {"tablesample": {"percent": 1}, "value": "foo"},
             "select": "*",
             "where": {"lt": ["a", 42]},
         }

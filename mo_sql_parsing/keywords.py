@@ -141,13 +141,7 @@ VIEW = keyword("view")
 
 
 joins = (
-    (
-        Optional(
-            CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))
-        )
-        + JOIN
-        + Optional(LATERAL)
-    )
+    (Optional(CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))) + JOIN + Optional(LATERAL))
     | LATERAL + Optional(VIEW + Optional(OUTER))
     | (CROSS | OUTER) + APPLY
 ) / (lambda tokens: " ".join(tokens).lower())

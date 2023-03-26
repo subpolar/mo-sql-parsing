@@ -19,10 +19,7 @@ class TestAthena(TestCase):
         sql = """SELECT * FROM UNNEST(ARRAY[foo,bar]) table_name(column_name)"""
         result = parse(sql)
         expected = {
-            "from": {
-                "name": {"table_name": "column_name"},
-                "value": {"unnest": {"create_array": ["foo", "bar"]}},
-            },
+            "from": {"name": {"table_name": "column_name"}, "value": {"unnest": {"create_array": ["foo", "bar"]}}},
             "select": "*",
         }
         self.assertEqual(result, expected)
@@ -39,39 +36,26 @@ class TestAthena(TestCase):
     def test_issue_57_window_in_expression(self):
         sql = """SELECT X() OVER () = 1 AS is_true"""
         result = parse(sql)
-        expected = {"select": {
-            "name": "is_true",
-            "value": {"eq": [{"over": {}, "value": {"x": {}}}, 1]},
-        }}
+        expected = {"select": {"name": "is_true", "value": {"eq": [{"over": {}, "value": {"x": {}}}, 1]}}}
         self.assertEqual(result, expected)
 
     def test_issue_58_filter_on_aggregate(self):
         sql = """SELECT MAX(1) FILTER (WHERE 1=1) AS foo"""
         result = parse(sql)
-        expected = {"select": {
-            "filter": {"eq": [1, 1]},
-            "name": "foo",
-            "value": {"max": 1},
-        }}
+        expected = {"select": {"filter": {"eq": [1, 1]}, "name": "foo", "value": {"max": 1}}}
         self.assertEqual(result, expected)
 
     def test_issue_60_row_type(self):
         # eg CAST(ROW(1, 2.0) AS ROW(x BIGINT, y DOUBLE))
         sql = """SELECT CAST(x AS ROW(y VARCHAR))"""
         result = parse(sql)
-        expected = {"select": {"value": {"cast": [
-            "x",
-            {"row": {"name": "y", "type": {"varchar": {}}}},
-        ]}}}
+        expected = {"select": {"value": {"cast": ["x", {"row": {"name": "y", "type": {"varchar": {}}}}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_61_dot(self):
         sql = """SELECT b['c'].d"""
         result = parse(sql)
-        expected = {"select": {"value": {"get": [
-            {"get": ["b", {"literal": "c"}]},
-            {"literal": "d"},
-        ]}}}
+        expected = {"select": {"value": {"get": [{"get": ["b", {"literal": "c"}]}, {"literal": "d"}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_59_is_distinct_from(self):
@@ -90,34 +74,25 @@ class TestAthena(TestCase):
     def test_issue_62_structuralA(self):
         sql = """SELECT CAST(x AS ARRAY(ROW(y VARCHAR)))"""
         result = parse(sql)
-        expected = {"select": {"value": {"cast": [
-            "x",
-            {"array": {"row": {"name": "y", "type": {"varchar": {}}}}},
-        ]}}}
+        expected = {"select": {"value": {"cast": ["x", {"array": {"row": {"name": "y", "type": {"varchar": {}}}}}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_62_structuralB(self):
         sql = """SELECT CAST(x AS ROW(y ARRAY(VARCHAR)))"""
         result = parse(sql)
-        expected = {"select": {"value": {"cast": [
-            "x",
-            {"row": {"name": "y", "type": {"array": {"varchar": {}}}}},
-        ]}}}
+        expected = {"select": {"value": {"cast": ["x", {"row": {"name": "y", "type": {"array": {"varchar": {}}}}}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_62_structuralC(self):
         sql = """SELECT CAST(x AS ARRAY(ARRAY(VARCHAR)))"""
         result = parse(sql)
-        expected = {"select": {"value": {"cast": [
-            "x",
-            {"array": {"array": {"varchar": {}}}},
-        ]}}}
+        expected = {"select": {"value": {"cast": ["x", {"array": {"array": {"varchar": {}}}}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_85_json_type(self):
         sql = "SELECT CAST(x AS JSON)"
         result = parse(sql)
-        expected = {"select": {"value": {"cast": ["x", {"json": {}},]}}}
+        expected = {"select": {"value": {"cast": ["x", {"json": {}}]}}}
         self.assertEqual(result, expected)
 
     def test_issue_92_empty_array(self):
@@ -135,11 +110,7 @@ class TestAthena(TestCase):
     def test_issue_93_order_by_parameter2(self):
         sql = "SELECT FOO(a ORDER BY b)"
         result = parse(sql, calls=normal_op)  # normal_op FOR BETTER OUTPUT CLARITY
-        expected = {"select": {"value": {
-            "op": "foo",
-            "args": ["a"],
-            "kwargs": {"orderby": {"value": "b"}},
-        }}}
+        expected = {"select": {"value": {"op": "foo", "args": ["a"], "kwargs": {"orderby": {"value": "b"}}}}}
         self.assertEqual(result, expected)
 
     def test_issue_125_pivot_identifier1(self):
@@ -158,10 +129,7 @@ class TestAthena(TestCase):
         sql = """SELECT * FROM UNNEST(ARRAY[1, 2, 3]) AS pivot(n);"""
         result = parse(sql)
         expected = {
-            "from": {
-                "name": {"pivot": "n"},
-                "value": {"unnest": {"create_array": [1, 2, 3]}},
-            },
+            "from": {"name": {"pivot": "n"}, "value": {"unnest": {"create_array": [1, 2, 3]}}},
             "select": "*",
         }
         self.assertEqual(result, expected)
@@ -172,10 +140,7 @@ class TestAthena(TestCase):
         result = parse(sql)
         expected = {
             "from": [
-                {
-                    "name": {"pivot": "n"},
-                    "value": {"unnest": {"create_array": [1, 2, 3]}},
-                },
+                {"name": {"pivot": "n"}, "value": {"unnest": {"create_array": [1, 2, 3]}}},
                 {"join": "a", "on": {"eq": ["a.id", "pivot.n"]}},
             ],
             "select": "*",
@@ -198,10 +163,7 @@ class TestAthena(TestCase):
         sql = """SELECT * FROM UNNEST(ARRAY[1, 2, 3]) AS unpivot(n);"""
         result = parse(sql)
         expected = {
-            "from": {
-                "name": {"unpivot": "n"},
-                "value": {"unnest": {"create_array": [1, 2, 3]}},
-            },
+            "from": {"name": {"unpivot": "n"}, "value": {"unnest": {"create_array": [1, 2, 3]}}},
             "select": "*",
         }
         self.assertEqual(result, expected)
@@ -212,10 +174,7 @@ class TestAthena(TestCase):
         result = parse(sql)
         expected = {
             "from": [
-                {
-                    "name": {"unpivot": "n"},
-                    "value": {"unnest": {"create_array": [1, 2, 3]}},
-                },
+                {"name": {"unpivot": "n"}, "value": {"unnest": {"create_array": [1, 2, 3]}}},
                 {"join": "a", "on": {"eq": ["a.id", "pivot.n"]}},
             ],
             "select": "*",

@@ -68,10 +68,7 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql, calls=normal_op)
         expected = {
-            "from": {
-                "op": "table",
-                "args": [{"op": "generator", "kwargs": {"rowcount": 10}}],
-            },
+            "from": {"op": "table", "args": [{"op": "generator", "kwargs": {"rowcount": 10}}]},
             "select": {"value": {"op": "seq4"}},
         }
         self.assertEqual(result, expected)
@@ -83,10 +80,7 @@ class TestSnowflake(TestCase):
         """
         result = parse(sql, calls=normal_op)
         expected = {
-            "from": {
-                "op": "table",
-                "args": [{"op": "generator", "kwargs": {"rowcount": 5}}],
-            },
+            "from": {"op": "table", "args": [{"op": "generator", "kwargs": {"rowcount": 5}}]},
             "select": {"value": {"op": "uniform", "args": [1, 10, {"op": "random"}]}},
         }
 
@@ -102,10 +96,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": {
                 "name": "t",
-                "value": {"table": {"split_to_table": [
-                    {"literal": "a.b.z.d"},
-                    {"literal": "."},
-                ]}},
+                "value": {"table": {"split_to_table": [{"literal": "a.b.z.d"}, {"literal": "."}]}},
             },
             "orderby": {"value": "t.value"},
             "select": [{"value": "t.index"}, {"value": "t.value"}],
@@ -143,19 +134,13 @@ class TestSnowflake(TestCase):
     def test_issue_104_character_varying1(self):
         sql = """CREATE TABLE foo(a CHARACTER(5))"""
         result = parse(sql)
-        expected = {"create table": {
-            "columns": {"name": "a", "type": {"character": 5}},
-            "name": "foo",
-        }}
+        expected = {"create table": {"columns": {"name": "a", "type": {"character": 5}}, "name": "foo"}}
         self.assertEqual(result, expected)
 
     def test_issue_104_character_varying2(self):
         sql = """CREATE TABLE foo(a CHARACTER VARYING(5))"""
         result = parse(sql)
-        expected = {"create table": {
-            "columns": {"name": "a", "type": {"character_varying": 5}},
-            "name": "foo",
-        }}
+        expected = {"create table": {"columns": {"name": "a", "type": {"character_varying": 5}}, "name": "foo"}}
         self.assertEqual(result, expected)
 
     def test_issue_106_index_column_name1(self):
@@ -167,10 +152,7 @@ class TestSnowflake(TestCase):
     def test_issue_106_index_column_name2(self):
         sql = """CREATE TABLE my_table(index INTEGER);"""
         result = parse(sql)
-        expected = {"create table": {
-            "columns": {"name": "index", "type": {"integer": {}}},
-            "name": "my_table",
-        }}
+        expected = {"create table": {"columns": {"name": "index", "type": {"integer": {}}}, "name": "my_table"}}
         self.assertEqual(result, expected)
 
     def test_issue_107_lateral_function(self):
@@ -181,10 +163,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": [
                 {"name": "emp", "value": "employees"},
-                {"lateral": {
-                    "name": "proj_names",
-                    "value": {"flatten": {}, "input": "emp.project_names"},
-                }},
+                {"lateral": {"name": "proj_names", "value": {"flatten": {}, "input": "emp.project_names"}}},
             ],
             "orderby": {"value": "employee_id"},
             "select": [
@@ -209,11 +188,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {
             "from": "car_sales",
-            "select": {"value": {"get": [
-                "src",
-                {"literal": "salesperson"},
-                {"literal": "name"},
-            ]}},
+            "select": {"value": {"get": ["src", {"literal": "salesperson"}, {"literal": "name"}]}},
         }
         self.assertEqual(result, expected)
 
@@ -222,11 +197,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {
             "from": "car_sales",
-            "select": {"value": {"get": [
-                "src",
-                {"literal": "salesperson"},
-                {"literal": "name"},
-            ]}},
+            "select": {"value": {"get": ["src", {"literal": "salesperson"}, {"literal": "name"}]}},
         }
         self.assertEqual(result, expected)
 
@@ -235,10 +206,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {
             "from": "my_table",
-            "select": {
-                "name": "bar",
-                "value": {"replace": ["foo", {"literal": '"'}, {"literal": ""}]},
-            },
+            "select": {"name": "bar", "value": {"replace": ["foo", {"literal": '"'}, {"literal": ""}]}},
         }
         self.assertEqual(result, expected)
 
@@ -270,10 +238,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": "my_table",
             "qualify": {"eq": [
-                {
-                    "over": {"orderby": {"value": "id"}, "partitionby": "id"},
-                    "value": {"row_number": {}},
-                },
+                {"over": {"orderby": {"value": "id"}, "partitionby": "id"}, "value": {"row_number": {}}},
                 1,
             ]},
             "select": [{"value": "id"}, {"value": "names"}],
@@ -335,10 +300,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {
             "from": [
-                {
-                    "name": "monthly_sales",
-                    "value": {"select": "*", "from": "monthly_sales_table"},
-                },
+                {"name": "monthly_sales", "value": {"select": "*", "from": "monthly_sales_table"}},
                 {
                     "pivot": {
                         "name": "p",
@@ -362,11 +324,7 @@ class TestSnowflake(TestCase):
         expected = {
             "from": [
                 "monthly_sales",
-                {"unpivot": {
-                    "value": "sales",
-                    "for": "month",
-                    "in": {"value": ["jan", "feb", "mar", "april"]},
-                }},
+                {"unpivot": {"value": "sales", "for": "month", "in": {"value": ["jan", "feb", "mar", "april"]}}},
             ],
             "orderby": {"value": "empid"},
             "select": "*",
@@ -380,11 +338,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {
             "from": "car_sales",
-            "select": {"value": {"get": [
-                "src",
-                {"literal": "sales-person"},
-                {"literal": "name"},
-            ]}},
+            "select": {"value": {"get": ["src", {"literal": "sales-person"}, {"literal": "name"}]}},
         }
         self.assertEqual(result, expected)
 
@@ -394,11 +348,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {
             "from": "car_sales",
-            "select": {"value": {"get": [
-                "src",
-                {"literal": "."},
-                {"literal": "name"},
-            ]}},
+            "select": {"value": {"get": ["src", {"literal": "."}, {"literal": "name"}]}},
         }
         self.assertEqual(result, expected)
 
@@ -439,9 +389,7 @@ class TestSnowflake(TestCase):
         self.assertEqual(result, expected)
 
     def test_issue_119_copy3(self):
-        sql = (
-            """COPY INTO mytable from @~/staged FILE_FORMAT = (FORMAT_NAME = 'mycsv')"""
-        )
+        sql = """COPY INTO mytable from @~/staged FILE_FORMAT = (FORMAT_NAME = 'mycsv')"""
         result = parse(sql)
         expected = {"copy": {
             "file_format": {"format_name": {"literal": "mycsv"}},
@@ -453,10 +401,7 @@ class TestSnowflake(TestCase):
     def test_issue_119_copy4(self):
         sql = """COPY INTO mycsvtable FROM @my_ext_stage/tutorials/dataloading/contacts1.csv;"""
         result = parse(sql)
-        expected = {"copy": {
-            "from": "@my_ext_stage/tutorials/dataloading/contacts1.csv",
-            "into": "mycsvtable",
-        }}
+        expected = {"copy": {"from": "@my_ext_stage/tutorials/dataloading/contacts1.csv", "into": "mycsvtable"}}
         self.assertEqual(result, expected)
 
     def test_issue_119_copy5(self):
@@ -467,9 +412,7 @@ class TestSnowflake(TestCase):
             FILE_FORMAT = (FORMAT_NAME = my_csv_format);"""
         result = parse(sql)
         expected = {"copy": {
-            "encryption": {"master_key": {
-                "literal": "eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8="
-            }},
+            "encryption": {"master_key": {"literal": "eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8="}},
             "file_format": {"format_name": "my_csv_format"},
             "from": "s3://mybucket/data/files",
             "into": "mytable",
@@ -489,9 +432,7 @@ class TestSnowflake(TestCase):
                 "aws_key_id": {"literal": "$AWS_ACCESS_KEY_ID"},
                 "aws_secret_key": {"literal": "$AWS_SECRET_ACCESS_KEY"},
             },
-            "encryption": {"master_key": {
-                "literal": "eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8="
-            }},
+            "encryption": {"master_key": {"literal": "eSxX0jzYfIamtnBKOEOwq80Au6NbSgPH5r4BDDwOaO8="}},
             "file_format": {"format_name": "my_csv_format"},
             "from": "s3://mybucket/data/files",
             "into": "mytable",
@@ -521,9 +462,7 @@ class TestSnowflake(TestCase):
         result = parse(sql)
         expected = {"copy": {
             "encryption": {
-                "master_key": {
-                    "literal": "kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8="
-                },
+                "master_key": {"literal": "kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8="},
                 "type": {"literal": "AZURE_CSE"},
             },
             "file_format": {"format_name": "my_csv_format"},
@@ -545,17 +484,11 @@ class TestSnowflake(TestCase):
                 "literal": "?sv=2016-05-31&ss=b&srt=sco&sp=rwdl&se=2018-06-27T10:05:50Z&st=2017-06-27T02:05:50Z&spr=https,http&sig=bgqQwoXwxzuD2GJfagRg7VOS8hzNr3QLT7rhS8OFRLQ%3D"
             }},
             "encryption": {
-                "master_key": {
-                    "literal": "kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8="
-                },
+                "master_key": {"literal": "kPxX0jzYfIamtnJEUTHwq80Au6NbSgPH5r4BDDwOaO8="},
                 "type": {"literal": "AZURE_CSE"},
             },
             "file_format": {"format_name": "my_csv_format"},
-            "from": {
-                "literal": (
-                    "azure://myaccount.blob.core.windows.net/mycontainer/data/files"
-                )
-            },
+            "from": {"literal": "azure://myaccount.blob.core.windows.net/mycontainer/data/files"},
             "into": "mytable",
         }}
         self.assertEqual(result, expected)
@@ -613,10 +546,7 @@ class TestSnowflake(TestCase):
         FROM orderstiny FILE_FORMAT = (FORMAT_NAME ='myformat' COMPRESSION='GZIP');"""
         result = parse(sql)
         expected = {"copy": {
-            "file_format": {
-                "compression": {"literal": "GZIP"},
-                "format_name": {"literal": "myformat"},
-            },
+            "file_format": {"compression": {"literal": "GZIP"}, "format_name": {"literal": "myformat"}},
             "from": "orderstiny",
             "into": "@%orderstiny/result/data_",
         }}
@@ -627,10 +557,7 @@ class TestSnowflake(TestCase):
             file_format=(format_name='myformat' compression='gzip');"""
         result = parse(sql)
         expected = {"copy": {
-            "file_format": {
-                "compression": {"literal": "gzip"},
-                "format_name": {"literal": "myformat"},
-            },
+            "file_format": {"compression": {"literal": "gzip"}, "format_name": {"literal": "myformat"}},
             "from": {"from": "orderstiny", "select": "*"},
             "into": "@my_stage/result/data_",
         }}
@@ -709,9 +636,7 @@ class TestSnowflake(TestCase):
             "credentials": {"azure_sas_token": {"literal": "xxxx"}},
             "file_format": {"format_name": "my_csv_format"},
             "from": "mytable",
-            "into": {
-                "literal": "azure://myaccount.blob.core.windows.net/mycontainer/unload/"
-            },
+            "into": {"literal": "azure://myaccount.blob.core.windows.net/mycontainer/unload/"},
         }}
         self.assertEqual(result, expected)
 
@@ -743,11 +668,7 @@ class TestSnowflake(TestCase):
             FILE_FORMAT = (TYPE = csv NULL_IF = ('NULL', 'null') EMPTY_FIELD_AS_NULL = false);"""
         result = parse(sql)
         expected = {"copy": {
-            "file_format": {
-                "empty_field_as_null": False,
-                "null_if": {"literal": ["NULL", "null"]},
-                "type": "csv",
-            },
+            "file_format": {"empty_field_as_null": False, "null_if": {"literal": ["NULL", "null"]}, "type": "csv"},
             "from": "HOME_SALES",
             "into": "@~",
         }}
@@ -801,21 +722,14 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_table3(self):
         sql = """ALTER TABLE t1 ADD COLUMN a2 number;"""
         result = parse(sql)
-        expected = {"alter": {
-            "add": {"column": {"name": "a2", "type": {"number": {}}}},
-            "table": "t1",
-        }}
+        expected = {"alter": {"add": {"column": {"name": "a2", "type": {"number": {}}}}, "table": "t1"}}
         self.assertEqual(result, expected)
 
     def test_issue_120_alter_table4(self):
         sql = """ALTER TABLE t1 ADD COLUMN a3 number NOT NULL;"""
         result = parse(sql)
         expected = {"alter": {
-            "add": {"column": {
-                "name": "a3",
-                "nullable": False,
-                "type": {"number": {}},
-            }},
+            "add": {"column": {"name": "a3", "nullable": False, "type": {"number": {}}}},
             "table": "t1",
         }}
         self.assertEqual(result, expected)
@@ -824,12 +738,7 @@ class TestSnowflake(TestCase):
         sql = """ALTER TABLE t1 ADD COLUMN a4 number DEFAULT 0 NOT NULL;"""
         result = parse(sql)
         expected = {"alter": {
-            "add": {"column": {
-                "default": 0,
-                "name": "a4",
-                "nullable": False,
-                "type": {"number": {}},
-            }},
+            "add": {"column": {"default": 0, "name": "a4", "nullable": False, "type": {"number": {}}}},
             "table": "t1",
         }}
         self.assertEqual(result, expected)
@@ -837,10 +746,7 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_table6(self):
         sql = """ALTER TABLE t1 RENAME COLUMN a1 TO b1;"""
         result = parse(sql)
-        expected = {"alter": {
-            "rename": {"column": {"name": "a1", "to": "b1"}},
-            "table": "t1",
-        }}
+        expected = {"alter": {"rename": {"column": {"name": "a1", "to": "b1"}}, "table": "t1"}}
         self.assertEqual(result, expected)
 
     def test_issue_120_alter_table7(self):
@@ -857,10 +763,7 @@ class TestSnowflake(TestCase):
             "add": {"column": {
                 "name": "a1",
                 "type": {"varchar": {}},
-                "value": {"cast": [
-                    {"get": ["value", {"literal": "a1"}]},
-                    {"varchar": {}},
-                ]},
+                "value": {"cast": [{"get": ["value", {"literal": "a1"}]}, {"varchar": {}}]},
             }},
             "table": "exttable1",
         }}
@@ -875,10 +778,7 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_tableA(self):
         sql = """alter table t1 add row access policy rap_t1 on (empl_id);"""
         result = parse(sql)
-        expected = {"alter": {
-            "add": {"row_access_policy": {"on": "empl_id", "policy": "rap_t1"}},
-            "table": "t1",
-        }}
+        expected = {"alter": {"add": {"row_access_policy": {"on": "empl_id", "policy": "rap_t1"}}, "table": "t1"}}
         self.assertEqual(result, expected)
 
     def test_issue_120_alter_tableB(self):
@@ -886,10 +786,7 @@ class TestSnowflake(TestCase):
             add row access policy rap_test2 on (cost, item);"""
         result = parse(sql)
         expected = {"alter": {
-            "add": {"row_access_policy": {
-                "on": ["cost", "item"],
-                "policy": "rap_test2",
-            }},
+            "add": {"row_access_policy": {"on": ["cost", "item"], "policy": "rap_test2"}},
             "table": "t1",
         }}
         self.assertEqual(result, expected)
@@ -906,10 +803,7 @@ class TestSnowflake(TestCase):
             add row access policy rap_t1_version_2 on (empl_id);"""
         result = parse(sql)
         expected = {"alter": {
-            "add": {"row_access_policy": {
-                "on": "empl_id",
-                "policy": "rap_t1_version_2",
-            }},
+            "add": {"row_access_policy": {"on": "empl_id", "policy": "rap_t1_version_2"}},
             "drop": {"row_access_policy": "rap_t1_version_1"},
             "table": "t1",
         }}
@@ -920,11 +814,7 @@ class TestSnowflake(TestCase):
             ADD COLUMN col2 VARCHAR NOT NULL;"""
         result = parse(sql)
         expected = {"alter": {
-            "add": {"column": {
-                "name": "col2",
-                "nullable": False,
-                "type": {"varchar": {}},
-            }},
+            "add": {"column": {"name": "col2", "nullable": False, "type": {"varchar": {}}}},
             "table": "table1",
         }}
         self.assertEqual(result, expected)
@@ -945,20 +835,14 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_tableG(self):
         sql = """ALTER TABLE t1 ALTER COLUMN c1 DROP NOT NULL;"""
         result = parse(sql)
-        expected = {"alter": {
-            "modify": {"drop": {"nullable": False}, "name": "c1"},
-            "table": "t1",
-        }}
+        expected = {"alter": {"modify": {"drop": {"nullable": False}, "name": "c1"}, "table": "t1"}}
         self.assertEqual(result, expected)
 
     def test_issue_120_alter_tableH(self):
         sql = """ALTER TABLE t1 MODIFY c2 DROP DEFAULT, c3 SET DEFAULT seq5.nextval ;"""
         result = parse(sql)
         expected = {"alter": {
-            "modify": [
-                {"drop": "default", "name": "c2"},
-                {"name": "c3", "set": {"default": "seq5.nextval"}},
-            ],
+            "modify": [{"drop": "default", "name": "c2"}, {"name": "c3", "set": {"default": "seq5.nextval"}}],
             "table": "t1",
         }}
 
@@ -968,10 +852,7 @@ class TestSnowflake(TestCase):
         sql = """ALTER TABLE t1 ALTER c4 SET DATA TYPE VARCHAR(50), COLUMN c4 DROP DEFAULT;"""
         result = parse(sql)
         expected = {"alter": {
-            "modify": [
-                {"name": "c4", "type": {"varchar": 50}},
-                {"drop": "default", "name": "c4"},
-            ],
+            "modify": [{"name": "c4", "type": {"varchar": 50}}, {"drop": "default", "name": "c4"}],
             "table": "t1",
         }}
         self.assertEqual(result, expected)
@@ -979,10 +860,7 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_tableJ(self):
         sql = """ALTER TABLE t1 ALTER c5 COMMENT '50 character column';"""
         result = parse(sql)
-        expected = {"alter": {
-            "modify": {"comment": {"literal": "50 character column"}, "name": "c5"},
-            "table": "t1",
-        }}
+        expected = {"alter": {"modify": {"comment": {"literal": "50 character column"}, "name": "c5"}, "table": "t1"}}
 
         self.assertEqual(result, expected)
 
@@ -1035,10 +913,7 @@ class TestSnowflake(TestCase):
     def test_issue_120_alter_tableN(self):
         sql = """ALTER TABLE empl_info modify column empl_id unset masking policy;"""
         result = parse(sql)
-        expected = {"alter": {
-            "modify": {"name": "empl_id", "unset": "masking_policy"},
-            "table": "empl_info",
-        }}
+        expected = {"alter": {"modify": {"name": "empl_id", "unset": "masking_policy"}, "table": "empl_info"}}
         self.assertEqual(result, expected)
 
     def test_issue_120_alter_tableO(self):
@@ -1060,9 +935,5 @@ class TestSnowflake(TestCase):
         FROM my_schema.my_table
         OVERWRITE = TRUE"""
         result = parse(sql)
-        expected = {"copy": {
-            "from": "my_schema.my_table",
-            "into": {"literal": "@my_stage/path"},
-            "overwrite": True,
-        }}
+        expected = {"copy": {"from": "my_schema.my_table", "into": {"literal": "@my_stage/path"}, "overwrite": True}}
         self.assertEqual(result, expected)

@@ -41,10 +41,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_select_quoted_name(self):
         result = parse('Select a "@*#&", b as test."g.g".c from dual')
         expected = {
-            "select": [
-                {"name": "@*#&", "value": "a"},
-                {"name": "test.g..g.c", "value": "b"},
-            ],
+            "select": [{"name": "@*#&", "value": "a"}, {"name": "test.g..g.c", "value": "b"}],
             "from": "dual",
         }
         self.assertEqual(result, expected)
@@ -133,9 +130,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_where_in_and_in(self):
         #                         1         2         3         4         5         6
         #               0123456789012345678901234567890123456789012345678901234567890123456789
-        result = parse(
-            "SELECT a FROM dual WHERE a in ('r', 'g', 'b') AND b in (10, 11, 12)"
-        )
+        result = parse("SELECT a FROM dual WHERE a in ('r', 'g', 'b') AND b in (10, 11, 12)")
         expected = {
             "from": "dual",
             "select": {"value": "a"},
@@ -181,10 +176,7 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "from": "mytable",
             "groupby": {"value": "a"},
-            "select": [
-                {"value": "a"},
-                {"name": "b", "value": {"args": [1], "op": "count"}},
-            ],
+            "select": [{"value": "a"}, {"name": "b", "value": {"args": [1], "op": "count"}}],
         }
         self.assertEqual(result, expected)
 
@@ -204,10 +196,7 @@ class TestSimpleUsingOperators(TestCase):
         result = parse("select DATE_TRUNC('2019-04-12', WEEK) from mytable")
         expected = {
             "from": "mytable",
-            "select": {"value": {
-                "args": [{"literal": "2019-04-12"}, "WEEK"],
-                "op": "date_trunc",
-            }},
+            "select": {"value": {"args": [{"literal": "2019-04-12"}, "WEEK"], "op": "date_trunc"}},
         }
         self.assertEqual(result, expected)
 
@@ -234,13 +223,7 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "from": "table1",
             "select": [{"value": "B"}, {"value": "C"}],
-            "where": {
-                "args": [
-                    {"args": ["A", -900], "op": "eq"},
-                    {"args": ["B", 100], "op": "eq"},
-                ],
-                "op": "or",
-            },
+            "where": {"args": [{"args": ["A", -900], "op": "eq"}, {"args": ["B", 100], "op": "eq"}], "op": "or"},
         }
         self.assertEqual(result, expected)
 
@@ -274,9 +257,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_like_in_select(self):
         #               0         1         2         3         4         5         6
         #               0123456789012345678901234567890123456789012345678901234567890123456789
-        result = parse(
-            "select case when A like 'bb%' then 1 else 0 end as bb from table1"
-        )
+        result = parse("select case when A like 'bb%' then 1 else 0 end as bb from table1")
         expected = {
             "from": "table1",
             "select": {
@@ -315,9 +296,7 @@ class TestSimpleUsingOperators(TestCase):
         self.assertEqual(result, expected)
 
     def test_not_like_in_select(self):
-        result = parse(
-            "select case when A not like 'bb%' then 1 else 0 end as bb from table1"
-        )
+        result = parse("select case when A not like 'bb%' then 1 else 0 end as bb from table1")
         expected = {
             "from": "table1",
             "select": {
@@ -325,10 +304,7 @@ class TestSimpleUsingOperators(TestCase):
                 "value": {
                     "args": [
                         {
-                            "args": [{
-                                "args": ["A", {"literal": "bb%"}],
-                                "op": "not_like",
-                            }],
+                            "args": [{"args": ["A", {"literal": "bb%"}], "op": "not_like"}],
                             "kwargs": {"then": 1},
                             "op": "when",
                         },
@@ -341,10 +317,7 @@ class TestSimpleUsingOperators(TestCase):
         self.assertEqual(result, expected)
 
     def test_like_from_pr16(self):
-        result = parse(
-            "select * from trade where school LIKE '%shool' and name='abc' and id IN"
-            " ('1','2')"
-        )
+        result = parse("select * from trade where school LIKE '%shool' and name='abc' and id IN ('1','2')")
         expected = {
             "from": "trade",
             "select": "*",
@@ -378,9 +351,7 @@ class TestSimpleUsingOperators(TestCase):
         self.assertEqual(result, expected)
 
     def test_rlike_in_select(self):
-        result = parse(
-            "select case when A rlike 'bb.*' then 1 else 0 end as bb from table1"
-        )
+        result = parse("select case when A rlike 'bb.*' then 1 else 0 end as bb from table1")
         expected = {
             "from": "table1",
             "select": {
@@ -388,10 +359,7 @@ class TestSimpleUsingOperators(TestCase):
                 "value": {
                     "args": [
                         {
-                            "args": [{
-                                "args": ["A", {"literal": "bb.*"}],
-                                "op": "rlike",
-                            }],
+                            "args": [{"args": ["A", {"literal": "bb.*"}], "op": "rlike"}],
                             "kwargs": {"then": 1},
                             "op": "when",
                         },
@@ -404,9 +372,7 @@ class TestSimpleUsingOperators(TestCase):
         self.assertEqual(result, expected)
 
     def test_not_rlike_in_select(self):
-        result = parse(
-            "select case when A not rlike 'bb.*' then 1 else 0 end as bb from table1"
-        )
+        result = parse("select case when A not rlike 'bb.*' then 1 else 0 end as bb from table1")
         expected = {
             "from": "table1",
             "select": {
@@ -414,10 +380,7 @@ class TestSimpleUsingOperators(TestCase):
                 "value": {
                     "args": [
                         {
-                            "args": [{
-                                "args": ["A", {"literal": "bb.*"}],
-                                "op": "not_rlike",
-                            }],
+                            "args": [{"args": ["A", {"literal": "bb.*"}], "op": "not_rlike"}],
                             "kwargs": {"then": 1},
                             "op": "when",
                         },
@@ -430,31 +393,20 @@ class TestSimpleUsingOperators(TestCase):
         self.assertEqual(result, expected)
 
     def test_in_expression(self):
-        result = parse(
-            "select * from task where repo.branch.name in ('try', 'mozilla-central')"
-        )
+        result = parse("select * from task where repo.branch.name in ('try', 'mozilla-central')")
         expected = {
             "from": "task",
             "select": "*",
-            "where": {
-                "args": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}],
-                "op": "in",
-            },
+            "where": {"args": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}], "op": "in"},
         }
         self.assertEqual(result, expected)
 
     def test_not_in_expression(self):
-        result = parse(
-            "select * from task where repo.branch.name not in ('try',"
-            " 'mozilla-central')"
-        )
+        result = parse("select * from task where repo.branch.name not in ('try', 'mozilla-central')")
         expected = {
             "from": "task",
             "select": "*",
-            "where": {
-                "args": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}],
-                "op": "nin",
-            },
+            "where": {"args": ["repo.branch.name", {"literal": ["try", "mozilla-central"]}], "op": "nin"},
         }
         self.assertEqual(result, expected)
 
@@ -464,10 +416,7 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "from": [
                 {"name": "t1", "value": "table1"},
-                {
-                    "join": {"name": "t3", "value": "table3"},
-                    "on": {"args": ["t1.id", "t3.id"], "op": "eq"},
-                },
+                {"join": {"name": "t3", "value": "table3"}, "on": {"args": ["t1.id", "t3.id"], "op": "eq"}},
             ],
             "select": "*",
         }
@@ -476,10 +425,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_not_equal(self):
         #               0         1         2         3         4         5         6        7          8
         #               012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-        result = parse(
-            "select * from task where build.product is not null and"
-            " build.product!='firefox'"
-        )
+        result = parse("select * from task where build.product is not null and build.product!='firefox'")
 
         expected = {
             "from": "task",
@@ -506,21 +452,13 @@ class TestSimpleUsingOperators(TestCase):
     def test_left_join(self):
         result = parse("SELECT t1.field1 FROM t1 LEFT JOIN t2 ON t1.id = t2.id")
         expected = {
-            "from": [
-                "t1",
-                {"left join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
-            ],
+            "from": ["t1", {"left join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}}],
             "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
 
     def test_multiple_left_join(self):
-        result = parse(
-            "SELECT t1.field1 "
-            "FROM t1 "
-            "LEFT JOIN t2 ON t1.id = t2.id "
-            "LEFT JOIN t3 ON t1.id = t3.id"
-        )
+        result = parse("SELECT t1.field1 FROM t1 LEFT JOIN t2 ON t1.id = t2.id LEFT JOIN t3 ON t1.id = t3.id")
         expected = {
             "from": [
                 "t1",
@@ -545,13 +483,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_left_outer_join(self):
         result = parse("SELECT t1.field1 FROM t1 LEFT OUTER JOIN t2 ON t1.id = t2.id")
         expected = {
-            "from": [
-                "t1",
-                {
-                    "left outer join": "t2",
-                    "on": {"args": ["t1.id", "t2.id"], "op": "eq"},
-                },
-            ],
+            "from": ["t1", {"left outer join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}}],
             "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
@@ -559,10 +491,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_right_join(self):
         result = parse("SELECT t1.field1 FROM t1 RIGHT JOIN t2 ON t1.id = t2.id")
         expected = {
-            "from": [
-                "t1",
-                {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}, "right join": "t2"},
-            ],
+            "from": ["t1", {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}, "right join": "t2"}],
             "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
@@ -570,13 +499,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_right_outer_join(self):
         result = parse("SELECT t1.field1 FROM t1 RIGHT OUTER JOIN t2 ON t1.id = t2.id")
         expected = {
-            "from": [
-                "t1",
-                {
-                    "on": {"args": ["t1.id", "t2.id"], "op": "eq"},
-                    "right outer join": "t2",
-                },
-            ],
+            "from": ["t1", {"on": {"args": ["t1.id", "t2.id"], "op": "eq"}, "right outer join": "t2"}],
             "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
@@ -584,10 +507,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_full_join(self):
         result = parse("SELECT t1.field1 FROM t1 FULL JOIN t2 ON t1.id = t2.id")
         expected = {
-            "from": [
-                "t1",
-                {"full join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}},
-            ],
+            "from": ["t1", {"full join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}}],
             "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
@@ -595,13 +515,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_full_outer_join(self):
         result = parse("SELECT t1.field1 FROM t1 FULL OUTER JOIN t2 ON t1.id = t2.id")
         expected = {
-            "from": [
-                "t1",
-                {
-                    "full outer join": "t2",
-                    "on": {"args": ["t1.id", "t2.id"], "op": "eq"},
-                },
-            ],
+            "from": ["t1", {"full outer join": "t2", "on": {"args": ["t1.id", "t2.id"], "op": "eq"}}],
             "select": {"value": "t1.field1"},
         }
         self.assertEqual(result, expected)
@@ -652,10 +566,7 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "from": "mobile",
             "select": {"value": {
-                "args": [{
-                    "args": [{"args": ["mobile_price.price"], "op": "int"}],
-                    "op": "sum",
-                }],
+                "args": [{"args": [{"args": ["mobile_price.price"], "op": "int"}], "op": "sum"}],
                 "op": "deflate",
             }},
         }
@@ -677,10 +588,7 @@ class TestSimpleUsingOperators(TestCase):
                 {"name": "ml", "value": "movie_link"},
                 {"name": "t", "value": "title"},
             ],
-            "select": {
-                "name": "from_company",
-                "value": {"args": ["cn.name"], "op": "min"},
-            },
+            "select": {"name": "from_company", "value": {"args": ["cn.name"], "op": "min"}},
             "where": {
                 "args": [
                     {"args": ["cn.country_code", {"literal": "[pl]"}], "op": "neq"},
@@ -743,34 +651,17 @@ class TestSimpleUsingOperators(TestCase):
                     },
                     {"args": ["it.info", {"literal": "mini biography"}], "op": "eq"},
                     {
-                        "args": [
-                            "lt.link",
-                            {"literal": [
-                                "references",
-                                "referenced in",
-                                "features",
-                                "featured in",
-                            ]},
-                        ],
+                        "args": ["lt.link", {"literal": ["references", "referenced in", "features", "featured in"]}],
                         "op": "in",
                     },
-                    {
-                        "args": ["n.name_pcode_cf", {"literal": "A"}, {"literal": "F"}],
-                        "op": "between",
-                    },
+                    {"args": ["n.name_pcode_cf", {"literal": "A"}, {"literal": "F"}], "op": "between"},
                     {
                         "args": [
                             {"args": ["n.gender", {"literal": "m"}], "op": "eq"},
                             {
                                 "args": [
-                                    {
-                                        "args": ["n.gender", {"literal": "f"}],
-                                        "op": "eq",
-                                    },
-                                    {
-                                        "args": ["n.name", {"literal": "A%"}],
-                                        "op": "like",
-                                    },
+                                    {"args": ["n.gender", {"literal": "f"}], "op": "eq"},
+                                    {"args": ["n.name", {"literal": "A%"}], "op": "like"},
                                 ],
                                 "op": "and",
                             },
@@ -799,10 +690,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_issue_68b(self):
         #      0         1         2         3         4         5         6         7         8         9
         #      012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-        sql = (
-            "SELECT COUNT(*) AS CNT FROM test.tb WHERE (id IN (unhex('1'),unhex('2')))"
-            " AND  status=1;"
-        )
+        sql = "SELECT COUNT(*) AS CNT FROM test.tb WHERE (id IN (unhex('1'),unhex('2'))) AND  status=1;"
         result = parse(sql)
         expected = {
             "from": "test.tb",
@@ -911,10 +799,7 @@ class TestSimpleUsingOperators(TestCase):
 
     def test_union_all2(self):
         result = parse("SELECT b UNION ALL SELECT c")
-        expected = {"union_all": [
-            {"select": {"value": "b"}},
-            {"select": {"value": "c"}},
-        ]}
+        expected = {"union_all": [{"select": {"value": "b"}}, {"select": {"value": "c"}}]}
         self.assertEqual(result, expected)
 
     def test_issue106(self):
@@ -951,28 +836,19 @@ class TestSimpleUsingOperators(TestCase):
     def test_issue97_function_names(self):
         sql = "SELECT ST_AsText(ST_MakePoint(174, -36));"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": [{"args": [174, -36], "op": "st_makepoint"}],
-            "op": "st_astext",
-        }}}
+        expected = {"select": {"value": {"args": [{"args": [174, -36], "op": "st_makepoint"}], "op": "st_astext"}}}
         self.assertEqual(result, expected)
 
     def test_issue91_order_of_operations1(self):
         sql = "select 5-4+2"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": [{"args": [5, 4], "op": "sub"}, 2],
-            "op": "add",
-        }}}
+        expected = {"select": {"value": {"args": [{"args": [5, 4], "op": "sub"}, 2], "op": "add"}}}
         self.assertEqual(result, expected)
 
     def test_issue91_order_of_operations2(self):
         sql = "select 5/4*2"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": [{"args": [5, 4], "op": "div"}, 2],
-            "op": "mul",
-        }}}
+        expected = {"select": {"value": {"args": [{"args": [5, 4], "op": "div"}, 2], "op": "mul"}}}
         self.assertEqual(result, expected)
 
     def test_issue_92(self):
@@ -1030,10 +906,7 @@ class TestSimpleUsingOperators(TestCase):
                 "value": {
                     "from": "emp",
                     "groupby": {"value": "deptno"},
-                    "select": [
-                        {"value": "deptno"},
-                        {"name": "dept_count", "value": {"args": ["*"], "op": "count"}},
-                    ],
+                    "select": [{"value": "deptno"}, {"name": "dept_count", "value": {"args": ["*"], "op": "count"}}],
                 },
             },
         }
@@ -1043,10 +916,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_2with_clause(self):
         #    0         1         2         3         4         5         6         7         8         9
         #    012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-        sql = (
-            " WITH a AS (SELECT 1), b AS (SELECT 2)"
-            " SELECT * FROM a UNION ALL SELECT * FROM b"
-        )
+        sql = " WITH a AS (SELECT 1), b AS (SELECT 2) SELECT * FROM a UNION ALL SELECT * FROM b"
         result = parse(sql)
         expected = {
             "union_all": [{"from": "a", "select": "*"}, {"from": "b", "select": "*"}],
@@ -1060,19 +930,13 @@ class TestSimpleUsingOperators(TestCase):
     def test_issue_38a(self):
         sql = "SELECT a IN ('abc',3,'def')"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": ["a", {"literal": ["abc", 3, "def"]}],
-            "op": "in",
-        }}}
+        expected = {"select": {"value": {"args": ["a", {"literal": ["abc", 3, "def"]}], "op": "in"}}}
         self.assertEqual(result, expected)
 
     def test_issue_38b(self):
         sql = "SELECT a IN (abc,3,'def')"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": ["a", ["abc", 3, {"literal": "def"}]],
-            "op": "in",
-        }}}
+        expected = {"select": {"value": {"args": ["a", ["abc", 3, {"literal": "def"}]], "op": "in"}}}
         self.assertEqual(result, expected)
 
     def test_issue_107_recursion(self):
@@ -1108,13 +972,7 @@ class TestSimpleUsingOperators(TestCase):
                                     "where": {
                                         "args": [
                                             "area",
-                                            {
-                                                "from": "state",
-                                                "select": {"value": {
-                                                    "args": ["area"],
-                                                    "op": "min",
-                                                }},
-                                            },
+                                            {"from": "state", "select": {"value": {"args": ["area"], "op": "min"}}},
                                         ],
                                         "op": "eq",
                                     },
@@ -1135,10 +993,7 @@ class TestSimpleUsingOperators(TestCase):
         sql = "select * from some_table.some_function('parameter', 1, some_col)"
         result = parse(sql)
         expected = {
-            "from": {
-                "args": [{"literal": "parameter"}, 1, "some_col"],
-                "op": "some_table.some_function",
-            },
+            "from": {"args": [{"literal": "parameter"}, 1, "some_col"], "op": "some_table.some_function"},
             "select": "*",
         }
         self.assertEqual(result, expected)
@@ -1146,10 +1001,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_date(self):
         sql = "select DATE '2020 01 25'"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": [{"literal": "2020 01 25"}],
-            "op": "date",
-        }}}
+        expected = {"select": {"value": {"args": [{"literal": "2020 01 25"}], "op": "date"}}}
         self.assertEqual(result, expected)
 
     def test_interval(self):
@@ -1162,10 +1014,7 @@ class TestSimpleUsingOperators(TestCase):
         sql = "select DATE '2020 01 25' - interval 4 seconds"
         result = parse(sql)
         expected = {"select": {"value": {
-            "args": [
-                {"args": [{"literal": "2020 01 25"}], "op": "date"},
-                {"args": [4, "second"], "op": "interval"},
-            ],
+            "args": [{"args": [{"literal": "2020 01 25"}], "op": "date"}, {"args": [4, "second"], "op": "interval"}],
             "op": "sub",
         }}}
         self.assertEqual(result, expected)
@@ -1222,17 +1071,8 @@ class TestSimpleUsingOperators(TestCase):
                     {"args": ["internal", True], "op": "eq"},
                     {
                         "args": [
-                            {
-                                "args": [
-                                    "header_content_type",
-                                    {"literal": "text/html"},
-                                ],
-                                "op": "eq",
-                            },
-                            {
-                                "args": ["header_content_type", {"literal": ""}],
-                                "op": "eq",
-                            },
+                            {"args": ["header_content_type", {"literal": "text/html"}], "op": "eq"},
+                            {"args": ["header_content_type", {"literal": ""}], "op": "eq"},
                         ],
                         "op": "or",
                     },
@@ -1254,13 +1094,7 @@ class TestSimpleUsingOperators(TestCase):
                 "args": [
                     {"args": ["a", 1], "op": "eq"},
                     [
-                        {
-                            "args": [
-                                {"args": ["b", 2], "op": "eq"},
-                                {"args": ["c", 3], "op": "eq"},
-                            ],
-                            "op": "and",
-                        },
+                        {"args": [{"args": ["b", 2], "op": "eq"}, {"args": ["c", 3], "op": "eq"}], "op": "and"},
                         False,
                     ],
                 ],
@@ -1278,10 +1112,7 @@ class TestSimpleUsingOperators(TestCase):
     def test_null_parameter(self):
         sql = "select DECODE(A, NULL, 'b')"
         result = parse(sql)
-        expected = {"select": {"value": {
-            "args": ["A", {"null": {}}, {"literal": "b"}],
-            "op": "decode",
-        }}}
+        expected = {"select": {"value": {"args": ["A", {"null": {}}, {"literal": "b"}], "op": "decode"}}}
         self.assertEqual(result, expected)
 
     def test_issue140(self):
@@ -1290,10 +1121,7 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "from": "tab",
             "select": {
-                "over": {
-                    "orderby": [{"value": "b"}, {"value": "c"}],
-                    "partitionby": "a",
-                },
+                "over": {"orderby": [{"value": "b"}, {"value": "c"}], "partitionby": "a"},
                 "value": {"args": ["*"], "op": "rank"},
             },
         }
@@ -1304,10 +1132,7 @@ class TestSimpleUsingOperators(TestCase):
         result = parse(sql)
         expected = {"select": {
             "name": "result",
-            "value": {
-                "args": [1, {"args": [1, {"op": "int"}], "op": "cast"}],
-                "op": "add",
-            },
+            "value": {"args": [1, {"args": [1, {"op": "int"}], "op": "cast"}], "op": "add"},
         }}
         self.assertEqual(result, expected)
 
@@ -1332,15 +1157,7 @@ class TestSimpleUsingOperators(TestCase):
         sql = "SELECT COUNT(DISTINCT Y) FROM A "
         result = parse(sql)
         self.assertEqual(
-            result,
-            {
-                "from": "A",
-                "select": {"value": {
-                    "op": "count",
-                    "args": ["Y"],
-                    "kwargs": {"distinct": True},
-                }},
-            },
+            result, {"from": "A", "select": {"value": {"op": "count", "args": ["Y"], "kwargs": {"distinct": True}}}},
         )
 
     def test_issue2b_of_fork(self):
@@ -1352,11 +1169,7 @@ class TestSimpleUsingOperators(TestCase):
                 "from": "C",
                 "groupby": {"value": "A"},
                 "select": [
-                    {"value": {
-                        "op": "count",
-                        "args": ["B", "E"],
-                        "kwargs": {"distinct": True},
-                    }},
+                    {"value": {"op": "count", "args": ["B", "E"], "kwargs": {"distinct": True}}},
                     {"value": "A"},
                 ],
                 "where": {"args": ["D", "X"], "op": "eq"},
@@ -1371,10 +1184,7 @@ class TestSimpleUsingOperators(TestCase):
             {
                 "from": "tab",
                 "select": {
-                    "over": {
-                        "orderby": [{"value": "b"}, {"sort": "desc", "value": "c"}],
-                        "partitionby": "a",
-                    },
+                    "over": {"orderby": [{"value": "b"}, {"sort": "desc", "value": "c"}], "partitionby": "a"},
                     "value": {"args": ["*"], "op": "rank"},
                 },
             },
@@ -1416,39 +1226,15 @@ class TestSimpleUsingOperators(TestCase):
                     "args": [
                         {"args": ["ra", 180, 181], "op": "between"},
                         {"args": ["dec", -0.5, 0.5], "op": "between"},
+                        {"args": [{"args": ["flags_r", {"hex": "10000000"}], "op": "binary_and"}, 0], "op": "neq"},
                         {
-                            "args": [
-                                {
-                                    "args": ["flags_r", {"hex": "10000000"}],
-                                    "op": "binary_and",
-                                },
-                                0,
-                            ],
-                            "op": "neq",
-                        },
-                        {
-                            "args": [
-                                {
-                                    "args": ["flags_r", {"hex": "8100000c00a4"}],
-                                    "op": "binary_and",
-                                },
-                                0,
-                            ],
+                            "args": [{"args": ["flags_r", {"hex": "8100000c00a4"}], "op": "binary_and"}, 0],
                             "op": "eq",
                         },
                         {
                             "args": [
                                 {
-                                    "args": [
-                                        {
-                                            "args": [
-                                                "flags_r",
-                                                {"hex": "400000000000"},
-                                            ],
-                                            "op": "binary_and",
-                                        },
-                                        0,
-                                    ],
+                                    "args": [{"args": ["flags_r", {"hex": "400000000000"}], "op": "binary_and"}, 0],
                                     "op": "eq",
                                 },
                                 {"args": ["psfmagerr_r", 0.2], "op": "lte"},
@@ -1458,26 +1244,11 @@ class TestSimpleUsingOperators(TestCase):
                         {
                             "args": [
                                 {
-                                    "args": [
-                                        {
-                                            "args": [
-                                                "flags_r",
-                                                {"hex": "100000000000"},
-                                            ],
-                                            "op": "binary_and",
-                                        },
-                                        0,
-                                    ],
+                                    "args": [{"args": ["flags_r", {"hex": "100000000000"}], "op": "binary_and"}, 0],
                                     "op": "eq",
                                 },
                                 {
-                                    "args": [
-                                        {
-                                            "args": ["flags_r", {"hex": "1000"}],
-                                            "op": "binary_and",
-                                        },
-                                        0,
-                                    ],
+                                    "args": [{"args": ["flags_r", {"hex": "1000"}], "op": "binary_and"}, 0],
                                     "op": "eq",
                                 },
                             ],
@@ -1521,10 +1292,7 @@ class TestSimpleUsingOperators(TestCase):
                             "groupby": {"value": "run"},
                             "select": [
                                 {"value": "run"},
-                                {
-                                    "name": "runarea",
-                                    "value": {"args": ["primaryArea"], "op": "sum"},
-                                },
+                                {"name": "runarea", "value": {"args": ["primaryArea"], "op": "sum"}},
                                 {
                                     "name": "avg_sky_muJy",
                                     "value": {
@@ -1533,17 +1301,8 @@ class TestSimpleUsingOperators(TestCase):
                                             {
                                                 "args": [{
                                                     "args": [
-                                                        {
-                                                            "args": [
-                                                                10,
-                                                                {"op": "float"},
-                                                            ],
-                                                            "op": "cast",
-                                                        },
-                                                        {
-                                                            "args": [-0.4, "sky_r"],
-                                                            "op": "mul",
-                                                        },
+                                                        {"args": [10, {"op": "float"}], "op": "cast"},
+                                                        {"args": [-0.4, "sky_r"], "op": "mul"},
                                                     ],
                                                     "op": "power",
                                                 }],
@@ -1563,23 +1322,14 @@ class TestSimpleUsingOperators(TestCase):
                                 "from": [
                                     {"name": "fm", "value": "FIRST"},
                                     {
-                                        "inner join": {
-                                            "name": "p",
-                                            "value": "photoprimary",
-                                        },
-                                        "on": {
-                                            "args": ["p.objid", "fm.objid"],
-                                            "op": "eq",
-                                        },
+                                        "inner join": {"name": "p", "value": "photoprimary"},
+                                        "on": {"args": ["p.objid", "fm.objid"], "op": "eq"},
                                     },
                                 ],
                                 "groupby": {"value": "p.run"},
                                 "select": [
                                     {"value": "p.run"},
-                                    {
-                                        "name": "nfirstmatch",
-                                        "value": {"args": ["*"], "op": "count"},
-                                    },
+                                    {"name": "nfirstmatch", "value": {"args": ["*"], "op": "count"}},
                                 ],
                             },
                         },
@@ -1629,10 +1379,7 @@ class TestSimpleUsingOperators(TestCase):
                             "groupby": {"value": "run"},
                             "select": [
                                 {"value": "run"},
-                                {
-                                    "name": "runarea",
-                                    "value": {"args": ["primaryArea"], "op": "sum"},
-                                },
+                                {"name": "runarea", "value": {"args": ["primaryArea"], "op": "sum"}},
                                 {
                                     "name": "avg_sky_muJy",
                                     "value": {"mul": [
@@ -1640,17 +1387,8 @@ class TestSimpleUsingOperators(TestCase):
                                         {
                                             "args": [{
                                                 "args": [
-                                                    {
-                                                        "args": [10.0, {"op": "float"}],
-                                                        "op": "cast",
-                                                    },
-                                                    {
-                                                        "args": [{"mul": [
-                                                            0.4,
-                                                            "sky_r",
-                                                        ]}],
-                                                        "op": "neg",
-                                                    },
+                                                    {"args": [10.0, {"op": "float"}], "op": "cast"},
+                                                    {"args": [{"mul": [0.4, "sky_r"]}], "op": "neg"},
                                                 ],
                                                 "op": "power",
                                             }],
@@ -1668,23 +1406,14 @@ class TestSimpleUsingOperators(TestCase):
                                 "from": [
                                     {"name": "fm", "value": "FIRST"},
                                     {
-                                        "inner join": {
-                                            "name": "p",
-                                            "value": "photoprimary",
-                                        },
-                                        "on": {
-                                            "args": ["p.objid", "fm.objid"],
-                                            "op": "eq",
-                                        },
+                                        "inner join": {"name": "p", "value": "photoprimary"},
+                                        "on": {"args": ["p.objid", "fm.objid"], "op": "eq"},
                                     },
                                 ],
                                 "groupby": {"value": "p.run"},
                                 "select": [
                                     {"value": "p.run"},
-                                    {
-                                        "name": "nfirstmatch",
-                                        "value": {"args": ["*"], "op": "count"},
-                                    },
+                                    {"name": "nfirstmatch", "value": {"args": ["*"], "op": "count"}},
                                 ],
                             },
                         },
@@ -1726,12 +1455,6 @@ class TestSimpleUsingOperators(TestCase):
         expected = {
             "from": "dbo.a",
             "select": "*",
-            "where": {
-                "op": "eq",
-                "args": [
-                    {"op": "mul", "args": [{"args": ["a"], "op": "abs"}, -1]},
-                    -22,
-                ],
-            },
+            "where": {"op": "eq", "args": [{"op": "mul", "args": [{"args": ["a"], "op": "abs"}, -1]}, -22]},
         }
         self.assertEqual(result, expected)

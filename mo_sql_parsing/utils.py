@@ -39,9 +39,9 @@ null_locations = []
 
 
 def keyword(keywords):
-    return And([
-        Keyword(k, caseless=True) for k in keywords.split(" ")
-    ]).set_parser_name(keywords) / keywords.replace(" ", "_")
+    return And([Keyword(k, caseless=True) for k in keywords.split(" ")]).set_parser_name(keywords) / keywords.replace(
+        " ", "_"
+    )
 
 
 def flag(keywords):
@@ -154,9 +154,7 @@ def to_json_operator(tokens):
         return Call(op, [tokens[1]], {})
     elif length == 5:
         # TRINARY OPERATOR
-        return Call(
-            tokens.tokens[1].type.parser_name, [tokens[0], tokens[2], tokens[4]], {}
-        )
+        return Call(tokens.tokens[1].type.parser_name, [tokens[0], tokens[2], tokens[4]], {})
 
     op = tokens[1]
     if not isinstance(op, text):
@@ -203,9 +201,7 @@ def to_json_operator(tokens):
             while isinstance(operand, ParseResults) and isinstance(operand.type, Group):
                 # PARENTHESES CAUSE EXTRA GROUP LAYERS
                 operand = operand[0]
-                if isinstance(operand, ParseResults) and isinstance(
-                    operand.type, Forward
-                ):
+                if isinstance(operand, ParseResults) and isinstance(operand.type, Forward):
                     operand = operand[0]
 
             if isinstance(operand, Call) and operand.op == op:
@@ -235,11 +231,7 @@ def as_literal(token):
         return token
     if is_data(token) and "literal" in token:
         return token["literal"]
-    if (
-        isinstance(token, ParseResults)
-        and isinstance(token.type, Group)
-        and token.length() == 1
-    ):
+    if isinstance(token, ParseResults) and isinstance(token.type, Group) and token.length() == 1:
         return as_literal(token[0])
 
 
@@ -316,11 +308,7 @@ def to_trim_call(tokens):
     frum = tokens["from"]
     if not frum:
         return Call("trim", [tokens["chars"]], {"direction": tokens["direction"]})
-    return Call(
-        "trim",
-        [frum],
-        {"characters": tokens["chars"], "direction": tokens["direction"]},
-    )
+    return Call("trim", [frum], {"characters": tokens["chars"], "direction": tokens["direction"]},)
 
 
 def to_kwarg(tokens):
@@ -347,13 +335,7 @@ def to_json_call(tokens):
         for kv in list(more_kwargs):
             kwargs.update(kv)
 
-    return ParseResults(
-        tokens.type,
-        tokens.start,
-        tokens.end,
-        [Call(op, args, kwargs)],
-        tokens.failures,
-    )
+    return ParseResults(tokens.type, tokens.start, tokens.end, [Call(op, args, kwargs)], tokens.failures,)
 
 
 def to_option(tokens):
@@ -389,9 +371,7 @@ def to_interval_type(tokens):
 
 def has_something(tokens, index, string):
     if not tokens:
-        raise ParseException(
-            tokens.type, index, string, "expecting something to match"
-        ) from None
+        raise ParseException(tokens.type, index, string, "expecting something to match") from None
 
 
 def to_interval_call(tokens, index, string):
@@ -404,14 +384,10 @@ def to_interval_call(tokens, index, string):
     if expr:
         return Call("interval", [expr], {})
     ago = -1 if tokens["ago"] else 1
-    durations = {
-        k: v for k, v in dict(tokens).items() if k not in ("type", "ago", "day-ago")
-    }
+    durations = {k: v for k, v in dict(tokens).items() if k not in ("type", "ago", "day-ago")}
     if tokens["day"] and ago == -1 and tokens["day-ago"] == "+":
         durations["day"] *= -1
-    result = Call(
-        "add", [Call("interval", [ago * v, k], {}) for k, v in durations.items()], {},
-    )
+    result = Call("add", [Call("interval", [ago * v, k], {}) for k, v in durations.items()], {},)
 
     if len(result.args) == 1:
         result = result.args[0]
@@ -493,13 +469,16 @@ def to_when_call(tokens):
     return Call("when", [tok["when"]], {"then": tok["then"]})
 
 
+def to_match_expr(tokens):
+    if "expr" in tokens:
+        return Call("and", [tokens["cond"], tokens['expr']])
+    return tokens['cond']
+
+
 def to_join_call(tokens):
     op = " ".join(tokens["op"])
     if tokens["join"]["name"]:
-        output = {op: {
-            "name": tokens["join"]["name"],
-            "value": tokens["join"]["value"],
-        }}
+        output = {op: {"name": tokens["join"]["name"], "value": tokens["join"]["value"]}}
     else:
         output = {op: tokens["join"]}
 
@@ -520,13 +499,7 @@ def to_expression_call(tokens):
     if set(tokens.keys()) & {"over", "within", "filter"}:
         return
 
-    return ParseResults(
-        tokens.type,
-        tokens.start,
-        tokens.end,
-        listwrap(tokens["value"]),
-        tokens.failures,
-    )
+    return ParseResults(tokens.type, tokens.start, tokens.end, listwrap(tokens["value"]), tokens.failures,)
 
 
 def to_over(tokens):
@@ -584,9 +557,7 @@ def get_literal(value):
 def to_values(tokens):
     rows = list(tokens)
     if len(rows) > 1:
-        values = [
-            [get_literal(s["value"]) for s in listwrap(row["select"])] for row in rows
-        ]
+        values = [[get_literal(s["value"]) for s in listwrap(row["select"])] for row in rows]
         if all(flatten(values)):
             return {"from": {"literal": values}}
         return {"union_all": list(tokens)}
@@ -670,9 +641,7 @@ def to_union_call(tokens):
 
 
 def to_insert_call(tokens):
-    options = {
-        k: v for k, v in tokens.items() if k not in ["columns", "table", "query"]
-    }
+    options = {k: v for k, v in tokens.items() if k not in ["columns", "table", "query"]}
     query = tokens["query"]
     columns = tokens["columns"]
     try:
@@ -686,9 +655,7 @@ def to_insert_call(tokens):
     except Exception:
         pass
 
-    return Call(
-        "insert", [tokens["table"]], {"columns": columns, "query": query, **options}
-    )
+    return Call("insert", [tokens["table"]], {"columns": columns, "query": query, **options})
 
 
 def to_update_call(tokens):
@@ -785,14 +752,8 @@ def square_column(tokens):
 
 
 # NUMBERS
-real_num = (
-    Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float")
-    / (lambda t: float(t[0]))
-)
-real_pos = (
-    Regex(r"(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float")
-    / (lambda t: float(t[0]))
-)
+real_num = Regex(r"[+-]?(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
+real_pos = Regex(r"(\d+\.\d*|\.\d+)([eE][+-]?\d+)?").set_parser_name("float") / (lambda t: float(t[0]))
 
 
 def parse_int(tokens):
@@ -804,15 +765,11 @@ def parse_int(tokens):
 
 int_num = Regex(r"[+-]?\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
 int_pos = Regex(r"\d+([eE]\+?\d+)?").set_parser_name("int") / parse_int
-hex_num = (
-    Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
-)
+hex_num = Regex(r"0x[0-9a-fA-F]+").set_parser_name("hex") / (lambda t: {"hex": t[0][2:]})
 
 # STRINGS
 ansi_string = Regex(r"\'(\'\'|[^'])*\'") / single_literal
-regex_string = (
-    Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")
-) / literal_regex
+regex_string = (Regex(r'r\"(\\\"|[^"])*\"') | Regex(r"r\'(\\\'|[^'])*\'")) / literal_regex
 mysql_doublequote_string = Regex(r'\"(\"\"|[^"])*\"') / double_literal
 
 # BASIC IDENTIFIERS
