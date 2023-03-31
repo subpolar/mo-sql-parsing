@@ -45,3 +45,15 @@ class TestOracle(TestCase):
         result = parse(sql)
         expected = {"explain": {"from": "temp", "select": "*"}, "into": "s.t@database"}
         self.assertEqual(result, expected)
+
+    def test_natural_join(self):
+        sql = """select * from A natural join b"""
+        result = parse(sql)
+        expected = {
+            "select": "*",
+            "from": [
+                "A",
+                {"natural join": "b"}
+            ]
+        }
+        self.assertEqual(result, expected)

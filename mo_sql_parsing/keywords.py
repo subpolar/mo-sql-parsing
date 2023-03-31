@@ -44,6 +44,7 @@ LEFT = keyword("left")
 LIKE = keyword("like")
 LIMIT = keyword("limit").suppress()
 MINUS = keyword("minus")
+NATURAL = keyword("natural")
 OFFSET = keyword("offset").suppress()
 ON = keyword("on").suppress()
 ORDER = keyword("order").suppress()
@@ -141,7 +142,7 @@ VIEW = keyword("view")
 
 
 joins = (
-    (Optional(CROSS | OUTER | INNER | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))) + JOIN + Optional(LATERAL))
+    (Optional(CROSS | OUTER | INNER | NATURAL | ((FULL | LEFT | RIGHT) + Optional(INNER | OUTER))) + JOIN + Optional(LATERAL))
     | LATERAL + Optional(VIEW + Optional(OUTER))
     | (CROSS | OUTER) + APPLY
 ) / (lambda tokens: " ".join(tokens).lower())
@@ -204,6 +205,7 @@ RESERVED = MatchFirst([
     LIKE,
     LIMIT,
     MINUS,
+    NATURAL,
     NOCASE,
     NOT,
     NULL,
